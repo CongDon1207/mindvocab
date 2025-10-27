@@ -1,6 +1,6 @@
 import React from 'react'
 
-const Folder = () => {
+const Folder: React.FC = () => {
   return (
     <div>
        Folder
@@ -9,4 +9,3 @@ const Folder = () => {
 }
 
 export default Folder
- Folder
