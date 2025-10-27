@@ -1,3 +1,15 @@
+/// <reference types="vite/client" />
+
+interface ImportMetaEnv {
+  readonly MODE: string
+  readonly VITE_API_BASE_URL?: string
+  // thêm các env variables khác ở đây nếu cần
+}
+
+interface ImportMeta {
+  readonly env: ImportMetaEnv
+}
+
 declare module '*.css' {
   const content: Record<string, string>;
   export default content;

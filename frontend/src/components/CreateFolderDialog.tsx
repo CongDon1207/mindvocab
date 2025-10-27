@@ -28,7 +28,9 @@ type Props = {
   onSubmit: (values: CreateFolderValues) => void
 }
 
+
 const CreateFolderDialog: React.FC<Props> = ({ open, onOpenChange, onSubmit }) => {
+  
   const { register, handleSubmit, formState: { errors, isSubmitting }, reset } = useForm<CreateFolderValues>({
     resolver: zodResolver(schema),
     defaultValues: { name: "", description: "" },
