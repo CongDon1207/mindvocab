@@ -17,7 +17,7 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 //
-app.use('/api/Folder', folderRoute);
+app.use('/api/folders', folderRoute);
 
 
 // Route kiểm tra server
