@@ -5,6 +5,7 @@ import cors from 'cors';
 import { connectDB } from './config/db.js'; // cần có .js ở cuối vì đang dùng ESM
 import folderRoute from './routes/folderRoute.js';
 import wordRoute from './routes/wordRoute.js';
+import sessionRoute from './routes/sessionRoute.js';
 
 dotenv.config();
 
@@ -20,6 +21,7 @@ if (process.env.NODE_ENV !== 'production') {
 // Routes
 app.use('/api/folders', folderRoute);
 app.use('/api/words', wordRoute);
+app.use('/api', sessionRoute); // /api/sessions, /api/attempts
 
 
 // Route kiểm tra server

@@ -1,5 +1,5 @@
 // models/Attempt.js
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const AttemptSchema = new mongoose.Schema({
   sessionId: { type: mongoose.Schema.Types.ObjectId, ref: 'Session', index: true, required: true },
@@ -9,4 +9,4 @@ const AttemptSchema = new mongoose.Schema({
   isCorrect: { type: Boolean, default: false },
 }, { timestamps: true });
 
-module.exports = mongoose.model('Attempt', AttemptSchema);
+export default mongoose.model('Attempt', AttemptSchema);

@@ -1,72 +1,4 @@
 # HANDOFF - mindvocab
-
-## Current Status
-✅ **Folder Management CRUD Completed** - Full CRUD operations cho folders (Create, Read, Update, Delete).
-✅ **Word Management CRUD Completed** - Full CRUD operations cho words với pagination, search, filter.
-✅ **FolderDetail Page Completed** - Trang chi tiết folder với quản lý từ vựng hoàn chỉnh.
-✅ **Frontend-Backend Integration** - API calls hoạt động đầy đủ cho folders và words.
-✅ **TypeScript Migration** - Frontend đã hoàn toàn sử dụng TypeScript với type safety.
-
-## TODO & Next Steps
-1. ~~Phát triển tính năng quản lý Folder (CRUD operations)~~ ✅ DONE
-2. ~~Tích hợp API backend với frontend~~ ✅ DONE
-3. ~~Implement UPDATE và DELETE operations cho folders~~ ✅ DONE
-4. ~~Thêm Words management (CRUD từ vựng trong folder)~~ ✅ DONE
-5. Add routing configuration cho FolderDetail page
-6. Integration testing (navigate to folder, add/edit/delete words, pagination, search, filter)
-7. Implement authentication/authorization
-8. Thêm Learning mode (flashcard, quiz, spaced repetition)
-9. Improve error handling với toast notifications (sonner đã có)
-10. Add loading skeletons cho better UX
-
-## Key Paths
-### Frontend
-- Source: `frontend/src/`
-- UI components: `frontend/src/components/ui/` (shadcn/ui components)
-- Folder components: `frontend/src/components/folder/` (FolderCard, FolderList, CreateFolderDialog, CreateFolderCard)
-- Word components: `frontend/src/components/word/` (WordFormDialog, WordsTable)
-- Pages: `frontend/src/pages/` (Folder.tsx, FolderDetail.tsx)
-- Type definitions: `frontend/src/types/` (word.ts)
-- Utilities: `frontend/src/lib/utils.ts`
-- API client: `frontend/src/lib/axios.ts`
-- TypeScript config: `frontend/tsconfig.json`
-- Vite config: `frontend/vite.config.ts`
-- Shadcn config: `frontend/components.json`
-
-### Backend
-- API routes: `backend/src/routes/` (folderRoute.js, wordRoute.js)
-- Controllers: `backend/src/controllers/` (folderController.js, wordController.js)
-- Models: `backend/src/model/` (Folder.js, Word.js)
-- Server entry: `backend/src/server.js`
-- Database config: `backend/src/config/db.js`
-
-## Latest Test Results
-- ✅ TypeScript type check: No errors (`npx tsc --noEmit`)
-- ✅ Production build: Success (build time ~3.8s)
-- ✅ Frontend dev server: Running on port 5173
-- ✅ Backend dev server: Running on port 5001
-- ✅ Folder API integration: Working (GET, POST, PUT, DELETE /api/folders)
-- ✅ Word API integration: Working (GET /folders/:id/words, POST /words, PUT /words/:id, DELETE /words/:id)
-- ✅ Word CRUD API tests: 11/11 passed (curl validation completed on 2025-01-28)
-- ✅ FolderDetail page: Compiles without errors (2025-10-28: refactored với WordsTable component)
-- ✅ WordFormDialog component: Compiles without errors
-- ✅ WordsTable component: Compiles without errors (2025-10-28: tách từ FolderDetail, hiển thị đầy đủ 7 columns)
-- ✅ Chrome DevTools debugging: No console errors
-
-## API Endpoints
-### Folders
-- `GET /api/folders` - Lấy danh sách folders
-- `GET /api/folders/:id` - Lấy folder theo ID (có stats.totalWords)
-- `POST /api/folders` - Tạo folder mới
-- `PUT /api/folders/:id` - Cập nhật folder
-- `DELETE /api/folders/:id` - Xóa folder
-
-### Words
-- `GET /api/folders/:id/words?skip=0&limit=20&q=search&pos=noun` - Lấy danh sách words trong folder (có pagination, search, filter)
-- `POST /api/words` - Tạo word mới (body: { folderId, word, pos, meaning_vi, ipa?, note?, ex1?: {en, vi, source}, ex2?: {en, vi, source} })
-- `PUT /api/words/:id` - Cập nhật word (body: { word, pos, meaning_vi, ipa?, note?, ex1?, ex2? })
-- `DELETE /api/words/:id` - Xóa word
-
 ## Environment
 ### Frontend
 - Node.js: Latest
@@ -86,7 +18,38 @@
 - MongoDB: Connected
 - Port: 5001
 
+## Current Status
+✅ **Phase 9 (Summary Step) - COMPLETED**
+- SummaryStep component hiển thị tổng kết session (Quiz P1/P2/Spelling/Fill scores)
+- Badge [Inferred] cho câu fill-blank sinh bởi AI
+- wrongSet review với danh sách từ sai chi tiết
+- CTA: Ôn lại từ sai (navigate về FolderDetail) & Kết thúc
+- Backend API POST /sessions/:id/complete - Cập nhật mastery, word metadata (lastSeenAt, difficulty)
+- Mastery logic: ≥80% quiz + không trong wrongSet → folder.stats.mastered tăng
+
+✅ **Phase 10 (UX Enhancements) - COMPLETED**
+- Toast notifications (sonner) cho session start, step completion, quiz feedback, errors
+- Progress bar chi tiết trong QuizStep (visual bar theo câu hiện tại)
+- Skeleton loading cho WordsTable (5 skeleton rows)
+- Keyboard shortcuts: 1-4, Enter (quiz), Enter (spelling) - đã có từ trước
+
+## TODO & Next Steps
+1. **Phase 11 - Spaced Repetition**: Implement SRS algorithm cập nhật meta.easyFactor và meta.nextReview (SuperMemo-2)
+2. **Phase 12 - Review Notes**: Thêm note cho từ sai trong session, lưu vào reviewNotes array
+3. **Phase 13 - Retry Session từ wrongSet**: Tạo session mới chỉ với wrongSet words (feature "Ôn lại từ sai")
+
 ## Current Features
+### Session Learning Flow (Phases 1-8 COMPLETED)
+- ✅ Session creation với 10 words (alphabetically sorted), random seed, idempotency guard
+- ✅ SessionPage UI với 6-step stepper (visual progress), localStorage persistence, state machine controls
+- ✅ Flashcard Step: Flip animation, prev/next nav, mark difficult, [Inferred] badges, viewed tracking
+- ✅ Quiz Part 1 (VN→EN): 10 câu sequential với 4 options A-D, instant feedback, keyboard shortcuts (1-4/Enter), wrongSet merge
+- ✅ Quiz Part 2 (EN→VI): Tái sử dụng QuizStep component với mode EN→VI, wrongSet merge unique
+- ✅ Spelling Step: Text input với normalization, multi-round (max 3), wrongSet logic, hint (ký tự đúng vị trí)
+- ✅ Fill-in-the-blank Step: Word bank 10 từ, 10 câu cloze, click-to-fill, Submit chấm điểm, highlight câu sai rõ ràng
+- ✅ Question Generator: PRNG deterministic với seed, lazy generation, distractor selection (cùng POS), isInferred flag
+- ✅ Session API: GET/POST/PUT sessions, POST/GET attempts, validation guards (chặn lùi bước/nhảy bước)
+
 ### Folder Management
 - ✅ Folder listing với pagination (7 items/page)
 - ✅ Create folder với form validation (name, description, category)
@@ -163,3 +126,41 @@ type GetWordsResponse = {
   limit: number
 }
 ```
+
+### Session Type (Backend Schema - Phase 3)
+```typescript
+type Question = {
+  type: 'VN2EN' | 'EN2VI' | 'SPELLING' | 'FILL'
+  wordId: string
+  prompt: string          // meaning_vi (VN2EN) | word (EN2VI) | cloze sentence (FILL)
+  options: string[]       // 4 options for quiz (empty for FILL)
+  answer: string          // correct answer
+  bank: string[]          // word bank for FILL (empty for quiz)
+  isInferred?: boolean    // flag for inferred examples (FILL only)
+}
+
+type Session = {
+  _id: string
+  folderId: string
+  wordIds: string[]       // 10 words (alphabetically sorted)
+  step: 'FLASHCARDS' | 'QUIZ_PART1' | 'QUIZ_PART2' | 'SPELLING' | 'FILL_BLANK' | 'SUMMARY'
+  wrongSet: string[]
+  reviewNotes: string[]
+  quizP1: { questions: Question[], score: number }
+  quizP2: { questions: Question[], score: number }
+  spelling: { rounds: number, correct: number, maxRounds: number }
+  fillBlank: { questions: Question[], score: number }
+  seed: number            // random seed for deterministic question generation
+  createdAt: string
+  updatedAt: string
+}
+```
+
+### Question Generator (Phase 3)
+- **PRNG Algorithm:** Linear Congruential Generator (LCG) với seed deterministic
+- **Quiz P1 (VN→EN):** prompt = meaning_vi, answer = word, 4 options (1 đáp án + 3 nhiễu cùng POS)
+- **Quiz P2 (EN→VI):** prompt = word, answer = meaning_vi, 4 options (1 đáp án + 3 nhiễu cùng POS)
+- **Fill Blank:** Cloze sentences từ ex1/ex2 (ưu tiên ex1), word bank = 10 từ shuffle deterministic
+- **Distractor Selection:** Ưu tiên từ cùng POS trong folder, mở rộng nếu không đủ
+- **isInferred Flag:** Fill Blank questions có flag isInferred=true nếu ví dụ có source='inferred'
+- **Lazy Generation:** Questions được generate lần đầu GET /api/sessions/:id, sau đó persist vào DB

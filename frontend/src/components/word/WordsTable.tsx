@@ -1,6 +1,7 @@
 // src/components/word/WordsTable.tsx
 import React from 'react'
 import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 import { Edit2, Trash2 } from 'lucide-react'
 import type { Word } from '@/types/word'
 
@@ -22,7 +23,38 @@ export const WordsTable: React.FC<WordsTableProps> = ({
   onDelete,
 }) => {
   if (loading) {
-    return <div className="p-8 text-center text-gray-500">Đang tải...</div>
+    return (
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead className="bg-gray-100 border-b">
+            <tr>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">Từ</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">Loại</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">Nghĩa</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">IPA</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">Ví dụ 1</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">Ví dụ 2</th>
+              <th className="px-4 py-3 text-right text-xs font-medium text-gray-700 uppercase">Thao tác</th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {[...Array(5)].map((_, idx) => (
+              <tr key={idx}>
+                <td className="px-4 py-3"><Skeleton className="h-4 w-24" /></td>
+                <td className="px-4 py-3"><Skeleton className="h-4 w-12" /></td>
+                <td className="px-4 py-3"><Skeleton className="h-4 w-32" /></td>
+                <td className="px-4 py-3"><Skeleton className="h-4 w-16" /></td>
+                <td className="px-4 py-3"><Skeleton className="h-4 w-40" /></td>
+                <td className="px-4 py-3"><Skeleton className="h-4 w-40" /></td>
+                <td className="px-4 py-3 text-right">
+                  <Skeleton className="h-8 w-16 ml-auto" />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )
   }
 
   if (words.length === 0) {

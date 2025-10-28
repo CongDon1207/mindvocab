@@ -144,6 +144,28 @@ const FolderDetail: React.FC = () => {
     }
   }
 
+  const handleStartLearning = async () => {
+    if (!id) return
+    
+    // Validate: cần ít nhất 1 từ để bắt đầu học
+    if (!folder?.stats?.totalWords || folder.stats.totalWords === 0) {
+      alert('Folder chưa có từ vựng nào. Vui lòng thêm từ trước khi bắt đầu học.')
+      return
+    }
+
+    try {
+      // Create new session
+      const res = await api.post('/sessions', { folderId: id })
+      const sessionId = res.data._id
+      
+      // Navigate to session page
+      navigate(`/sessions/${sessionId}`)
+    } catch (err: any) {
+      alert(err.response?.data?.error || 'Không thể tạo session học.')
+      console.error(err)
+    }
+  }
+
   // ========== COMPUTED VALUES ==========
   const totalPages = Math.ceil(total / limit)
 
@@ -172,7 +194,18 @@ const FolderDetail: React.FC = () => {
                 Tổng số từ: <span className="font-semibold">{folder?.stats?.totalWords || 0}</span>
               </p>
             </div>
-            <Button onClick={() => setIsAddDialogOpen(true)}>+ Thêm từ mới</Button>
+            <div className="flex gap-3">
+              <Button 
+                onClick={handleStartLearning}
+                className="bg-blue-600 hover:bg-blue-700"
+                disabled={!folder?.stats?.totalWords || folder.stats.totalWords === 0}
+              >
+                🎯 Bắt đầu học
+              </Button>
+              <Button variant="outline" onClick={() => setIsAddDialogOpen(true)}>
+                + Thêm từ mới
+              </Button>
+            </div>
           </div>
         </div>
 
