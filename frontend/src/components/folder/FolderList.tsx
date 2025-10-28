@@ -6,11 +6,14 @@ import CreateFolderCard from "./CreateFolderCard"
 export type Folder = {
   _id: string
   name: string
+  description?: string
   stats?: {
     totalWords?: number
     mastered?: number
   }
   owner?: string
+  createdAt?: string
+  updatedAt?: string
 }
 
 export type FolderListProps = {

@@ -1,5 +1,6 @@
 // src/controllers/folderController.js
 import Folder from '../model/Folder.js';
+import Word from '../model/Word.js';
 
 /**
  * Tạo thư mục mới
@@ -40,7 +41,7 @@ export async function listFolders(_req, res) {
 }
 
 /**
- * Lấy chi tiết 1 thư mục theo id
+ * Lấy chi tiết 1 thư mục theo id (bao gồm stats.totalWords)
  * Param: :id
  */
 export async function getFolderById(req, res) {
@@ -49,9 +50,19 @@ export async function getFolderById(req, res) {
     if (!folder) {
       return res.status(404).json({ error: 'Không tìm thấy thư mục.' });
     }
-    return res.json(folder);
+
+    // Đếm số từ vựng trong folder
+    const totalWords = await Word.countDocuments({ folderId: folder._id });
+
+    // Trả về folder + stats
+    return res.json({
+      ...folder.toObject(),
+      stats: {
+        totalWords,
+        mastered: 0 // TODO: tính sau khi có learning progress
+      }
+    });
   } catch (err) {
-    // 400 thay vì 500 để phản hồi khi id sai định dạng
     return res.status(400).json({
       error: 'ID không hợp lệ hoặc truy vấn lỗi.',
       detail: err.message,

@@ -1,41 +1,70 @@
 # HANDOFF - mindvocab
 
 ## Current Status
-✅ **Folder Management UI Completed** - Hoàn thành giao diện quản lý folder với CRUD operations cơ bản.
-✅ **Frontend-Backend Integration** - API calls đã được tích hợp và hoạt động (GET, POST /api/folders).
+✅ **Folder Management CRUD Completed** - Full CRUD operations cho folders (Create, Read, Update, Delete).
+✅ **Word Management CRUD Completed** - Full CRUD operations cho words với pagination, search, filter.
+✅ **FolderDetail Page Completed** - Trang chi tiết folder với quản lý từ vựng hoàn chỉnh.
+✅ **Frontend-Backend Integration** - API calls hoạt động đầy đủ cho folders và words.
 ✅ **TypeScript Migration** - Frontend đã hoàn toàn sử dụng TypeScript với type safety.
 
 ## TODO & Next Steps
 1. ~~Phát triển tính năng quản lý Folder (CRUD operations)~~ ✅ DONE
-2. ~~Tích hợp API backend với frontend~~ ✅ DONE (GET, POST)
-3. Implement UPDATE và DELETE operations cho folders
-4. Implement authentication/authorization
-5. Thêm Words management (CRUD từ vựng trong folder)
-6. Thêm Learning mode (flashcard, quiz, spaced repetition)
-7. Improve error handling với toast notifications (sonner đã có)
-8. Add loading skeletons cho better UX
+2. ~~Tích hợp API backend với frontend~~ ✅ DONE
+3. ~~Implement UPDATE và DELETE operations cho folders~~ ✅ DONE
+4. ~~Thêm Words management (CRUD từ vựng trong folder)~~ ✅ DONE
+5. Add routing configuration cho FolderDetail page
+6. Integration testing (navigate to folder, add/edit/delete words, pagination, search, filter)
+7. Implement authentication/authorization
+8. Thêm Learning mode (flashcard, quiz, spaced repetition)
+9. Improve error handling với toast notifications (sonner đã có)
+10. Add loading skeletons cho better UX
 
 ## Key Paths
-- Frontend source: `frontend/src/`
-- UI components: `frontend/src/components/ui/`
-- Custom components: `frontend/src/components/` (FolderCard, FolderList, CreateFolderDialog, CreateFolderCard)
-- Pages: `frontend/src/pages/` (Folder.tsx)
+### Frontend
+- Source: `frontend/src/`
+- UI components: `frontend/src/components/ui/` (shadcn/ui components)
+- Folder components: `frontend/src/components/folder/` (FolderCard, FolderList, CreateFolderDialog, CreateFolderCard)
+- Word components: `frontend/src/components/word/` (WordFormDialog)
+- Pages: `frontend/src/pages/` (Folder.tsx, FolderDetail.tsx)
+- Type definitions: `frontend/src/types/` (word.ts)
 - Utilities: `frontend/src/lib/utils.ts`
 - API client: `frontend/src/lib/axios.ts`
 - TypeScript config: `frontend/tsconfig.json`
 - Vite config: `frontend/vite.config.ts`
 - Shadcn config: `frontend/components.json`
-- Backend API: `backend/src/routes/folderRoute.js`
-- Backend controllers: `backend/src/controllers/folderController.js`
+
+### Backend
+- API routes: `backend/src/routes/` (folderRoute.js, wordRoute.js)
+- Controllers: `backend/src/controllers/` (folderController.js, wordController.js)
+- Models: `backend/src/model/` (Folder.js, Word.js)
+- Server entry: `backend/src/server.js`
+- Database config: `backend/src/config/db.js`
 
 ## Latest Test Results
 - ✅ TypeScript type check: No errors (`npx tsc --noEmit`)
 - ✅ Production build: Success (build time ~3.4s)
 - ✅ Frontend dev server: Running on port 5173
 - ✅ Backend dev server: Running on port 5001
-- ✅ API integration: Working (GET /api/folders returns data, POST /api/folders creates folder)
+- ✅ Folder API integration: Working (GET, POST, PUT, DELETE /api/folders)
+- ✅ Word API integration: Working (GET /folders/:id/words, POST /words, PUT /words/:id, DELETE /words/:id)
+- ✅ Word CRUD API tests: 11/11 passed (curl validation completed on 2025-01-28)
+- ✅ FolderDetail page: Compiles without errors
+- ✅ WordFormDialog component: Compiles without errors
 - ✅ Chrome DevTools debugging: No console errors
-- ✅ All shadcn/ui components: TypeScript compatible
+
+## API Endpoints
+### Folders
+- `GET /api/folders` - Lấy danh sách folders
+- `GET /api/folders/:id` - Lấy folder theo ID (có stats.totalWords)
+- `POST /api/folders` - Tạo folder mới
+- `PUT /api/folders/:id` - Cập nhật folder
+- `DELETE /api/folders/:id` - Xóa folder
+
+### Words
+- `GET /api/folders/:id/words?skip=0&limit=20&q=search&pos=noun` - Lấy danh sách words trong folder (có pagination, search, filter)
+- `POST /api/words` - Tạo word mới (body: { folderId, word, pos, meaning_vi, ipa?, note? })
+- `PUT /api/words/:id` - Cập nhật word (body: { word, pos, meaning_vi, ipa?, note? })
+- `DELETE /api/words/:id` - Xóa word
 
 ## Environment
 ### Frontend
@@ -57,9 +86,74 @@
 - Port: 5001
 
 ## Current Features
+### Folder Management
 - ✅ Folder listing với pagination (7 items/page)
 - ✅ Create folder với form validation (name, description, category)
+- ✅ Update folder (edit name, description)
+- ✅ Delete folder (xóa cả words bên trong)
 - ✅ Folder cards với stats display (totalWords, mastered)
 - ✅ Responsive grid layout (4 columns)
 - ✅ Navigation pagination (previous/next)
 - ✅ API integration với error handling
+
+### Word Management (FolderDetail Page)
+- ✅ Header hiển thị: folder name, description, totalWords
+- ✅ Bảng từ vựng với columns: word, pos, meaning_vi, actions (Edit/Delete icons)
+- ✅ Pagination server-side: skip/limit với navigation controls
+- ✅ Search box: filter words theo text query (word, meaning_vi)
+- ✅ POS filter dropdown: filter theo loại từ (noun, verb, adj, adv, etc.)
+- ✅ Add word button: mở dialog thêm từ mới
+- ✅ Edit word: click icon Edit2 trên từng dòng → mở dialog với pre-filled values
+- ✅ Delete word: click icon Trash2 → xóa từ với confirmation
+- ✅ Reusable WordFormDialog component: form validation (Zod), select dropdown cho POS, textarea cho note
+- ✅ Auto refresh danh sách sau khi add/update/delete word
+- ✅ Loading states và error handling
+
+## Schemas & Contracts
+### Folder Type
+```typescript
+type Folder = {
+  _id: string
+  name: string
+  description?: string
+  category: string
+  totalWords: number
+  mastered: number
+  createdAt?: string
+  updatedAt?: string
+}
+```
+
+### Word Type
+```typescript
+type Word = {
+  _id: string
+  folderId: string
+  word: string
+  pos: string
+  meaning_vi: string
+  ipa?: string
+  note?: string
+  ex1?: { en: string; vi: string }
+  ex2?: { en: string; vi: string }
+  meta: {
+    reviewCount: number
+    correctCount: number
+    lastReview?: string
+    nextReview?: string
+    easyFactor: number
+  }
+  createdAt: string
+  updatedAt: string
+}
+```
+
+### GetWordsResponse Type
+```typescript
+type GetWordsResponse = {
+  words: Word[]
+  total: number
+  skip: number
+  limit: number
+}
+```

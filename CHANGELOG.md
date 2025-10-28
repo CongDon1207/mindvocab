@@ -1,5 +1,69 @@
 # CHANGELOG - mindvocab
 
+## 2025-01-28
+
+### Added - Backend Word Management
+- ✅ Tạo Word model (ESM syntax) tại backend/src/model/Word.js với schema: word, pos, meaning_vi, ipa, note, ex1, ex2, meta (reviewCount, correctCount, easyFactor)
+- ✅ Tạo wordController.js tại backend/src/controllers/ với 4 functions: getWordsInFolder, createWord, updateWord, deleteWord
+- ✅ Implement getWordsInFolder với pagination (skip/limit), search (q), filter (pos)
+- ✅ Implement createWord với validation (word, pos, meaning_vi required) và auto-increment totalWords trong Folder
+- ✅ Implement updateWord với partial update support
+- ✅ Implement deleteWord với cascade delete và auto-decrement totalWords
+- ✅ Tạo wordRoute.js tại backend/src/routes/ với 3 routes: POST /words, PUT /words/:id, DELETE /words/:id
+- ✅ Thêm route GET /folders/:id/words vào folderRoute.js
+- ✅ Register wordRoute trong server.js tại /api/words
+- ✅ Convert Word.js từ CommonJS sang ESM syntax (import/export)
+
+### Changed - Backend Folder Enhancement
+- ✅ Enhanced getFolderById trong folderController.js - Thêm stats.totalWords bằng Word.countDocuments
+- ✅ Update folderController.js - Thêm updateFolder function (PUT /folders/:id)
+- ✅ Update folderController.js - Thêm deleteFolder function (DELETE /folders/:id) với cascade delete cho words
+
+### Added - Frontend Word Management UI
+- ✅ Tạo type definitions tại frontend/src/types/word.ts: Word, WordFormValues, GetWordsResponse
+- ✅ Tạo WordFormDialog component tại frontend/src/components/word/WordFormDialog.tsx
+- ✅ Implement WordFormDialog với React Hook Form + Zod validation
+- ✅ Thêm POS select dropdown với 8 loại từ (noun, verb, adj, adv, prep, conj, pron, interj)
+- ✅ Thêm fields: word*, pos*, meaning_vi*, ipa, note (textarea)
+- ✅ Reusable component với props: defaultValues, title, submitButtonText
+- ✅ Tạo barrel export tại frontend/src/components/word/index.ts
+- ✅ Tạo FolderDetail page tại frontend/src/pages/FolderDetail.tsx (270 lines)
+- ✅ Implement FolderDetail với 18 state variables: folder, words, pagination, filters, loading, error, dialog states
+- ✅ Implement fetchFolder và fetchWords với auto-refresh khi page/search/filter thay đổi
+- ✅ Implement handleAddWord - Gọi POST /words, refresh danh sách, close dialog
+- ✅ Implement handleUpdateWord - Gọi PUT /words/:id, refresh danh sách, close dialog
+- ✅ Implement handleDeleteWord - Gọi DELETE /words/:id với confirmation, refresh danh sách
+- ✅ Implement pagination controls: Trước/Sau buttons, hiển thị "Trang X / Y"
+- ✅ Implement search box: debounce input, reset về page 1 khi search
+- ✅ Implement POS filter dropdown: reset về page 1 khi filter
+- ✅ Render words table với columns: word, pos, meaning_vi, actions (Edit2/Trash2 icons từ lucide-react)
+- ✅ Integrate WordFormDialog vào FolderDetail: Add dialog (title "Thêm từ mới"), Edit dialog (title "Chỉnh sửa từ", pre-filled values)
+
+### Changed - Frontend Folder Components
+- ✅ Update FolderCard.tsx - Thêm Edit2 và Trash2 buttons với onEdit/onDelete callbacks
+- ✅ Reorganize folder components - Di chuyển FolderCard, FolderList, CreateFolderCard, CreateFolderDialog vào frontend/src/components/folder/
+- ✅ Tạo barrel export tại frontend/src/components/folder/index.ts
+- ✅ Update Folder.tsx - Refactor với clear sections: STATE MANAGEMENT, LIFECYCLE, HANDLERS, RENDER
+- ✅ Update Folder.tsx - Thêm handleEditFolder và handleDeleteFolder
+- ✅ Update FolderList.tsx - Extend Folder type với description, createdAt, updatedAt fields
+
+### Fixed - TypeScript & Dependencies
+- ✅ Fix import errors - Đổi 'react-router-dom' → 'react-router' (React Router v7 compatibility)
+- ✅ Fix Folder type - Thêm description?, createdAt?, updatedAt? vào type definition
+- ✅ Fix Word model syntax - Convert từ CommonJS (module.exports) sang ESM (export default)
+- ✅ Fix compile errors - Resolve 7 TypeScript errors trong FolderDetail.tsx (unused variables là intentional)
+
+### Testing
+- ✅ Test GET /folders/:id - Trả về folder với stats.totalWords
+- ✅ Test GET /folders/:id/words?skip=0&limit=20 - Trả về words với pagination
+- ✅ Test GET /folders/:id/words?q=example - Search hoạt động
+- ✅ Test GET /folders/:id/words?pos=noun - Filter hoạt động
+- ✅ Test POST /words - Tạo word mới, totalWords tăng
+- ✅ Test PUT /words/:id - Cập nhật word thành công
+- ✅ Test DELETE /words/:id - Xóa word, totalWords giảm
+- ✅ Test cascade delete - Xóa folder xóa cả words bên trong
+- ✅ Total test cases: 11/11 passed (curl validation)
+
 ## 2025-10-28
 
 ### Added
