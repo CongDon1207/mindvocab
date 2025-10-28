@@ -1,7 +1,7 @@
-// src/components/FolderList.tsx
+// src/components/folder/FolderList.tsx
 import { useNavigate } from "react-router"
-import FolderCard, { type FolderCardProps } from "@/components/FolderCard"
-import CreateFolderCard from "@/components/CreateFolderCard.tsx"
+import FolderCard, { type FolderCardProps } from "./FolderCard"
+import CreateFolderCard from "./CreateFolderCard"
 
 export type Folder = {
   _id: string

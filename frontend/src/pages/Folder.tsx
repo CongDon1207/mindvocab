@@ -1,7 +1,7 @@
-import FolderList, { type Folder } from '@/components/FolderList'
+import { FolderList, CreateFolderDialog } from '@/components/folder'
+import type { Folder, CreateFolderValues } from '@/components/folder'
 import { Button } from '@/components/ui/button'
 import React, { useEffect, useState } from 'react'
-import CreateFolderDialog, { type CreateFolderValues } from '@/components/CreateFolderDialog'
 import api from '@/lib/axios'
 
 const Folder: React.FC = () => {
