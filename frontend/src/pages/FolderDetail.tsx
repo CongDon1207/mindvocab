@@ -3,9 +3,8 @@ import React, { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Edit2, Trash2 } from 'lucide-react'
 import api from '@/lib/axios'
-import { WordFormDialog } from '@/components/word'
+import { WordFormDialog, WordsTable } from '@/components/word'
 import type { Folder } from '@/components/folder'
 import type { Word, GetWordsResponse, WordFormValues } from '@/types/word'
 
@@ -81,7 +80,23 @@ const FolderDetail: React.FC = () => {
 
   const handleAddWord = async (values: WordFormValues) => {
     try {
-      await api.post('/words', { ...values, folderId: id })
+      const payload: any = {
+        folderId: id,
+        word: values.word,
+        pos: values.pos,
+        meaning_vi: values.meaning_vi,
+        ipa: values.ipa,
+        note: values.note,
+      }
+      // Chỉ thêm ex1/ex2 nếu có cả en và vi
+      if (values.ex1_en && values.ex1_vi) {
+        payload.ex1 = { en: values.ex1_en, vi: values.ex1_vi, source: 'user' }
+      }
+      if (values.ex2_en && values.ex2_vi) {
+        payload.ex2 = { en: values.ex2_en, vi: values.ex2_vi, source: 'user' }
+      }
+      
+      await api.post('/words', payload)
       setIsAddDialogOpen(false)
       fetchWords()
       fetchFolder() // cập nhật totalWords
@@ -93,7 +108,22 @@ const FolderDetail: React.FC = () => {
 
   const handleUpdateWord = async (wordId: string, values: WordFormValues) => {
     try {
-      await api.put(`/words/${wordId}`, values)
+      const payload: any = {
+        word: values.word,
+        pos: values.pos,
+        meaning_vi: values.meaning_vi,
+        ipa: values.ipa,
+        note: values.note,
+      }
+      // Chỉ thêm ex1/ex2 nếu có cả en và vi
+      if (values.ex1_en && values.ex1_vi) {
+        payload.ex1 = { en: values.ex1_en, vi: values.ex1_vi, source: 'user' }
+      }
+      if (values.ex2_en && values.ex2_vi) {
+        payload.ex2 = { en: values.ex2_en, vi: values.ex2_vi, source: 'user' }
+      }
+      
+      await api.put(`/words/${wordId}`, payload)
       setEditingWord(null)
       fetchWords()
       alert('Cập nhật từ thành công!')
@@ -171,82 +201,41 @@ const FolderDetail: React.FC = () => {
 
         {/* Words Table */}
         <div className="bg-white rounded-lg shadow overflow-hidden">
-          {loading && (
-            <div className="p-8 text-center text-gray-500">Đang tải...</div>
-          )}
+          <WordsTable
+            words={words}
+            loading={loading}
+            searchQuery={searchQuery}
+            posFilter={posFilter}
+            onEdit={setEditingWord}
+            onDelete={handleDeleteWord}
+          />
 
-          {!loading && words.length === 0 && (
-            <div className="p-8 text-center text-gray-500">
-              {searchQuery || posFilter ? 'Không tìm thấy từ phù hợp.' : 'Chưa có từ vựng nào. Hãy thêm từ mới!'}
+          {/* Pagination */}
+          {!loading && words.length > 0 && totalPages > 1 && (
+            <div className="px-6 py-4 border-t flex items-center justify-between">
+              <div className="text-sm text-gray-600">
+                Hiển thị {(page - 1) * limit + 1} - {Math.min(page * limit, total)} / {total} từ
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                >
+                  Trước
+                </Button>
+                <span className="px-3 py-1 text-sm">Trang {page} / {totalPages}</span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
+                >
+                  Sau
+                </Button>
+              </div>
             </div>
-          )}
-
-          {!loading && words.length > 0 && (
-            <>
-              <table className="w-full">
-                <thead className="bg-gray-100 border-b">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Từ</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Loại</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Nghĩa</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-700 uppercase">Thao tác</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {words.map((word) => (
-                    <tr key={word._id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 text-sm font-medium text-gray-900">{word.word}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{word.pos}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{word.meaning_vi}</td>
-                      <td className="px-6 py-4 text-sm text-right space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setEditingWord(word)}
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteWord(word._id)}
-                        >
-                          <Trash2 className="w-4 h-4 text-red-500" />
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="px-6 py-4 border-t flex items-center justify-between">
-                  <div className="text-sm text-gray-600">
-                    Hiển thị {(page - 1) * limit + 1} - {Math.min(page * limit, total)} / {total} từ
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setPage(p => Math.max(1, p - 1))}
-                      disabled={page === 1}
-                    >
-                      Trước
-                    </Button>
-                    <span className="px-3 py-1 text-sm">Trang {page} / {totalPages}</span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                      disabled={page === totalPages}
-                    >
-                      Sau
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </>
           )}
         </div>
       </div>
@@ -272,6 +261,10 @@ const FolderDetail: React.FC = () => {
             meaning_vi: editingWord.meaning_vi,
             ipa: editingWord.ipa || '',
             note: editingWord.note || '',
+            ex1_en: editingWord.ex1?.en || '',
+            ex1_vi: editingWord.ex1?.vi || '',
+            ex2_en: editingWord.ex2?.en || '',
+            ex2_vi: editingWord.ex2?.vi || '',
           }}
           title="Chỉnh sửa từ"
           submitButtonText="Lưu"

@@ -1,5 +1,25 @@
 # CHANGELOG - mindvocab
 
+## 2025-10-28
+
+### Added - WordsTable Component (Refactor)
+- ✅ Tạo WordsTable component tại frontend/src/components/word/WordsTable.tsx - Tách logic hiển thị bảng từ FolderDetail (131 lines)
+- ✅ Thêm đầy đủ 7 columns vào WordsTable: word + note, pos, meaning_vi, ipa, ex1 (en/vi), ex2 (en/vi), actions
+- ✅ Implement badge [Inferred] cho ex1/ex2 với source='inferred' - Badge màu xanh (bg-blue-100, text-blue-700)
+- ✅ Hiển thị note dưới word column (italic, gray text) khi có note
+- ✅ Export WordsTable từ frontend/src/components/word/index.ts
+
+### Changed - FolderDetail Refactor
+- ✅ Refactor FolderDetail.tsx - Thay thế table JSX (70+ dòng) bằng WordsTable component
+- ✅ Giảm FolderDetail từ 319 dòng xuống ~250 dòng (đạt mục tiêu under 300 LOC)
+- ✅ Remove unused imports (Edit2, Trash2 từ lucide-react) trong FolderDetail.tsx
+- ✅ Simplify pagination logic - Di chuyển conditional rendering vào WordsTable component
+
+### Testing
+- ✅ Test TypeScript compile - No errors (npx tsc --noEmit)
+- ✅ Test production build - Success (build time 3.84s)
+- ✅ Verify WordsTable component structure - Hiển thị đầy đủ 7 columns với [Inferred] badges
+
 ## 2025-01-28
 
 ### Added - Backend Word Management
@@ -21,23 +41,26 @@
 
 ### Added - Frontend Word Management UI
 - ✅ Tạo type definitions tại frontend/src/types/word.ts: Word, WordFormValues, GetWordsResponse
+- ✅ Extend WordFormValues với ex1_en, ex1_vi, ex2_en, ex2_vi để support ví dụ câu
 - ✅ Tạo WordFormDialog component tại frontend/src/components/word/WordFormDialog.tsx
 - ✅ Implement WordFormDialog với React Hook Form + Zod validation
 - ✅ Thêm POS select dropdown với 8 loại từ (noun, verb, adj, adv, prep, conj, pron, interj)
-- ✅ Thêm fields: word*, pos*, meaning_vi*, ipa, note (textarea)
+- ✅ Thêm fields: word*, pos*, meaning_vi*, ipa, note (textarea), ex1 (en/vi), ex2 (en/vi)
+- ✅ Expand dialog width (700px) và scrollable content để chứa đầy đủ form fields
 - ✅ Reusable component với props: defaultValues, title, submitButtonText
 - ✅ Tạo barrel export tại frontend/src/components/word/index.ts
-- ✅ Tạo FolderDetail page tại frontend/src/pages/FolderDetail.tsx (270 lines)
+- ✅ Tạo FolderDetail page tại frontend/src/pages/FolderDetail.tsx (285+ lines)
 - ✅ Implement FolderDetail với 18 state variables: folder, words, pagination, filters, loading, error, dialog states
 - ✅ Implement fetchFolder và fetchWords với auto-refresh khi page/search/filter thay đổi
-- ✅ Implement handleAddWord - Gọi POST /words, refresh danh sách, close dialog
-- ✅ Implement handleUpdateWord - Gọi PUT /words/:id, refresh danh sách, close dialog
+- ✅ Implement handleAddWord - Transform ex1/ex2 fields sang {en, vi, source:'user'} object, gọi POST /words, refresh danh sách
+- ✅ Implement handleUpdateWord - Transform ex1/ex2 fields, gọi PUT /words/:id, refresh danh sách
 - ✅ Implement handleDeleteWord - Gọi DELETE /words/:id với confirmation, refresh danh sách
 - ✅ Implement pagination controls: Trước/Sau buttons, hiển thị "Trang X / Y"
 - ✅ Implement search box: debounce input, reset về page 1 khi search
 - ✅ Implement POS filter dropdown: reset về page 1 khi filter
 - ✅ Render words table với columns: word, pos, meaning_vi, actions (Edit2/Trash2 icons từ lucide-react)
-- ✅ Integrate WordFormDialog vào FolderDetail: Add dialog (title "Thêm từ mới"), Edit dialog (title "Chỉnh sửa từ", pre-filled values)
+- ✅ Integrate WordFormDialog vào FolderDetail: Add dialog, Edit dialog với pre-filled values (bao gồm ex1/ex2)
+- ✅ Thêm route /folders/:id vào App.tsx để navigate sang FolderDetail page
 
 ### Changed - Frontend Folder Components
 - ✅ Update FolderCard.tsx - Thêm Edit2 và Trash2 buttons với onEdit/onDelete callbacks
@@ -46,11 +69,13 @@
 - ✅ Update Folder.tsx - Refactor với clear sections: STATE MANAGEMENT, LIFECYCLE, HANDLERS, RENDER
 - ✅ Update Folder.tsx - Thêm handleEditFolder và handleDeleteFolder
 - ✅ Update FolderList.tsx - Extend Folder type với description, createdAt, updatedAt fields
+- ✅ FolderList đã có sẵn navigation onClick={() => navigate(`/folders/${f._id}`)}
 
 ### Fixed - TypeScript & Dependencies
 - ✅ Fix import errors - Đổi 'react-router-dom' → 'react-router' (React Router v7 compatibility)
 - ✅ Fix Folder type - Thêm description?, createdAt?, updatedAt? vào type definition
 - ✅ Fix Word model syntax - Convert từ CommonJS (module.exports) sang ESM (export default)
+- ✅ Fix port conflict - Kill process 9952 chiếm port 5001, restart backend successfully
 - ✅ Fix compile errors - Resolve 7 TypeScript errors trong FolderDetail.tsx (unused variables là intentional)
 
 ### Testing

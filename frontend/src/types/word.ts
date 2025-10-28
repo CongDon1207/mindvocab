@@ -34,6 +34,10 @@ export type WordFormValues = {
   meaning_vi: string
   ipa?: string
   note?: string
+  ex1_en?: string
+  ex1_vi?: string
+  ex2_en?: string
+  ex2_vi?: string
 }
 
 export type GetWordsResponse = {
