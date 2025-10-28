@@ -1,5 +1,5 @@
 // models/Session.js
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const StepEnum = ['FLASHCARDS','QUIZ_PART1','QUIZ_PART2','SPELLING','FILL_BLANK','SUMMARY'];
 
@@ -10,6 +10,7 @@ const QuestionSchema = new mongoose.Schema({
   options: { type: [String], default: [] },     // A-D cho quiz
   answer: { type: String, required: true },     // đáp án đúng (từ EN hoặc nghĩa VI tùy type)
   bank: { type: [String], default: [] },        // word bank cho FILL
+  isInferred: { type: Boolean, default: false } // flag cho ví dụ inferred (FILL only)
 }, { _id:false });
 
 const SessionSchema = new mongoose.Schema({
@@ -29,4 +30,4 @@ const SessionSchema = new mongoose.Schema({
   seed: { type: Number, default: () => Math.floor(Math.random()*1e9) }, // tái lập ngẫu nhiên
 }, { timestamps: true });
 
-module.exports = mongoose.model('Session', SessionSchema);
+export default mongoose.model('Session', SessionSchema);

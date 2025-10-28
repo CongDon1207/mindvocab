@@ -20,9 +20,14 @@
 ```
 frontend/
 ├── src/
-│   ├── components/ui/     # shadcn/ui components (TypeScript)
+│   ├── components/
+│   │   ├── ui/            # shadcn/ui base components (TypeScript)
+│   │   ├── folder/        # Folder management components
+│   │   ├── word/          # Word management components
+│   │   └── session/       # Session learning components (6 components)
 │   ├── pages/             # Page components
-│   ├── lib/               # Utilities (cn helper)
+│   ├── lib/               # Utilities (cn helper, axios)
+│   ├── types/             # TypeScript type definitions
 │   ├── App.tsx            # Main app component
 │   └── main.tsx           # Entry point
 ├── tsconfig.json          # TypeScript config
@@ -51,3 +56,4 @@ npx shadcn@latest add <component-name>
 - ✅ Configured Tailwind CSS v4 with Vite
 - ✅ Installed shadcn/ui with TypeScript support
 - ✅ Path aliases configured (@/* imports)
+- ✅ SessionPage refactored into 6 reusable components (209 LOC main file)
