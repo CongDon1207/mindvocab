@@ -16,9 +16,11 @@ export type Folder = {
 export type FolderListProps = {
   folders: Folder[]
   onCreate?: () => void
+  onDelete?: (folderId: string) => void
+  onEdit?: (folder: Folder) => void
 }
 
-export default function FolderList({ folders, onCreate }: FolderListProps) {
+export default function FolderList({ folders, onCreate, onDelete, onEdit }: FolderListProps) {
   const navigate = useNavigate()
 
   return (
@@ -31,6 +33,8 @@ export default function FolderList({ folders, onCreate }: FolderListProps) {
           mastered: f.stats?.mastered ?? 0,
           owner: f.owner ?? "You",
           onClick: () => navigate(`/folders/${f._id}`),
+          onEdit: () => onEdit?.(f),
+          onDelete: () => onDelete?.(f._id),
         }
         return <FolderCard key={f._id} {...props} />
       })}
