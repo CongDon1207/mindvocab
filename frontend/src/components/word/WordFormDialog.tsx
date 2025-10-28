@@ -22,6 +22,10 @@ const schema = z.object({
   meaning_vi: z.string().trim().min(1, 'Nghĩa tiếng Việt là bắt buộc'),
   ipa: z.string().trim().optional(),
   note: z.string().trim().optional(),
+  ex1_en: z.string().trim().optional(),
+  ex1_vi: z.string().trim().optional(),
+  ex2_en: z.string().trim().optional(),
+  ex2_vi: z.string().trim().optional(),
 })
 
 type Props = {
@@ -49,6 +53,10 @@ const WordFormDialog: React.FC<Props> = ({
       meaning_vi: '',
       ipa: '',
       note: '',
+      ex1_en: '',
+      ex1_vi: '',
+      ex2_en: '',
+      ex2_vi: '',
     },
   })
 
@@ -64,7 +72,7 @@ const WordFormDialog: React.FC<Props> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
@@ -117,6 +125,52 @@ const WordFormDialog: React.FC<Props> = ({
               rows={3}
               {...register('note')}
             />
+          </div>
+
+          {/* Example 1 */}
+          <div className="grid gap-2">
+            <Label className="font-semibold">Ví dụ 1 (tùy chọn)</Label>
+            <div className="grid gap-2 pl-4">
+              <div className="grid gap-1">
+                <Label htmlFor="ex1_en" className="text-sm text-gray-600">Tiếng Anh</Label>
+                <Input
+                  id="ex1_en"
+                  placeholder="The report gave us actionable steps to improve sales."
+                  {...register('ex1_en')}
+                />
+              </div>
+              <div className="grid gap-1">
+                <Label htmlFor="ex1_vi" className="text-sm text-gray-600">Tiếng Việt</Label>
+                <Input
+                  id="ex1_vi"
+                  placeholder="Báo cáo đã đưa ra các bước thực tế có thể làm ngay để tăng doanh số."
+                  {...register('ex1_vi')}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Example 2 */}
+          <div className="grid gap-2">
+            <Label className="font-semibold">Ví dụ 2 (tùy chọn)</Label>
+            <div className="grid gap-2 pl-4">
+              <div className="grid gap-1">
+                <Label htmlFor="ex2_en" className="text-sm text-gray-600">Tiếng Anh</Label>
+                <Input
+                  id="ex2_en"
+                  placeholder="He prefers actionable advice, not just ideas."
+                  {...register('ex2_en')}
+                />
+              </div>
+              <div className="grid gap-1">
+                <Label htmlFor="ex2_vi" className="text-sm text-gray-600">Tiếng Việt</Label>
+                <Input
+                  id="ex2_vi"
+                  placeholder="Anh ấy thích những lời khuyên thực tế, chứ không chỉ là ý tưởng."
+                  {...register('ex2_vi')}
+                />
+              </div>
+            </div>
           </div>
 
           <DialogFooter className="mt-2">

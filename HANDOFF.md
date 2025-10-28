@@ -24,7 +24,7 @@
 - Source: `frontend/src/`
 - UI components: `frontend/src/components/ui/` (shadcn/ui components)
 - Folder components: `frontend/src/components/folder/` (FolderCard, FolderList, CreateFolderDialog, CreateFolderCard)
-- Word components: `frontend/src/components/word/` (WordFormDialog)
+- Word components: `frontend/src/components/word/` (WordFormDialog, WordsTable)
 - Pages: `frontend/src/pages/` (Folder.tsx, FolderDetail.tsx)
 - Type definitions: `frontend/src/types/` (word.ts)
 - Utilities: `frontend/src/lib/utils.ts`
@@ -42,14 +42,15 @@
 
 ## Latest Test Results
 - ✅ TypeScript type check: No errors (`npx tsc --noEmit`)
-- ✅ Production build: Success (build time ~3.4s)
+- ✅ Production build: Success (build time ~3.8s)
 - ✅ Frontend dev server: Running on port 5173
 - ✅ Backend dev server: Running on port 5001
 - ✅ Folder API integration: Working (GET, POST, PUT, DELETE /api/folders)
 - ✅ Word API integration: Working (GET /folders/:id/words, POST /words, PUT /words/:id, DELETE /words/:id)
 - ✅ Word CRUD API tests: 11/11 passed (curl validation completed on 2025-01-28)
-- ✅ FolderDetail page: Compiles without errors
+- ✅ FolderDetail page: Compiles without errors (2025-10-28: refactored với WordsTable component)
 - ✅ WordFormDialog component: Compiles without errors
+- ✅ WordsTable component: Compiles without errors (2025-10-28: tách từ FolderDetail, hiển thị đầy đủ 7 columns)
 - ✅ Chrome DevTools debugging: No console errors
 
 ## API Endpoints
@@ -62,8 +63,8 @@
 
 ### Words
 - `GET /api/folders/:id/words?skip=0&limit=20&q=search&pos=noun` - Lấy danh sách words trong folder (có pagination, search, filter)
-- `POST /api/words` - Tạo word mới (body: { folderId, word, pos, meaning_vi, ipa?, note? })
-- `PUT /api/words/:id` - Cập nhật word (body: { word, pos, meaning_vi, ipa?, note? })
+- `POST /api/words` - Tạo word mới (body: { folderId, word, pos, meaning_vi, ipa?, note?, ex1?: {en, vi, source}, ex2?: {en, vi, source} })
+- `PUT /api/words/:id` - Cập nhật word (body: { word, pos, meaning_vi, ipa?, note?, ex1?, ex2? })
 - `DELETE /api/words/:id` - Xóa word
 
 ## Environment
@@ -98,16 +99,21 @@
 
 ### Word Management (FolderDetail Page)
 - ✅ Header hiển thị: folder name, description, totalWords
-- ✅ Bảng từ vựng với columns: word, pos, meaning_vi, actions (Edit/Delete icons)
+- ✅ WordsTable component: tách riêng component cho bảng từ vựng (reusable, under 300 LOC)
+- ✅ Bảng từ vựng với đầy đủ columns: word + note, pos, meaning_vi, ipa, ex1 (en/vi + [Inferred] badge), ex2 (en/vi + [Inferred] badge), actions (Edit/Delete icons)
+- ✅ Badge [Inferred]: hiển thị badge màu xanh cho các field có source='inferred' (ex1/ex2)
 - ✅ Pagination server-side: skip/limit với navigation controls
 - ✅ Search box: filter words theo text query (word, meaning_vi)
 - ✅ POS filter dropdown: filter theo loại từ (noun, verb, adj, adv, etc.)
-- ✅ Add word button: mở dialog thêm từ mới
-- ✅ Edit word: click icon Edit2 trên từng dòng → mở dialog với pre-filled values
+- ✅ Add word button: mở dialog thêm từ mới với đầy đủ fields (word, pos, meaning_vi, ipa, note, ex1 en/vi, ex2 en/vi)
+- ✅ Edit word: click icon Edit2 trên từng dòng → mở dialog với pre-filled values (bao gồm cả ex1, ex2)
 - ✅ Delete word: click icon Trash2 → xóa từ với confirmation
-- ✅ Reusable WordFormDialog component: form validation (Zod), select dropdown cho POS, textarea cho note
+- ✅ Reusable WordFormDialog component: form validation (Zod), POS dropdown, textarea cho note, 2 sections cho ví dụ (ex1, ex2)
+- ✅ Dialog width 700px, scrollable content để chứa đầy đủ form
+- ✅ Transform ex1/ex2 fields (ex1_en, ex1_vi) → {en, vi, source:'user'} trước khi submit API
 - ✅ Auto refresh danh sách sau khi add/update/delete word
 - ✅ Loading states và error handling
+- ✅ Route /folders/:id đã được gắn vào App.tsx
 
 ## Schemas & Contracts
 ### Folder Type
