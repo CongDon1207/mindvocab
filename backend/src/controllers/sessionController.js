@@ -35,19 +35,29 @@ export const createSession = async (req, res) => {
     }
 
     // Pick 10 words (rule: alphabetically by word, then by createdAt)
-    const words = await Word.find({ folderId })
-      .sort({ word: 1, createdAt: 1 })
-      .limit(10);
+    const allWords = await Word.find({ folderId })
+      .sort({ word: 1, createdAt: 1 });
 
-    if (words.length === 0) {
+    if (allWords.length === 0) {
       return res.status(400).json({ error: 'Folder không có từ vựng nào' });
     }
 
-    if (words.length < 10) {
-      console.warn(`[SESSION] Folder ${folderId} chỉ có ${words.length} từ (< 10)`);
+    // Filter unique words (remove duplicates by word text)
+    const uniqueWordsMap = new Map();
+    for (const word of allWords) {
+      const key = word.word.toLowerCase().trim();
+      if (!uniqueWordsMap.has(key)) {
+        uniqueWordsMap.set(key, word);
+      }
+    }
+    
+    const uniqueWords = Array.from(uniqueWordsMap.values()).slice(0, 10);
+
+    if (uniqueWords.length < 10) {
+      console.warn(`[SESSION] Folder ${folderId} chỉ có ${uniqueWords.length} từ unique (< 10)`);
     }
 
-    const wordIds = words.map(w => w._id);
+    const wordIds = uniqueWords.map(w => w._id);
 
     // Create session
     const session = new Session({

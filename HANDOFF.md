@@ -19,6 +19,13 @@
 - Port: 5001
 
 ## Current Status
+✅ **BUG FIXES - Session & Quiz (Critical) - COMPLETED**
+- 🐛 Fixed duplicate words trong quiz - Backend filter unique by word.toLowerCase().trim() qua Map
+- 🐛 Fixed Quiz P2 không reset về câu 1 - Frontend useEffect reset state khi stepType thay đổi
+- Root cause #1: Script add words tạo duplicate docs (cùng word text, khác _id) → sessionController giờ filter duplicates
+- Root cause #2: QuizStep state persist khi chuyển QUIZ_PART1 → QUIZ_PART2 → thêm useEffect dependency [stepType]
+- Test: Session mới với 10 từ unique ✓, Quiz P2 reset index về 0 ✓
+
 ✅ **Phase 9 (Summary Step) - COMPLETED**
 - SummaryStep component hiển thị tổng kết session (Quiz P1/P2/Spelling/Fill scores)
 - Badge [Inferred] cho câu fill-blank sinh bởi AI
