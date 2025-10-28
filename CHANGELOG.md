@@ -2,6 +2,22 @@
 
 ## 2025-10-28
 
+### Fixed - Critical Bugs (Session & Quiz)
+- 🐛 Fix duplicate words bug trong createSession - Backend lọc từ trùng lặp bằng Map (key = word.toLowerCase().trim())
+- 🐛 Fix Quiz Part 2 không reset về câu 1 - Thêm useEffect reset currentQuestionIndex khi stepType thay đổi
+- ✅ Implement unique word filter trong sessionController - Lấy tất cả words, filter unique by word text, slice(0, 10)
+- ✅ Implement stepType dependency trong QuizStep - Reset state (index=0, score=0, wrongIds=[]) khi QUIZ_PART1 → QUIZ_PART2
+- ✅ Root cause: Script add words tạo duplicate documents với cùng word text nhưng khác _id
+- ✅ Solution: Backend tự động filter duplicates trước khi tạo session
+
+### Testing - Bug Fixes
+- ✅ Test session mới - 10 từ unique (able, apple, big, book, call, cat, day, dog, eat, fast)
+- ✅ Test Quiz P1 - Mỗi từ chỉ xuất hiện 1 lần (không còn double)
+- ✅ Verify Quiz P2 reset - currentQuestionIndex về 0 khi chuyển từ P1 sang P2
+- ✅ TypeScript compile - No errors
+
+## 2025-10-28
+
 ### Added - Summary Step (Phase 9 - Frontend + Backend)
 - ✅ Tạo SummaryStep component tại frontend/src/components/session/SummaryStep.tsx (240 lines)
 - ✅ Implement tổng hợp điểm: Quiz P1+P2 (total/20, %), Spelling (correct count, rounds), Fill Blank (score/10, %)

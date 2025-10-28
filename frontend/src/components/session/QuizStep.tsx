@@ -30,6 +30,13 @@ const QuizStep: React.FC<QuizStepProps> = ({
   const totalQuestions = questions.length
   const isLastQuestion = currentQuestionIndex === totalQuestions - 1
 
+  // Reset currentQuestionIndex when stepType changes (QUIZ_PART1 -> QUIZ_PART2)
+  useEffect(() => {
+    setCurrentQuestionIndex(0)
+    setScore(0)
+    setWrongWordIds([])
+  }, [stepType])
+
   // Reset state when question changes
   useEffect(() => {
     setSelectedAnswer(null)
