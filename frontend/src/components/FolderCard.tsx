@@ -1,6 +1,6 @@
 // src/components/FolderCard.tsx
 import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
-import { Square, PenLine } from "lucide-react"
+import { Square, PenLine, Edit2, Trash2 } from "lucide-react"
 
 export type FolderCardProps = {
   name: string
@@ -8,6 +8,8 @@ export type FolderCardProps = {
   mastered?: number
   owner?: string
   onClick?: () => void
+  onEdit?: () => void
+  onDelete?: () => void
 }
 
 export default function FolderCard({
@@ -16,6 +18,8 @@ export default function FolderCard({
   mastered = 0,
   owner = "You",
   onClick,
+  onEdit,
+  onDelete,
 }: FolderCardProps) {
   return (
     <Card
@@ -36,11 +40,39 @@ export default function FolderCard({
         </CardDescription>
       </CardHeader>
 
-      <CardFooter className="flex items-center justify-center gap-2">
-        <div className="size-7 rounded-full bg-gray-200 grid place-items-center text-gray-700 text-sm font-semibold">
-          {owner?.[0]?.toUpperCase() || "U"}
+      <CardFooter className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <div className="size-7 rounded-full bg-gray-200 grid place-items-center text-gray-700 text-sm font-semibold">
+            {owner?.[0]?.toUpperCase() || "U"}
+          </div>
+          <span className="text-sm text-gray-700">{owner}</span>
         </div>
-        <span className="text-sm text-gray-700">{owner}</span>
+        <div className="flex gap-2">
+          {onEdit && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit();
+              }}
+              className="p-2 hover:bg-blue-100 rounded transition-colors"
+              title="Chỉnh sửa"
+            >
+              <Edit2 className="h-4 w-4 text-blue-600" />
+            </button>
+          )}
+          {onDelete && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete();
+              }}
+              className="p-2 hover:bg-red-100 rounded transition-colors"
+              title="Xóa"
+            >
+              <Trash2 className="h-4 w-4 text-red-600" />
+            </button>
+          )}
+        </div>
       </CardFooter>
     </Card>
   )

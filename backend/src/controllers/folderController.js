@@ -58,3 +58,44 @@ export async function getFolderById(req, res) {
     });
   }
 }
+
+export async function updateFolder(req, res){
+  try{
+    const id = req.params.id;
+    const name = (req.body?.name || '').trim();
+    const description = (req.body?.description || '').trim();
+
+    if (!name) {
+      return res.status(400).json({ error: 'Tên thư mục (name) là bắt buộc.' });
+    }
+
+    const updatedFolder = await Folder.findByIdAndUpdate(id, { name, description }, { new: true });
+    if (!updatedFolder) {
+      return res.status(404).json({ error: 'Không tìm thấy thư mục để cập nhật.' });
+    }
+    return res.json(updatedFolder);
+  }catch(error){
+    return res.status(500).json({
+      error: 'Cập nhật thư mục thất bại.',
+      detail: error.message,
+    });
+  }
+}
+/**
+ * Xóa thư mục theo id
+ * Param: :id
+ */
+export async function deleteFolder(req, res) {
+  try {
+    const deletedFolder = await Folder.findByIdAndDelete(req.params.id);
+    if (!deletedFolder) {
+      return res.status(404).json({ error: 'Không tìm thấy thư mục để xóa.' });
+    }
+    return res.json({ message: 'Thư mục đã được xóa thành công.' });
+  } catch (err) {
+    return res.status(400).json({
+      error: 'ID không hợp lệ hoặc xóa thất bại.',
+      detail: err.message,
+    });
+  }
+}

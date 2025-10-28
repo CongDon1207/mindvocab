@@ -26,14 +26,24 @@ type Props = {
   open: boolean
   onOpenChange: (v: boolean) => void
   onSubmit: (values: CreateFolderValues) => void
+  defaultValues?: CreateFolderValues
+  title?: string
+  submitButtonText?: string
 }
 
 
-const CreateFolderDialog: React.FC<Props> = ({ open, onOpenChange, onSubmit }) => {
+const CreateFolderDialog: React.FC<Props> = ({ 
+  open, 
+  onOpenChange, 
+  onSubmit,
+  defaultValues: initialValues,
+  title = "Tạo folder mới",
+  submitButtonText = "Tạo"
+}) => {
   
   const { register, handleSubmit, formState: { errors, isSubmitting }, reset } = useForm<CreateFolderValues>({
     resolver: zodResolver(schema),
-    defaultValues: { name: "", description: "" },
+    defaultValues: initialValues || { name: "", description: "" },
   })
 
   const submit = (values: CreateFolderValues) => {
@@ -51,7 +61,7 @@ const CreateFolderDialog: React.FC<Props> = ({ open, onOpenChange, onSubmit }) =
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[520px]">
         <DialogHeader>
-          <DialogTitle>Tạo folder mới</DialogTitle>
+          <DialogTitle>{title}</DialogTitle>
           <DialogDescription>Nhập tên và mô tả ngắn để bắt đầu nhóm từ vựng.</DialogDescription>
         </DialogHeader>
 
@@ -69,7 +79,7 @@ const CreateFolderDialog: React.FC<Props> = ({ open, onOpenChange, onSubmit }) =
 
           <DialogFooter className="mt-2">
             <Button type="button" variant="outline" onClick={close}>Hủy</Button>
-            <Button type="submit" disabled={isSubmitting}>Tạo</Button>
+            <Button type="submit" disabled={isSubmitting}>{submitButtonText}</Button>
           </DialogFooter>
         </form>
       </DialogContent>
