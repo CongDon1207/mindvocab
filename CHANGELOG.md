@@ -8,6 +8,7 @@
 - ✅ Frontend: `UploadWordsDialog`, `ImportStatusDrawer`, báo cáo chi tiết + toast kết quả, tích hợp tại `FolderDetail` và refactor component header/filters/pagination (<300 LOC).
 - ✅ Sample TXT kèm repo; sample Excel placeholder cần thay bằng file thật trước khi release.
 - ✅ Docs: cập nhật README/HANDOFF về cấu hình ENV và luồng import.
+ - 📝 Docs: thêm file `format.md` mô tả chuẩn nhập liệu TXT/XLSX (headers, alias, ví dụ, checklist).
 
 ### Change - Import stability config & logs
 - 🔧 Đặt mặc định an toàn trong `.env`: `IMPORT_ENRICH_BATCH=10`, `AI_TIMEOUT_MS=45000`, `AI_RETRY_LIMIT=3` để giảm timeout/cắt phản hồi khi batch lớn.
