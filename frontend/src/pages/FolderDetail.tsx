@@ -2,34 +2,40 @@
 import React, { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import api from '@/lib/axios'
 import { WordFormDialog, WordsTable } from '@/components/word'
-import type { Folder } from '@/components/folder'
+import { UploadWordsDialog, ImportStatusDrawer } from '@/components/import'
+import {
+  FolderDetailHeader,
+  FolderWordFilters,
+  FolderPagination,
+  type Folder,
+} from '@/components/folder'
 import type { Word, GetWordsResponse, WordFormValues } from '@/types/word'
+import type { ImportJob } from '@/types/import'
+import { toast } from 'sonner'
 
 const FolderDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
 
-  // ========== STATE MANAGEMENT ==========
   const [folder, setFolder] = useState<Folder | null>(null)
   const [words, setWords] = useState<Word[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Pagination & filters
   const [page, setPage] = useState(1)
   const [limit] = useState(20)
   const [searchQuery, setSearchQuery] = useState('')
   const [posFilter, setPosFilter] = useState('')
 
-  // Modal states
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [editingWord, setEditingWord] = useState<Word | null>(null)
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false)
+  const [isImportDrawerOpen, setIsImportDrawerOpen] = useState(false)
+  const [activeJobId, setActiveJobId] = useState<string | null>(null)
 
-  // ========== DATA FETCHING ==========
   useEffect(() => {
     if (!id) return
     fetchFolder()
@@ -67,10 +73,9 @@ const FolderDetail: React.FC = () => {
     }
   }
 
-  // ========== HANDLERS ==========
   const handleSearch = (value: string) => {
     setSearchQuery(value)
-    setPage(1) // reset về trang 1
+    setPage(1)
   }
 
   const handlePosFilter = (value: string) => {
@@ -147,7 +152,6 @@ const FolderDetail: React.FC = () => {
   const handleStartLearning = async () => {
     if (!id) return
     
-    // Validate: cần ít nhất 1 từ để bắt đầu học
     if (!folder?.stats?.totalWords || folder.stats.totalWords === 0) {
       alert('Folder chưa có từ vựng nào. Vui lòng thêm từ trước khi bắt đầu học.')
       return
@@ -166,10 +170,30 @@ const FolderDetail: React.FC = () => {
     }
   }
 
-  // ========== COMPUTED VALUES ==========
+  const handleImportJobCreated = (jobId: string) => {
+    setActiveJobId(jobId)
+    setIsImportDrawerOpen(true)
+    toast('Đang xử lý import', {
+      description: `Job #${jobId} đang chạy ở nền.`,
+    })
+  }
+
+  const handleJobFinished = (job: ImportJob) => {
+    if (job.status === 'DONE') {
+      toast.success('Import hoàn tất', {
+        description: `Đã nhập ${job.counters.parsedOk} dòng (AI bổ sung ${job.counters.enrichedOk}).`,
+      })
+    } else {
+      toast.error('Import thất bại', {
+        description: 'Vui lòng xem báo cáo để biết chi tiết lỗi.',
+      })
+    }
+    fetchWords()
+    fetchFolder()
+  }
+
   const totalPages = Math.ceil(total / limit)
 
-  // ========== RENDER ==========
   if (error && !folder) {
     return (
       <div className="min-h-screen p-8 flex flex-col items-center justify-center">
@@ -182,55 +206,20 @@ const FolderDetail: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">{folder?.name || 'Loading...'}</h1>
-              {folder?.description && (
-                <p className="text-gray-600 mt-2">{folder.description}</p>
-              )}
-              <p className="text-sm text-gray-500 mt-2">
-                Tổng số từ: <span className="font-semibold">{folder?.stats?.totalWords || 0}</span>
-              </p>
-            </div>
-            <div className="flex gap-3">
-              <Button 
-                onClick={handleStartLearning}
-                className="bg-blue-600 hover:bg-blue-700"
-                disabled={!folder?.stats?.totalWords || folder.stats.totalWords === 0}
-              >
-                🎯 Bắt đầu học
-              </Button>
-              <Button variant="outline" onClick={() => setIsAddDialogOpen(true)}>
-                + Thêm từ mới
-              </Button>
-            </div>
-          </div>
-        </div>
+        <FolderDetailHeader
+          folder={folder}
+          onStartLearning={handleStartLearning}
+          onOpenUpload={() => setIsUploadDialogOpen(true)}
+          onOpenAddWord={() => setIsAddDialogOpen(true)}
+          canStart={Boolean(folder?.stats?.totalWords)}
+        />
 
-        {/* Filters */}
-        <div className="bg-white rounded-lg shadow p-4 mb-6">
-          <div className="flex gap-4">
-            <Input
-              placeholder="Tìm kiếm từ..."
-              value={searchQuery}
-              onChange={(e) => handleSearch(e.target.value)}
-              className="flex-1"
-            />
-            <select
-              value={posFilter}
-              onChange={(e) => handlePosFilter(e.target.value)}
-              className="border rounded px-3 py-2"
-            >
-              <option value="">Tất cả loại từ</option>
-              <option value="noun">Noun</option>
-              <option value="verb">Verb</option>
-              <option value="adj">Adjective</option>
-              <option value="adv">Adverb</option>
-            </select>
-          </div>
-        </div>
+        <FolderWordFilters
+          searchQuery={searchQuery}
+          onSearch={handleSearch}
+          posFilter={posFilter}
+          onPosChange={handlePosFilter}
+        />
 
         {/* Words Table */}
         <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -243,32 +232,14 @@ const FolderDetail: React.FC = () => {
             onDelete={handleDeleteWord}
           />
 
-          {/* Pagination */}
-          {!loading && words.length > 0 && totalPages > 1 && (
-            <div className="px-6 py-4 border-t flex items-center justify-between">
-              <div className="text-sm text-gray-600">
-                Hiển thị {(page - 1) * limit + 1} - {Math.min(page * limit, total)} / {total} từ
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage(p => Math.max(1, p - 1))}
-                  disabled={page === 1}
-                >
-                  Trước
-                </Button>
-                <span className="px-3 py-1 text-sm">Trang {page} / {totalPages}</span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                  disabled={page === totalPages}
-                >
-                  Sau
-                </Button>
-              </div>
-            </div>
+          {!loading && words.length > 0 && (
+            <FolderPagination
+              page={page}
+              totalPages={totalPages}
+              total={total}
+              limit={limit}
+              onPageChange={setPage}
+            />
           )}
         </div>
       </div>
@@ -303,6 +274,20 @@ const FolderDetail: React.FC = () => {
           submitButtonText="Lưu"
         />
       )}
+
+      <UploadWordsDialog
+        open={isUploadDialogOpen}
+        onOpenChange={setIsUploadDialogOpen}
+        folderId={id!}
+        onJobCreated={handleImportJobCreated}
+      />
+
+      <ImportStatusDrawer
+        open={isImportDrawerOpen}
+        onOpenChange={setIsImportDrawerOpen}
+        jobId={activeJobId}
+        onJobFinished={handleJobFinished}
+      />
     </div>
   )
 }

@@ -17,6 +17,12 @@ const WordSchema = new mongoose.Schema({
   ex1: { type: ExampleSchema, default: () => ({}) },
   ex2: { type: ExampleSchema, default: () => ({}) },
   tags: { type: [String], default: [] },
+  sources: {
+    meaning_vi: { type: String, enum: ['user', 'inferred'], default: 'user' },
+    pos: { type: String, enum: ['user', 'inferred'], default: 'user' },
+    ipa: { type: String, enum: ['user', 'inferred'], default: 'user' },
+    note: { type: String, enum: ['user', 'inferred'], default: 'user' },
+  },
   meta: {
     difficulty: { type: Number, default: 0 },      // 0–2–4 ...
     lastSeenAt: { type: Date },

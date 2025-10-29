@@ -1,5 +1,18 @@
 # CHANGELOG - mindvocab
 
+## 2025-10-29
+
+### Added - Import Pipeline (TXT/XLSX → AI → Mongo)
+- ✅ Backend: thêm `ImportJob` schema, service parse TXT/XLSX, batching enrich qua Gemini (fallback-ready), lưu kết quả vào Word + cập nhật folder stats.
+- ✅ API: `POST /api/import-jobs`, `GET /api/import-jobs/:id`, `GET /api/import-jobs/:id/report` với tracking counters/report.
+- ✅ Frontend: `UploadWordsDialog`, `ImportStatusDrawer`, báo cáo chi tiết + toast kết quả, tích hợp tại `FolderDetail` và refactor component header/filters/pagination (<300 LOC).
+- ✅ Sample TXT kèm repo; sample Excel placeholder cần thay bằng file thật trước khi release.
+- ✅ Docs: cập nhật README/HANDOFF về cấu hình ENV và luồng import.
+
+### Change - Import stability config & logs
+- 🔧 Đặt mặc định an toàn trong `.env`: `IMPORT_ENRICH_BATCH=10`, `AI_TIMEOUT_MS=45000`, `AI_RETRY_LIMIT=3` để giảm timeout/cắt phản hồi khi batch lớn.
+- 📈 Thêm logging quan sát: kích thước prompt/response Gemini và số phần tử phản hồi trên mỗi batch enrich.
+
 ## 2025-10-28
 
 ### Fixed - Critical Bugs (Session & Quiz)

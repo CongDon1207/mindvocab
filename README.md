@@ -57,3 +57,9 @@ npx shadcn@latest add <component-name>
 - ✅ Installed shadcn/ui with TypeScript support
 - ✅ Path aliases configured (@/* imports)
 - ✅ SessionPage refactored into 6 reusable components (209 LOC main file)
+
+## Import words (TXT/XLSX)
+- API mới: `POST /api/import-jobs` nhận multipart (`folderId`, `file`, `allowUpdate?`). Trạng thái job theo chu kỳ `PENDING → PARSING → ENRICHING → SAVING → DONE/FAILED`.
+- Theo dõi job: `GET /api/import-jobs/:id`, báo cáo: `GET /api/import-jobs/:id/report`.
+- ENV backend: `IMPORT_MAX_SIZE_MB` (mặc định 5), `IMPORT_ENRICH_BATCH` (mặc định 20), `AI_PROVIDER` (default gemini), `GEMINI_API_KEY`, `GEMINI_MODEL`, `AI_TIMEOUT_MS`, `AI_FALLBACKS`.
+- UI: `FolderDetail` có dialog upload + drawer tiến độ, liên kết mẫu tại `frontend/public/import-samples` (`sample.xlsx` hiện chỉ là placeholder, cần thay bằng file Excel thực tế trước khi release).
