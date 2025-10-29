@@ -6,6 +6,7 @@ import { connectDB } from './config/db.js'; // cần có .js ở cuối vì đan
 import folderRoute from './routes/folderRoute.js';
 import wordRoute from './routes/wordRoute.js';
 import sessionRoute from './routes/sessionRoute.js';
+import importJobRoute from './routes/importJobRoute.js';
 
 dotenv.config();
 
@@ -22,6 +23,7 @@ if (process.env.NODE_ENV !== 'production') {
 app.use('/api/folders', folderRoute);
 app.use('/api/words', wordRoute);
 app.use('/api', sessionRoute); // /api/sessions, /api/attempts
+app.use('/api/import-jobs', importJobRoute);
 
 
 // Route kiểm tra server

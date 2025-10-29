@@ -40,10 +40,19 @@
 - Skeleton loading cho WordsTable (5 skeleton rows)
 - Keyboard shortcuts: 1-4, Enter (quiz), Enter (spelling) - đã có từ trước
 
+🚧 **Import pipeline (TXT/XLSX → AI enrich → Mongo) - READY FOR QA**
+- Backend: route `POST /api/import-jobs` (multer upload), parsing TXT/XLSX, batching enrich qua Gemini, lưu vào Word + cập nhật folder stats.
+- Model mới `ImportJob` + report (errors, skipped, enriched) + progress track.
+- Frontend: `UploadWordsDialog` + `ImportStatusDrawer` (polling, progress bar, báo cáo chi tiết) tại `FolderDetail`.
+- Sample TXT có sẵn; `sample.xlsx` hiện là placeholder do môi trường CLI chưa đủ công cụ tạo file Excel → cần thay bằng file thật trước khi QA chính thức.
+- Cấu hình khuyến nghị (ổn định cho batch lớn): `IMPORT_ENRICH_BATCH=10`, `AI_TIMEOUT_MS=45000`, `AI_RETRY_LIMIT=3`.
+- Logging thêm: `[import][gemini] promptChars/responseChars`, `[import][enrich] batch/responseItems` để chẩn đoán timeout/cắt phản hồi.
+
 ## TODO & Next Steps
 1. **Phase 11 - Spaced Repetition**: Implement SRS algorithm cập nhật meta.easyFactor và meta.nextReview (SuperMemo-2)
 2. **Phase 12 - Review Notes**: Thêm note cho từ sai trong session, lưu vào reviewNotes array
 3. **Phase 13 - Retry Session từ wrongSet**: Tạo session mới chỉ với wrongSet words (feature "Ôn lại từ sai")
+4. **Hoàn thiện sample Excel**: tạo `frontend/public/import-samples/sample.xlsx` chuẩn (sheet đầu tiên, header chuẩn) thay cho placeholder.
 
 ## Current Features
 ### Session Learning Flow (Phases 1-8 COMPLETED)
@@ -66,6 +75,7 @@
 - ✅ Responsive grid layout (4 columns)
 - ✅ Navigation pagination (previous/next)
 - ✅ API integration với error handling
+- ✅ Upload words: dialog chọn TXT/XLSX, tạo import job, drawer trạng thái với báo cáo + reload bảng khi DONE
 
 ### Word Management (FolderDetail Page)
 - ✅ Header hiển thị: folder name, description, totalWords
@@ -119,6 +129,37 @@ type Word = {
     nextReview?: string
     easyFactor: number
   }
+  createdAt: string
+  updatedAt: string
+}
+```
+
+### ImportJob Type (Backend)
+```typescript
+type ImportJob = {
+  _id: string
+  folderId: string
+  status: 'PENDING' | 'PARSING' | 'ENRICHING' | 'SAVING' | 'DONE' | 'FAILED'
+  filename: string
+  originalName: string
+  counters: {
+    totalLines: number
+    parsedOk: number
+    enrichedOk: number
+    duplicatesSkipped: number
+    failedCount: number
+  }
+  progress: {
+    totalRecords: number
+    processedRecords: number
+    currentStage: string
+  }
+  report: {
+    errors: { stage: string; message: string; location?: string }[]
+    skippedWords: { word: string; reason: string }[]
+    enrichedWordIds: string[]
+  }
+  metadata: { options?: { allowUpdate?: boolean } }
   createdAt: string
   updatedAt: string
 }
