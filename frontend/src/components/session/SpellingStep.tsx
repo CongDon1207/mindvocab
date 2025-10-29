@@ -19,30 +19,16 @@ const SpellingStep: React.FC<SpellingStepProps> = ({
   wrongSet,
   onComplete
 }) => {
-  const [currentRound, setCurrentRound] = useState(1)
   const [currentWordIndex, setCurrentWordIndex] = useState(0)
   const [userInput, setUserInput] = useState('')
   const [isAnswered, setIsAnswered] = useState(false)
   const [feedback, setFeedback] = useState<'correct' | 'incorrect' | null>(null)
   const [correctCount, setCorrectCount] = useState(0)
-  const [wrongWords, setWrongWords] = useState<string[]>([])
+  const [wrongWordIds, setWrongWordIds] = useState<string[]>([])
+  const [allResults, setAllResults] = useState<Array<{ word: Word; userAnswer: string; isCorrect: boolean }>>([])
 
-  const maxRounds = 3
-
-  // Khởi tạo wrongSet từ Quiz P1+P2
-  useEffect(() => {
-    if (wrongSet && wrongSet.length > 0) {
-      setWrongWords(wrongSet)
-    }
-  }, [])
-
-  // Lấy danh sách từ cần kiểm tra (round 1 = wrongSet, round 2+ = wrongWords còn sai)
-  const wordsToSpell = currentRound === 1 && wrongSet.length > 0
-    ? words.filter(w => wrongSet.includes(w._id))
-    : words.filter(w => wrongWords.includes(w._id))
-
-  const currentWord = wordsToSpell[currentWordIndex]
-  const totalWords = wordsToSpell.length
+  const currentWord = words[currentWordIndex]
+  const totalWords = words.length
   const isLastWord = currentWordIndex === totalWords - 1
 
   // Reset khi chuyển từ
@@ -50,7 +36,7 @@ const SpellingStep: React.FC<SpellingStepProps> = ({
     setUserInput('')
     setIsAnswered(false)
     setFeedback(null)
-  }, [currentWordIndex, currentRound])
+  }, [currentWordIndex])
 
   // Keyboard: Enter để submit/next
   useEffect(() => {
@@ -66,11 +52,11 @@ const SpellingStep: React.FC<SpellingStepProps> = ({
 
     window.addEventListener('keydown', handleKeyPress)
     return () => window.removeEventListener('keydown', handleKeyPress)
-  }, [isAnswered, userInput])
+  }, [isAnswered, userInput, currentWordIndex])
 
-  // Chuẩn hoá text: trim, lowercase, bỏ khoảng trắng thừa
+  // Chuẩn hoá text: trim, lowercase
   const normalizeText = (text: string): string => {
-    return text.trim().toLowerCase().replace(/\s+/g, ' ')
+    return text.trim().toLowerCase()
   }
 
   // Submit answer
@@ -87,17 +73,16 @@ const SpellingStep: React.FC<SpellingStepProps> = ({
     // Update stats
     if (isCorrect) {
       setCorrectCount(prev => prev + 1)
-      // Xoá từ khỏi wrongWords nếu đúng
-      setWrongWords(prev => prev.filter(id => id !== currentWord._id))
     } else {
-      // Thêm vào wrongWords nếu sai (cho round tiếp theo)
-      setWrongWords(prev => {
-        if (!prev.includes(currentWord._id)) {
-          return [...prev, currentWord._id]
-        }
-        return prev
-      })
+      setWrongWordIds(prev => [...prev, currentWord._id])
     }
+
+    // Lưu kết quả để hiển thị summary cuối cùng
+    setAllResults(prev => [...prev, {
+      word: currentWord,
+      userAnswer: userInput.trim(),
+      isCorrect
+    }])
 
     // Log attempt
     try {
@@ -113,19 +98,12 @@ const SpellingStep: React.FC<SpellingStepProps> = ({
     }
   }
 
-  // Next word or round
+  // Next word or complete
   const handleNext = () => {
     if (!isAnswered) return
 
     if (isLastWord) {
-      // Kiểm tra điều kiện kết thúc
-      if (wrongWords.length === 0 || currentRound >= maxRounds) {
-        handleComplete()
-      } else {
-        // Chuyển sang round tiếp theo
-        setCurrentRound(prev => prev + 1)
-        setCurrentWordIndex(0)
-      }
+      handleComplete()
     } else {
       setCurrentWordIndex(prev => prev + 1)
     }
@@ -133,12 +111,14 @@ const SpellingStep: React.FC<SpellingStepProps> = ({
 
   // Complete spelling
   const handleComplete = async () => {
+    const uniqueWrongIds = Array.from(new Set([...wrongSet, ...wrongWordIds]))
+
     // Update session
     try {
       await api.put(`/sessions/${sessionId}`, {
-        'spelling.rounds': currentRound,
+        'spelling.rounds': 1,
         'spelling.correct': correctCount,
-        wrongSet: wrongWords
+        wrongSet: uniqueWrongIds
       })
     } catch (err) {
       console.error('Failed to update session:', err)
@@ -146,61 +126,104 @@ const SpellingStep: React.FC<SpellingStepProps> = ({
 
     // Notify parent
     if (onComplete) {
-      onComplete(correctCount, currentRound)
+      onComplete(correctCount, 1)
     }
   }
 
-  // Gợi ý: số ký tự đúng vị trí (optional hint)
-  const getHint = (): string => {
-    if (!currentWord || !userInput.trim() || !isAnswered) return ''
-
-    const normalizedInput = normalizeText(userInput)
-    const normalizedAnswer = normalizeText(currentWord.word)
-    
-    let correctPositions = 0
-    const minLength = Math.min(normalizedInput.length, normalizedAnswer.length)
-    
-    for (let i = 0; i < minLength; i++) {
-      if (normalizedInput[i] === normalizedAnswer[i]) {
-        correctPositions++
-      }
-    }
-
-    return `${correctPositions}/${normalizedAnswer.length} ký tự đúng vị trí`
-  }
-
-  // Kiểm tra xem còn từ để kiểm tra không
-  if (wordsToSpell.length === 0) {
+  // Nếu đã hoàn thành, hiển thị summary
+  if (isAnswered && isLastWord && allResults.length === totalWords) {
     return (
-      <div className="text-center py-12">
-        <div className="text-green-600 mb-4">
-          <svg className="w-16 h-16 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
+      <div className="space-y-6">
+        {/* Summary Header */}
+        <Card className="bg-blue-50 border-blue-200">
+          <CardContent className="p-6">
+            <div className="text-center">
+              <h3 className="text-lg font-semibold text-blue-900 mb-2">Kết quả Spelling</h3>
+              <div className="space-y-1 text-sm text-blue-800">
+                <p>Điểm: <span className="font-bold">{correctCount}/{totalWords}</span></p>
+                <p>Tỷ lệ đúng: <span className="font-bold">{Math.round((correctCount / totalWords) * 100)}%</span></p>
+                {correctCount < totalWords && (
+                  <p className="text-orange-700 mt-2">
+                    Các từ sai đã được thêm vào wrongSet để ôn tập
+                  </p>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Detailed Results */}
+        <Card>
+          <CardContent className="p-6">
+            <h3 className="text-sm font-semibold text-gray-700 mb-4">Chi tiết từng từ</h3>
+            <div className="space-y-3">
+              {allResults.map((result, idx) => (
+                <div
+                  key={result.word._id}
+                  className={`p-4 rounded-lg border-2 ${
+                    result.isCorrect
+                      ? 'bg-green-50 border-green-200'
+                      : 'bg-red-50 border-red-200'
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="font-semibold text-gray-500 min-w-6">{idx + 1}.</div>
+                    <div className="flex-1 space-y-1">
+                      <div className="text-gray-900 font-medium">
+                        {result.word.meaning_vi}
+                      </div>
+                      <div className="text-sm">
+                        <span className="text-gray-600">Bạn trả lời: </span>
+                        <span className={result.isCorrect ? 'text-green-700 font-semibold' : 'text-red-700 font-semibold'}>
+                          {result.userAnswer || '(bỏ trống)'}
+                        </span>
+                      </div>
+                      {!result.isCorrect && (
+                        <div className="text-sm">
+                          <span className="text-gray-600">Đáp án đúng: </span>
+                          <span className="text-green-700 font-semibold">{result.word.word}</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="text-xl">
+                      {result.isCorrect ? '✓' : '✗'}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Complete Button */}
+        <div className="flex justify-center">
+          <Button onClick={() => onComplete?.(correctCount, 1)} size="lg" className="min-w-[200px]">
+            Hoàn thành
+          </Button>
         </div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">
-          Hoàn thành!
-        </h2>
-        <p className="text-gray-600 mb-6">
-          Bạn đã trả lời đúng tất cả các từ trong Quiz. Không có từ nào cần kiểm tra chính tả.
-        </p>
-        <Button onClick={() => onComplete?.(0, 0)}>
-          Tiếp tục
-        </Button>
       </div>
     )
   }
 
+  // Hiển thị từ hiện tại
   return (
     <div className="space-y-6">
       {/* Progress */}
       <div className="flex items-center justify-between text-sm text-gray-600">
         <span>
-          Vòng {currentRound} / {maxRounds} • Từ {currentWordIndex + 1} / {totalWords}
+          Từ {currentWordIndex + 1} / {totalWords}
         </span>
         <span>
           Đúng: {correctCount}
         </span>
+      </div>
+
+      {/* Progress bar */}
+      <div className="w-full bg-gray-200 rounded-full h-2">
+        <div
+          className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+          style={{ width: `${((currentWordIndex + 1) / totalWords) * 100}%` }}
+        />
       </div>
 
       {/* Spelling card */}
@@ -215,11 +238,6 @@ const SpellingStep: React.FC<SpellingStepProps> = ({
               <h2 className="text-2xl font-bold text-gray-900">
                 {currentWord.meaning_vi}
               </h2>
-              {currentWord.ipa && (
-                <p className="text-sm text-gray-500 mt-2">
-                  /{currentWord.ipa}/
-                </p>
-              )}
             </div>
 
             {/* Input */}
@@ -246,13 +264,8 @@ const SpellingStep: React.FC<SpellingStepProps> = ({
                   {feedback === 'correct' ? '✓ Chính xác!' : '✗ Sai rồi'}
                 </div>
                 {feedback === 'incorrect' && (
-                  <div className="space-y-1">
-                    <div className="text-sm">
-                      Đáp án đúng: <span className="font-bold">{currentWord.word}</span>
-                    </div>
-                    <div className="text-xs text-gray-600">
-                      {getHint()}
-                    </div>
+                  <div className="text-sm">
+                    Đáp án đúng: <span className="font-bold">{currentWord.word}</span>
                   </div>
                 )}
               </div>
@@ -273,11 +286,7 @@ const SpellingStep: React.FC<SpellingStepProps> = ({
                   onClick={handleNext}
                   className="min-w-[120px]"
                 >
-                  {isLastWord && (wrongWords.length === 0 || currentRound >= maxRounds)
-                    ? 'Hoàn thành'
-                    : isLastWord
-                    ? `Vòng tiếp theo (${currentRound + 1}/${maxRounds})`
-                    : 'Từ tiếp theo'}
+                  {isLastWord ? 'Xem kết quả' : 'Từ tiếp theo'}
                 </Button>
               )}
             </div>
@@ -289,13 +298,6 @@ const SpellingStep: React.FC<SpellingStepProps> = ({
           </div>
         </CardContent>
       </Card>
-
-      {/* Round info */}
-      {currentRound > 1 && (
-        <div className="text-center text-sm text-gray-600">
-          <p>Đang lặp lại các từ sai trong vòng {currentRound}</p>
-        </div>
-      )}
     </div>
   )
 }

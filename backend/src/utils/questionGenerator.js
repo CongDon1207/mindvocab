@@ -152,7 +152,7 @@ export async function generateFillBlank(session, words) {
 
     // Nếu không có ví dụ, tạo câu placeholder
     if (!sentence) {
-      sentence = `Use the word "${word.word}" in a sentence.`;
+      sentence = `Use the word ${word.word} in a sentence.`;
       isInferred = true;
       console.warn(`[FILL_BLANK] Word ${word.word} không có ví dụ, dùng placeholder`);
     }
