@@ -57,6 +57,8 @@ npx shadcn@latest add <component-name>
 - ✅ Installed shadcn/ui with TypeScript support
 - ✅ Path aliases configured (@/* imports)
 - ✅ SessionPage refactored into 6 reusable components (209 LOC main file)
+- ✅ SummaryStep hỗ trợ tạo session 10 từ kế tiếp cho đến khi học hết folder
+- ✅ Thêm nút quay lại: Session → FolderDetail, FolderDetail → Danh sách folder
 
 ## Import words (TXT/XLSX)
 - API mới: `POST /api/import-jobs` nhận multipart (`folderId`, `file`, `allowUpdate?`). Trạng thái job theo chu kỳ `PENDING → PARSING → ENRICHING → SAVING → DONE/FAILED`.

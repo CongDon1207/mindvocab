@@ -7,6 +7,21 @@ import { generateAllQuestions } from '../utils/questionGenerator.js';
 
 const STEP_ORDER = ['FLASHCARDS', 'QUIZ_PART1', 'QUIZ_PART2', 'SPELLING', 'FILL_BLANK', 'SUMMARY'];
 
+// Helper: Lấy danh sách từ unique đã được sort (alphabet + createdAt)
+const getUniqueFolderWords = async (folderId) => {
+  const allWords = await Word.find({ folderId }).sort({ word: 1, createdAt: 1 });
+
+  const uniqueWordsMap = new Map();
+  for (const word of allWords) {
+    const key = word.word.toLowerCase().trim();
+    if (!uniqueWordsMap.has(key)) {
+      uniqueWordsMap.set(key, word);
+    }
+  }
+
+  return Array.from(uniqueWordsMap.values());
+};
+
 // ========== POST /api/sessions - Tạo session mới ==========
 export const createSession = async (req, res) => {
   try {
@@ -34,30 +49,18 @@ export const createSession = async (req, res) => {
       return res.status(200).json(recentSession);
     }
 
-    // Pick 10 words (rule: alphabetically by word, then by createdAt)
-    const allWords = await Word.find({ folderId })
-      .sort({ word: 1, createdAt: 1 });
-
-    if (allWords.length === 0) {
+    const uniqueWords = await getUniqueFolderWords(folderId);
+    if (uniqueWords.length === 0) {
       return res.status(400).json({ error: 'Folder không có từ vựng nào' });
     }
 
-    // Filter unique words (remove duplicates by word text)
-    const uniqueWordsMap = new Map();
-    for (const word of allWords) {
-      const key = word.word.toLowerCase().trim();
-      if (!uniqueWordsMap.has(key)) {
-        uniqueWordsMap.set(key, word);
-      }
-    }
-    
-    const uniqueWords = Array.from(uniqueWordsMap.values()).slice(0, 10);
+    const selectedWords = uniqueWords.slice(0, 10);
 
-    if (uniqueWords.length < 10) {
-      console.warn(`[SESSION] Folder ${folderId} chỉ có ${uniqueWords.length} từ unique (< 10)`);
+    if (selectedWords.length < 10) {
+      console.warn(`[SESSION] Folder ${folderId} chỉ có ${selectedWords.length} từ unique (< 10)`);
     }
 
-    const wordIds = uniqueWords.map(w => w._id);
+    const wordIds = selectedWords.map(w => w._id);
 
     // Create session
     const session = new Session({
@@ -81,6 +84,90 @@ export const createSession = async (req, res) => {
   } catch (err) {
     console.error('[SESSION] Error creating session:', err);
     res.status(500).json({ error: 'Lỗi server khi tạo session', details: err.message });
+  }
+};
+
+// ========== POST /api/sessions/next - Tạo session 10 từ tiếp theo ==========
+export const createNextSession = async (req, res) => {
+  try {
+    const { previousSessionId } = req.body;
+
+    if (!previousSessionId) {
+      return res.status(400).json({ error: 'previousSessionId là bắt buộc' });
+    }
+
+    const previousSession = await Session.findById(previousSessionId);
+    if (!previousSession) {
+      return res.status(404).json({ error: 'Không tìm thấy session trước đó' });
+    }
+
+    const folderId = previousSession.folderId;
+    const uniqueWords = await getUniqueFolderWords(folderId);
+
+    if (uniqueWords.length === 0) {
+      return res.status(400).json({ error: 'Folder không có từ vựng nào' });
+    }
+
+    // Map wordId -> index trong danh sách đã sort
+    const idToIndex = new Map(
+      uniqueWords.map((word, index) => [word._id.toString(), index])
+    );
+
+    const previousIndices = previousSession.wordIds
+      .map(word => {
+        const id = word?._id ? word._id : word;
+        return idToIndex.get(id.toString());
+      })
+      .filter(index => typeof index === 'number');
+
+    if (previousIndices.length === 0) {
+      return res.status(400).json({ error: 'Không xác định được vị trí từ trong session trước' });
+    }
+
+    const lastIndex = Math.max(...previousIndices);
+    const startIndex = lastIndex + 1;
+
+    if (startIndex >= uniqueWords.length) {
+      return res.status(400).json({ error: 'Đã học hết từ trong folder này' });
+    }
+
+    const nextWords = uniqueWords.slice(startIndex, startIndex + 10);
+    const nextWordIds = nextWords.map(word => word._id);
+
+    // Idempotency guard: tránh tạo trùng trong vòng 5 giây
+    const fiveSecondsAgo = new Date(Date.now() - 5000);
+    const existingSession = await Session.findOne({
+      folderId,
+      createdAt: { $gte: fiveSecondsAgo },
+      wordIds: nextWordIds
+    });
+
+    if (existingSession) {
+      console.log(`[SESSION] Idempotency guard: returning existing next session ${existingSession._id}`);
+      return res.status(200).json(existingSession);
+    }
+
+    const session = new Session({
+      folderId,
+      wordIds: nextWordIds,
+      step: 'FLASHCARDS',
+      wrongSet: [],
+      reviewNotes: [],
+      quizP1: { questions: [], score: 0 },
+      quizP2: { questions: [], score: 0 },
+      spelling: { rounds: 0, correct: 0, maxRounds: 3 },
+      fillBlank: { questions: [], score: 0 },
+      seed: Math.floor(Math.random() * 1e9)
+    });
+
+    await session.save();
+
+    console.log(`[SESSION] Created next session ${session._id} với ${nextWordIds.length} từ (bắt đầu từ index ${startIndex})`);
+
+    res.status(201).json(session);
+  } catch (err) {
+    console.error('[SESSION] Error creating next session:', err);
+    res.status(500).json({ error: 'Lỗi server khi tạo session tiếp theo', details: err.message });
   }
 };
 

@@ -1,5 +1,21 @@
 # CHANGELOG - mindvocab
 
+## 2025-10-30
+
+### Added - Sequential Session Batches
+- ✅ Backend: thêm endpoint `POST /api/sessions/next` tạo session mới với 10 từ tiếp theo (lô cuối <10 nếu hết từ)
+- ✅ Frontend: SummaryStep bổ sung nút "Học 10 từ kế tiếp" điều hướng sang session mới và khóa nút khi đã học hết
+
+### Added - Navigation Shortcuts
+- ✅ SessionHeader hiển thị nút quay lại FolderDetail cho session đang học
+- ✅ FolderDetailHeader bổ sung nút quay lại danh sách folder
+
+### Change - Flashcard Back Styling
+- ✅ Cải thiện typography mặt sau flashcard: nghĩa chính nổi bật, ví dụ và ghi chú dễ đọc hơn
+- ✅ Giữ chiều cao cố định, nội dung dài scroll trong thẻ để không đẩy navigation
+
+### Fix - Spelling Input Focus
+- ✅ Tự động focus ô nhập chính tả khi chuyển sang từ mới trong bước Spelling
 ## 2025-10-29
 
 ### Added - Import Pipeline (TXT/XLSX → AI → Mongo)
