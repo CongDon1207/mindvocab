@@ -1,5 +1,5 @@
 // src/components/session/SummaryStep.tsx
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -15,6 +15,8 @@ interface SummaryStepProps {
 const SummaryStep: React.FC<SummaryStepProps> = ({ session }) => {
   const navigate = useNavigate()
   const words = session.wordIds as unknown as Word[]
+  const [isStartingNext, setIsStartingNext] = useState(false)
+  const [hasNextBatch, setHasNextBatch] = useState(true)
 
   // Tính điểm tổng
   const quizP1Score = session.quizP1.score
@@ -67,6 +69,28 @@ const SummaryStep: React.FC<SummaryStepProps> = ({ session }) => {
 
   const handleFinish = () => {
     navigate(`/folders/${session.folderId._id}`)
+  }
+
+  const handleStartNext = async () => {
+    if (isStartingNext || !hasNextBatch) return
+
+    setIsStartingNext(true)
+
+    try {
+      const res = await api.post(`/sessions/next`, {
+        previousSessionId: session._id
+      })
+      navigate(`/sessions/${res.data._id}`)
+    } catch (err: any) {
+      const message = err?.response?.data?.error || 'Không thể tạo session tiếp theo.'
+      alert(message)
+
+      if (err?.response?.status === 400 && message.includes('Đã học hết')) {
+        setHasNextBatch(false)
+      }
+    } finally {
+      setIsStartingNext(false)
+    }
   }
 
   return (
@@ -174,6 +198,14 @@ const SummaryStep: React.FC<SummaryStepProps> = ({ session }) => {
       <Card>
         <CardContent className="pt-6">
           <div className="flex gap-4 justify-center">
+            <Button
+              onClick={handleStartNext}
+              className="flex items-center gap-2"
+              disabled={isStartingNext || !hasNextBatch}
+            >
+              <RefreshCcw className="w-4 h-4" />
+              {hasNextBatch ? (isStartingNext ? 'Đang tạo...' : 'Học 10 từ kế tiếp') : 'Không còn từ mới'}
+            </Button>
             {wrongWords.length > 0 && (
               <Button
                 onClick={handleRetryWrong}

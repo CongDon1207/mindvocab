@@ -40,6 +40,21 @@
 - Skeleton loading cho WordsTable (5 skeleton rows)
 - Keyboard shortcuts: 1-4, Enter (quiz), Enter (spelling) - đã có từ trước
 
+✅ **Summary Step - Sequential Batches - COMPLETED**
+- Backend: thêm `POST /api/sessions/next` trả về session kế tiếp với 10 từ tiếp theo (lô cuối <10 nếu hết từ)
+- Frontend: SummaryStep có nút "Học 10 từ kế tiếp" điều hướng sang session mới, tự tắt khi đã học hết tất cả từ trong folder
+
+✅ **Navigation Improvements - COMPLETED**
+- SessionHeader có nút quay về FolderDetail
+- FolderDetailHeader có nút quay lại danh sách folder
+
+✅ **Flashcard UX Polish - COMPLETED**
+- Cập nhật typography mặt sau flashcard: nghĩa chính đậm, ví dụ/ghi chú dễ đọc hơn
+- Giữ chiều cao thẻ ổn định, nội dung dài scroll nội bộ tránh đẩy navigation
+
+✅ **Spelling UX - COMPLETED**
+- Ô nhập chính tả tự động focus khi chuyển sang từ mới, giảm thao tác chuột
+
 🚧 **Import pipeline (TXT/XLSX → AI enrich → Mongo) - READY FOR QA**
 - Backend: route `POST /api/import-jobs` (multer upload), parsing TXT/XLSX, batching enrich qua Gemini, lưu vào Word + cập nhật folder stats.
 - Model mới `ImportJob` + report (errors, skipped, enriched) + progress track.
@@ -65,6 +80,10 @@
 - ✅ Fill-in-the-blank Step: Word bank 10 từ, 10 câu cloze, click-to-fill, Submit chấm điểm, highlight câu sai rõ ràng
 - ✅ Question Generator: PRNG deterministic với seed, lazy generation, distractor selection (cùng POS), isInferred flag
 - ✅ Session API: GET/POST/PUT sessions, POST/GET attempts, validation guards (chặn lùi bước/nhảy bước)
+- ✅ SummaryStep tạo tiếp session kế tiếp qua `POST /api/sessions/next`, học tuần tự lô 10 từ cho tới khi hết
+- ✅ SessionHeader hiển thị nút quay về folder, FolderDetailHeader có nút quay về danh sách
+- ✅ FlashcardStep mặt sau dùng typography mới, chiều cao cố định, ví dụ dài scroll nội bộ
+- ✅ SpellingStep tự focus input khi tới từ mới, hỗ trợ thao tác nhanh
 
 ### Folder Management
 - ✅ Folder listing với pagination (7 items/page)

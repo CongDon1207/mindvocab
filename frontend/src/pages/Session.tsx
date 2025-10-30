@@ -1,6 +1,6 @@
 // src/pages/Session.tsx
 import React, { useEffect, useState } from 'react'
-import { useParams } from 'react-router'
+import { useNavigate, useParams } from 'react-router'
 import { toast } from 'sonner'
 import {
   SessionHeader,
@@ -33,6 +33,7 @@ const STEP_LABELS: Record<SessionStep, string> = {
 
 const SessionPage: React.FC = () => {
   const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
 
   // ========== STATE MANAGEMENT ==========
   const [session, setSession] = useState<Session | null>(null)
@@ -183,6 +184,9 @@ const SessionPage: React.FC = () => {
     return null
   }
 
+  const folderIdValue =
+    typeof session.folderId === 'string' ? session.folderId : session.folderId._id
+
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-4xl mx-auto space-y-6">
@@ -192,6 +196,7 @@ const SessionPage: React.FC = () => {
           stepLabel={STEP_LABELS[currentStep]}
           totalWords={session.totalWords || session.wordIds.length}
           progressPercentage={progressPercentage}
+          onBackToFolder={() => navigate(`/folders/${folderIdValue}`)}
         />
 
         {/* Stepper */}

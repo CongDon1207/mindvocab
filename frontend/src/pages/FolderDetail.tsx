@@ -212,6 +212,7 @@ const FolderDetail: React.FC = () => {
           onOpenUpload={() => setIsUploadDialogOpen(true)}
           onOpenAddWord={() => setIsAddDialogOpen(true)}
           canStart={Boolean(folder?.stats?.totalWords)}
+          onBackToFolders={() => navigate('/')}
         />
 
         <FolderWordFilters

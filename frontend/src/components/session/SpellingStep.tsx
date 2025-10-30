@@ -1,5 +1,5 @@
 // src/components/session/SpellingStep.tsx
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -26,6 +26,7 @@ const SpellingStep: React.FC<SpellingStepProps> = ({
   const [correctCount, setCorrectCount] = useState(0)
   const [wrongWordIds, setWrongWordIds] = useState<string[]>([])
   const [allResults, setAllResults] = useState<Array<{ word: Word; userAnswer: string; isCorrect: boolean }>>([])
+  const inputRef = useRef<HTMLInputElement>(null)
 
   const currentWord = words[currentWordIndex]
   const totalWords = words.length
@@ -36,6 +37,7 @@ const SpellingStep: React.FC<SpellingStepProps> = ({
     setUserInput('')
     setIsAnswered(false)
     setFeedback(null)
+    inputRef.current?.focus()
   }, [currentWordIndex])
 
   // Keyboard: Enter để submit/next
@@ -243,13 +245,13 @@ const SpellingStep: React.FC<SpellingStepProps> = ({
             {/* Input */}
             <div className="max-w-md mx-auto">
               <Input
+                ref={inputRef}
                 type="text"
                 value={userInput}
                 onChange={(e) => setUserInput(e.target.value)}
                 placeholder="Nhập từ tiếng Anh..."
                 disabled={isAnswered}
                 className="text-center text-lg py-6"
-                autoFocus
               />
             </div>
 

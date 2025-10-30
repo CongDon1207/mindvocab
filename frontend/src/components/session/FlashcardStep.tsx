@@ -73,17 +73,17 @@ const FlashcardStep: React.FC<FlashcardStepProps> = ({ words, onComplete }) => {
     if (!ex || !ex.en) return null
     
     return (
-      <div className="space-y-1">
-        <div className="flex items-start gap-2">
-          <p className="text-sm text-gray-700 flex-1">{ex.en}</p>
+      <div className="space-y-2 rounded-lg bg-gray-50 p-4">
+        <div className="flex items-start justify-between gap-2">
+          <p className="flex-1 text-base font-medium text-gray-900 leading-relaxed">{ex.en}</p>
           {ex.source === 'inferred' && (
-            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+            <span className="inline-flex items-center whitespace-nowrap px-2 py-0.5 rounded text-xs font-semibold bg-blue-100 text-blue-700">
               Inferred
             </span>
           )}
         </div>
         {ex.vi && (
-          <p className="text-sm text-gray-600 italic">{ex.vi}</p>
+          <p className="text-sm text-gray-600 italic leading-relaxed">{ex.vi}</p>
         )}
       </div>
     )
@@ -102,9 +102,9 @@ const FlashcardStep: React.FC<FlashcardStepProps> = ({ words, onComplete }) => {
       </div>
 
       {/* Flashcard */}
-      <div className="relative" style={{ minHeight: '400px' }}>
+      <div className="relative h-[420px]" style={{ perspective: '1200px' }}>
         <div 
-          className="cursor-pointer"
+          className="cursor-pointer relative h-full w-full"
           onClick={handleFlip}
           style={{
             transformStyle: 'preserve-3d',
@@ -114,10 +114,10 @@ const FlashcardStep: React.FC<FlashcardStepProps> = ({ words, onComplete }) => {
         >
           {/* Front side - Word info */}
           <Card 
-            className="absolute inset-0"
+            className="absolute inset-0 h-full"
             style={{ backfaceVisibility: 'hidden' }}
           >
-            <CardContent className="p-8">
+            <CardContent className="flex h-full flex-col justify-between p-8">
               <div className="space-y-6 text-center">
                 <div className="flex justify-between items-start">
                   <div className="flex-1" />
@@ -156,45 +156,52 @@ const FlashcardStep: React.FC<FlashcardStepProps> = ({ words, onComplete }) => {
 
           {/* Back side - Meaning and examples */}
           <Card 
-            className="absolute inset-0"
+            className="absolute inset-0 h-full"
             style={{
               backfaceVisibility: 'hidden',
               transform: 'rotateY(180deg)'
             }}
           >
-            <CardContent className="p-8">
-              <div className="space-y-6">
-                <div className="text-center">
-                  <h3 className="text-2xl font-semibold text-gray-900 mb-4">
+            <CardContent className="flex h-full flex-col p-8">
+              <div className="flex-1 space-y-5 overflow-y-auto pr-2 min-h-0">
+                  <div className="text-center space-y-2">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-blue-500">
+                      Nghĩa tiếng Việt
+                    </p>
+                    <h3 className="text-3xl font-bold text-gray-900 leading-tight">
                     {currentWord.meaning_vi}
                   </h3>
                 </div>
 
                 {(currentWord.ex1 || currentWord.ex2) && (
-                  <div className="space-y-4 border-t pt-4">
-                    <h4 className="font-medium text-gray-700">Ví dụ:</h4>
-                    {renderExample(currentWord.ex1)}
+                  <div className="space-y-3 border-t border-gray-100 pt-4">
+                    <h4 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
+                      Ví dụ minh hoạ
+                    </h4>
+                    <div className="space-y-3">
+                      {renderExample(currentWord.ex1)}
                     {currentWord.ex2 && currentWord.ex2.en && (
-                      <div className="pt-2">
-                        {renderExample(currentWord.ex2)}
-                      </div>
+                        renderExample(currentWord.ex2)
                     )}
+                    </div>
                   </div>
                 )}
 
                 {currentWord.note && (
-                  <div className="border-t pt-4">
-                    <h4 className="font-medium text-gray-700 mb-2">Ghi chú:</h4>
-                    <p className="text-sm text-gray-600 whitespace-pre-wrap">
+                  <div className="border-t border-gray-100 pt-4">
+                    <h4 className="text-sm font-semibold uppercase tracking-wide text-gray-500 mb-2">
+                      Ghi chú
+                    </h4>
+                    <p className="text-base text-gray-700 whitespace-pre-wrap leading-relaxed">
                       {currentWord.note}
                     </p>
                   </div>
                 )}
+              </div>
 
-                <div className="flex items-center justify-center gap-2 text-gray-400 pt-4">
-                  <RotateCw className="h-5 w-5" />
-                  <span className="text-sm">Nhấp để lật lại</span>
-                </div>
+              <div className="flex items-center justify-center gap-2 text-gray-400 pt-4">
+                <RotateCw className="h-5 w-5" />
+                <span className="text-sm">Nhấp để lật lại</span>
               </div>
             </CardContent>
           </Card>

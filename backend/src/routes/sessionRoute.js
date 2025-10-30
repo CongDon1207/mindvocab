@@ -2,6 +2,7 @@
 import express from 'express';
 import {
   createSession,
+  createNextSession,
   getSession,
   updateSession,
   createAttempt,
@@ -13,6 +14,7 @@ const router = express.Router();
 
 // Session routes
 router.post('/sessions', createSession);
+router.post('/sessions/next', createNextSession);
 router.get('/sessions/:id', getSession);
 router.put('/sessions/:id', updateSession);
 router.post('/sessions/:id/complete', completeSession);
