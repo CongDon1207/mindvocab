@@ -15,7 +15,7 @@
 - ✅ Giữ chiều cao cố định, nội dung dài scroll trong thẻ để không đẩy navigation
 
 ### Fix - Spelling Input Focus
-- ✅ Tự động focus ô nhập chính tả khi chuyển sang từ mới trong bước Spelling
+- ✅ Tự động focus ô nhập chính tả ngay sau khi chuyển từ mới hoặc bấm Enter/Next trong bước Spelling
 ## 2025-10-29
 
 ### Added - Import Pipeline (TXT/XLSX → AI → Mongo)

@@ -53,7 +53,7 @@
 - Giữ chiều cao thẻ ổn định, nội dung dài scroll nội bộ tránh đẩy navigation
 
 ✅ **Spelling UX - COMPLETED**
-- Ô nhập chính tả tự động focus khi chuyển sang từ mới, giảm thao tác chuột
+- Ô nhập chính tả tự động focus ngay khi chuyển sang từ mới hoặc sau khi nhấn Enter/Next, giảm thao tác chuột
 
 🚧 **Import pipeline (TXT/XLSX → AI enrich → Mongo) - READY FOR QA**
 - Backend: route `POST /api/import-jobs` (multer upload), parsing TXT/XLSX, batching enrich qua Gemini, lưu vào Word + cập nhật folder stats.
@@ -83,7 +83,7 @@
 - ✅ SummaryStep tạo tiếp session kế tiếp qua `POST /api/sessions/next`, học tuần tự lô 10 từ cho tới khi hết
 - ✅ SessionHeader hiển thị nút quay về folder, FolderDetailHeader có nút quay về danh sách
 - ✅ FlashcardStep mặt sau dùng typography mới, chiều cao cố định, ví dụ dài scroll nội bộ
-- ✅ SpellingStep tự focus input khi tới từ mới, hỗ trợ thao tác nhanh
+- ✅ SpellingStep tự focus input khi tới từ mới và sau khi Enter/Next, hỗ trợ thao tác nhanh
 
 ### Folder Management
 - ✅ Folder listing với pagination (7 items/page)
