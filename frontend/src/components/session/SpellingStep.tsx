@@ -32,18 +32,26 @@ const SpellingStep: React.FC<SpellingStepProps> = ({
   const totalWords = words.length
   const isLastWord = currentWordIndex === totalWords - 1
 
-  // Reset khi chuyển từ
+  // Reset khi chuyển từ (không focus ngay tại đây để chờ DOM cập nhật xong)
   useEffect(() => {
     setUserInput('')
     setIsAnswered(false)
     setFeedback(null)
-    inputRef.current?.focus()
   }, [currentWordIndex])
+
+  // Sau khi input được mở khoá (isAnswered=false) và đã sang từ mới → focus input
+  useEffect(() => {
+    if (!isAnswered) {
+      const t = setTimeout(() => inputRef.current?.focus(), 0)
+      return () => clearTimeout(t)
+    }
+  }, [currentWordIndex, isAnswered])
 
   // Keyboard: Enter để submit/next
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       if (e.key === 'Enter') {
+        e.preventDefault()
         if (isAnswered) {
           handleNext()
         } else if (userInput.trim()) {
@@ -57,7 +65,7 @@ const SpellingStep: React.FC<SpellingStepProps> = ({
   }, [isAnswered, userInput, currentWordIndex])
 
   // Chuẩn hoá text: trim, lowercase
-  const normalizeText = (text: string): string => {
+const normalizeText = (text: string): string => {
     return text.trim().toLowerCase()
   }
 
@@ -98,6 +106,9 @@ const SpellingStep: React.FC<SpellingStepProps> = ({
     } catch (err) {
       console.error('Failed to log spelling attempt:', err)
     }
+
+    // focus back vào ô nhập để có thể tiếp tục gõ ngay nếu chưa đi tiếp
+    setTimeout(() => inputRef.current?.focus(), 0)
   }
 
   // Next word or complete
