@@ -36,8 +36,8 @@ export async function getWordsInFolder(req, res) {
     ]);
 
     return res.json({
-      words,
-      total,
+      words: words || [],
+      total: total || 0,
       skip,
       limit
     });

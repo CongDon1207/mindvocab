@@ -63,10 +63,13 @@ const FolderDetail: React.FC = () => {
       if (posFilter) params.pos = posFilter
 
       const res = await api.get<GetWordsResponse>(`/folders/${id}/words`, { params })
-      setWords(res.data.words)
-      setTotal(res.data.total)
+      // Defensive: đảm bảo words luôn là array
+      setWords(Array.isArray(res.data?.words) ? res.data.words : [])
+      setTotal(res.data?.total || 0)
     } catch (err: any) {
       setError('Không thể tải danh sách từ.')
+      setWords([]) // Reset về empty array khi lỗi
+      setTotal(0)
       console.error(err)
     } finally {
       setLoading(false)

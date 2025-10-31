@@ -29,7 +29,9 @@ const Folder: React.FC = () => {
     const fetchFolders = async () => {
       try {
         const res = await api.get<Folder[]>("/folders")
-        setFolders(res.data || [])
+        // Defensive: đảm bảo luôn là array
+        const data = Array.isArray(res.data) ? res.data : []
+        setFolders(data)
       } catch (error) {
         console.error("Lỗi khi tải danh sách folder:", error)
         setFolders([])
