@@ -51,6 +51,17 @@ npx tsc --noEmit # Type checking
 npx shadcn@latest add <component-name>
 ```
 
+## Deploy (Render)
+- Vite cần devDependencies trong bước build. Trên Render, nếu `npm install` bỏ qua dev deps (do `NPM_CONFIG_PRODUCTION=true`), build sẽ lỗi kiểu "Cannot find package '@vitejs/plugin-react'" khi load `vite.config.ts`.
+- Cách khắc phục tối thiểu (chọn 1):
+  - Đặt biến môi trường của service: `NPM_CONFIG_PRODUCTION=false` (hoặc nếu dùng Yarn: `YARN_PRODUCTION=false`) để cài devDependencies trong bước build.
+  - Hoặc đặt Build Command chỉ cho frontend kèm cờ include dev:
+    - npm: `cd frontend && npm ci --include=dev && npm run build`
+    - yarn: `cd frontend && yarn install --frozen-lockfile --production=false && yarn build`
+    - pnpm: `cd frontend && pnpm install --prod=false && pnpm build`
+- Không khuyến nghị chuyển `@vitejs/plugin-react` sang `dependencies` trừ khi không thể chỉnh môi trường build.
+- Repo hiện đã cập nhật script `npm run build` ở thư mục gốc để luôn thực hiện `npm ci --include=dev` trong `frontend`, nên Render chỉ cần chạy script mặc định là đủ.
+
 ## Recent Updates
 - ✅ Migrated from JavaScript to TypeScript
 - ✅ Configured Tailwind CSS v4 with Vite
