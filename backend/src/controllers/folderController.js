@@ -31,7 +31,22 @@ export async function createFolder(req, res) {
 export async function listFolders(_req, res) {
   try {
     const docs = await Folder.find().sort({ createdAt: -1 });
-    return res.json(docs);
+    
+    // Đếm số từ cho mỗi folder
+    const foldersWithStats = await Promise.all(
+      docs.map(async (folder) => {
+        const totalWords = await Word.countDocuments({ folderId: folder._id });
+        return {
+          ...folder.toObject(),
+          stats: {
+            totalWords,
+            mastered: 0 // TODO: tính sau khi có learning progress
+          }
+        };
+      })
+    );
+    
+    return res.json(foldersWithStats);
   } catch (err) {
     return res.status(500).json({
       error: 'Không lấy được danh sách thư mục.',
