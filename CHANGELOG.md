@@ -16,6 +16,9 @@
 
 ### Fix - Spelling Input Focus
 - ✅ Tự động focus ô nhập chính tả ngay sau khi chuyển từ mới hoặc bấm Enter/Next trong bước Spelling
+### Fix - Render build (Vite devDeps omitted)
+- ✅ Thêm hướng dẫn Deploy trên Render: yêu cầu cài devDependencies khi build (đặt `NPM_CONFIG_PRODUCTION=false` hoặc dùng `npm ci --include=dev` cho `frontend`) để tránh lỗi thiếu `@vitejs/plugin-react` khi load `vite.config.ts`.
+- ✅ Cập nhật script gốc `npm run build` để tự động dùng `npm ci --include=dev` trong `frontend`, giúp Render build thành công ngay cả khi `NPM_CONFIG_PRODUCTION=true`.
 ## 2025-10-29
 
 ### Added - Import Pipeline (TXT/XLSX → AI → Mongo)

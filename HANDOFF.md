@@ -63,6 +63,17 @@
 - Cấu hình khuyến nghị (ổn định cho batch lớn): `IMPORT_ENRICH_BATCH=10`, `AI_TIMEOUT_MS=45000`, `AI_RETRY_LIMIT=3`.
 - Logging thêm: `[import][gemini] promptChars/responseChars`, `[import][enrich] batch/responseItems` để chẩn đoán timeout/cắt phản hồi.
 
+## Deployment Notes (Render)
+- Vite build cần devDependencies. Nếu Render bỏ qua dev deps (mặc định ở một số stack với `NPM_CONFIG_PRODUCTION=true`), sẽ lỗi khi load `vite.config.ts` vì thiếu `@vitejs/plugin-react`.
+- Khuyến nghị cấu hình:
+  1) Thiết lập biến môi trường cho service: `NPM_CONFIG_PRODUCTION=false` (hoặc `YARN_PRODUCTION=false` nếu dùng Yarn).
+  2) Hoặc đổi Build Command để chỉ build frontend và bao gồm dev deps:
+     - npm: `cd frontend && npm ci --include=dev && npm run build`
+     - yarn: `cd frontend && yarn install --frozen-lockfile --production=false && yarn build`
+     - pnpm: `cd frontend && pnpm install --prod=false && pnpm build`
+- Không nên chuyển plugin build sang `dependencies` trừ khi không thể chỉnh môi trường.
+- Script `npm run build` tại thư mục gốc đã được cập nhật để tự chạy `npm ci --include=dev` trong `frontend`, đảm bảo Render build thành công ngay cả khi quên đặt biến môi trường.
+
 ## TODO & Next Steps
 1. **Phase 11 - Spaced Repetition**: Implement SRS algorithm cập nhật meta.easyFactor và meta.nextReview (SuperMemo-2)
 2. **Phase 12 - Review Notes**: Thêm note cho từ sai trong session, lưu vào reviewNotes array
