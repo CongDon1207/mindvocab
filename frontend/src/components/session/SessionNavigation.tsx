@@ -11,6 +11,7 @@ interface SessionNavigationProps {
   continueEnabled: boolean
   onBack: () => void
   onContinue: () => void
+  onSkip?: () => void // Thêm prop onSkip
 }
 
 const SessionNavigation: React.FC<SessionNavigationProps> = ({
@@ -20,28 +21,29 @@ const SessionNavigation: React.FC<SessionNavigationProps> = ({
   isLastStep,
   continueEnabled,
   onBack,
-  onContinue
+  onContinue,
+  onSkip
 }) => {
   return (
     <Card>
       <CardContent className="pt-6">
         <div className="flex items-center justify-between">
-          <Button
-            variant="outline"
-            onClick={onBack}
-            disabled={isFirstStep}
-          >
+          <Button variant="outline" onClick={onBack} disabled={isFirstStep}>
             ← Quay lại
           </Button>
+
+          {/* Nút Bỏ qua session */}
+          {onSkip && (
+            <Button variant="ghost" onClick={onSkip} className="text-sm text-gray-500">
+              Bỏ qua đến 10 từ tiếp theo
+            </Button>
+          )}
 
           <div className="text-sm text-gray-600">
             Bước {currentStepIndex + 1} / {totalSteps}
           </div>
 
-          <Button
-            onClick={onContinue}
-            disabled={!continueEnabled}
-          >
+          <Button onClick={onContinue} disabled={!continueEnabled}>
             {isLastStep ? 'Hoàn thành' : 'Tiếp tục →'}
           </Button>
         </div>
