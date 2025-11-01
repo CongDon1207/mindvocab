@@ -2,6 +2,10 @@
 // Deterministic question generator với PRNG từ seed
 
 import Word from '../model/Word.js';
+import natural from 'natural';
+
+// Khởi tạo tokenizer để tách câu thành các từ
+const tokenizer = new natural.WordTokenizer();
 
 // ========== PRNG (Pseudo-Random Number Generator) từ seed ==========
 class SeededRandom {
@@ -129,16 +133,83 @@ export async function generateQuizP2(session, words) {
   return questions;
 }
 
+// ========== Helper: Tìm và thay thế từ với các dạng biến thể ==========
+/**
+ * Tìm từ trong câu (kể cả dạng biến thể) và thay thế bằng '_____'
+ * @param {string} sentence - Câu ví dụ
+ * @param {string} targetWord - Từ gốc cần tìm
+ * @returns {{found: boolean, matchedWord: string, clozeSentence: string}} 
+ *          - found: true nếu tìm thấy
+ *          - matchedWord: Dạng từ thực tế trong câu (e.g., "called")
+ *          - clozeSentence: Câu đã được đục lỗ
+ */
+function findAndReplaceWordVariant(sentence, targetWord) {
+  const tokens = tokenizer.tokenize(sentence);
+  if (!tokens) {
+    return { found: false, matchedWord: targetWord, clozeSentence: sentence };
+  }
+
+  const targetLower = targetWord.toLowerCase();
+
+  for (const token of tokens) {
+    const tokenLower = token.toLowerCase();
+
+    // 1. So sánh trực tiếp
+    if (tokenLower === targetLower) {
+      const clozeSentence = sentence.replace(new RegExp(`\\b${token}\\b`, 'i'), '_____');
+      return { found: true, matchedWord: token, clozeSentence };
+    }
+
+    // 2. Xử lý các phrasal verbs (e.g., "call off")
+    // Nếu targetWord là "call off", ta tìm "called off"
+    if (targetLower.includes(' ')) {
+        const targetParts = targetLower.split(' ');
+        const firstPart = targetParts[0]; // "call"
+        const rest = targetParts.slice(1).join(' '); // "off"
+
+        // Logic tìm biến thể cho phần đầu của phrasal verb
+        const stem1 = tokenLower.endsWith('ed') ? tokenLower.slice(0, -2) : null; // called -> call
+        const stem2 = tokenLower.endsWith('ing') ? tokenLower.slice(0, -3) : null; // calling -> call
+        const stem3 = tokenLower.endsWith('s') ? tokenLower.slice(0, -1) : null; // calls -> call
+
+        if (stem1 === firstPart || stem2 === firstPart || stem3 === firstPart) {
+            // Kiểm tra xem các phần sau có khớp không
+            const nextTokens = tokens.slice(tokens.indexOf(token) + 1, tokens.indexOf(token) + 1 + targetParts.length - 1).join(' ');
+            if (nextTokens.toLowerCase() === rest) {
+                const fullPhrase = `${token} ${nextTokens}`;
+                const clozeSentence = sentence.replace(fullPhrase, '_____');
+                return { found: true, matchedWord: fullPhrase, clozeSentence };
+            }
+        }
+    }
+
+
+    // 3. Xử lý các biến thể đơn giản (-s, -ed, -ing)
+    const stem_s = tokenLower.endsWith('s') ? tokenLower.slice(0, -1) : null;
+    const stem_ed = tokenLower.endsWith('ed') ? tokenLower.slice(0, -2) : null;
+    const stem_d = tokenLower.endsWith('d') ? tokenLower.slice(0, -1) : null; // cho các từ kết thúc bằng 'e'
+    const stem_ing = tokenLower.endsWith('ing') ? tokenLower.slice(0, -3) : null;
+
+    if (stem_s === targetLower || stem_ed === targetLower || stem_d === targetLower || stem_ing === targetLower) {
+        const clozeSentence = sentence.replace(new RegExp(`\\b${token}\\b`, 'i'), '_____');
+        return { found: true, matchedWord: token, clozeSentence };
+    }
+  }
+
+  // Không tìm thấy
+  return { found: false, matchedWord: targetWord, clozeSentence: sentence };
+}
+
+
 // ========== Fill Blank: Cloze sentences (10 câu + word bank) ==========
 export async function generateFillBlank(session, words) {
   const questions = [];
-  const rng = new SeededRandom(session.seed + 3); // offset +3
+  const rng = new SeededRandom(session.seed + 3);
 
-  // Word bank = tất cả 10 từ, shuffle deterministic
-  const wordBank = rng.shuffle(words.map(w => w.word));
+  const matchedWords = [];
+  const finalQuestions = [];
 
   for (const word of words) {
-    // Ưu tiên ex1, fallback ex2, fallback inferred flag
     let sentence = null;
     let isInferred = false;
 
@@ -150,29 +221,52 @@ export async function generateFillBlank(session, words) {
       isInferred = word.ex2.source === 'inferred';
     }
 
-    // Nếu không có ví dụ, tạo câu placeholder
-    if (!sentence) {
-      sentence = `Use the word ${word.word} in a sentence.`;
+    let result;
+    if (sentence) {
+      result = findAndReplaceWordVariant(sentence, word.word);
+    } else {
+      // Không có câu ví dụ, tự tạo câu placeholder
+      const placeholderSentence = `The word is _____.`;
+      result = { 
+        found: true, 
+        matchedWord: word.word, 
+        clozeSentence: placeholderSentence.replace('_____', `[${word.meaning_vi}]`) 
+      };
       isInferred = true;
       console.warn(`[FILL_BLANK] Word ${word.word} không có ví dụ, dùng placeholder`);
     }
+    
+    // Nếu không tìm thấy biến thể, thử lại với regex gốc để đảm bảo không bỏ sót
+    if (!result.found && sentence) {
+        const targetRegex = new RegExp(`\\b${word.word}\\b`, 'gi');
+        if(targetRegex.test(sentence)){
+            result.found = true;
+            result.matchedWord = word.word;
+            result.clozeSentence = sentence.replace(targetRegex, '_____');
+        }
+    }
 
-    // Chuyển thành cloze: thay từ target bằng _____
-    const targetRegex = new RegExp(`\\b${word.word}\\b`, 'gi');
-    const clozeSentence = sentence.replace(targetRegex, '_____');
-
-    questions.push({
+    matchedWords.push(result.matchedWord);
+    finalQuestions.push({
       type: 'FILL',
       wordId: word._id,
-      prompt: clozeSentence,
-      options: [],               // Fill không dùng options
-      answer: word.word,
-      bank: wordBank,            // Word bank giống nhau cho tất cả câu
-      isInferred                 // Flag để frontend hiển thị [Inferred]
+      prompt: result.clozeSentence,
+      options: [],
+      answer: result.matchedWord, // Answer là từ đã match
+      bank: [], // Sẽ điền sau
+      isInferred,
     });
   }
 
-  return questions;
+  // Word bank = tất cả các từ đã match, shuffle deterministic
+  const wordBank = rng.shuffle(matchedWords);
+
+  // Gán wordBank cho tất cả câu hỏi
+  finalQuestions.forEach(q => {
+    q.bank = wordBank;
+  });
+
+  return finalQuestions;
 }
 
 // ========== Main Generator: Sinh tất cả questions ==========
