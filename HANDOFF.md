@@ -92,6 +92,7 @@
 - ✅ Question Generator: PRNG deterministic với seed, lazy generation, distractor selection (cùng POS), isInferred flag
 - ✅ Session API: GET/POST/PUT sessions, POST/GET attempts, validation guards (chặn lùi bước/nhảy bước)
 - ✅ SummaryStep tạo tiếp session kế tiếp qua `POST /api/sessions/next`, học tuần tự lô 10 từ cho tới khi hết
+- ✅ Thêm nút "Bỏ qua session" để tạo session kế tiếp bất cứ lúc nào
 - ✅ SessionHeader hiển thị nút quay về folder, FolderDetailHeader có nút quay về danh sách
 - ✅ FlashcardStep mặt sau dùng typography mới, chiều cao cố định, ví dụ dài scroll nội bộ
 - ✅ SpellingStep tự focus input khi tới từ mới và sau khi Enter/Next, hỗ trợ thao tác nhanh

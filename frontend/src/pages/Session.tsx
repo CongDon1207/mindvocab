@@ -169,6 +169,29 @@ const SessionPage: React.FC = () => {
     }
   }
 
+  const handleSkipSession = async () => {
+    if (!id) return
+
+    const toastId = toast.loading('Đang tạo session tiếp theo...')
+    try {
+      const res = await api.post<Session>('/sessions/next', { previousSessionId: id })
+      const newSession = res.data
+
+      toast.success('Tạo session mới thành công!', {
+        id: toastId,
+        description: 'Bắt đầu học 10 từ tiếp theo.'
+      })
+
+      // Chuyển hướng đến session mới
+      navigate(`/sessions/${newSession._id}`)
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Không thể tạo session tiếp theo.', {
+        id: toastId
+      })
+      console.error(err)
+    }
+  }
+
   // ========== COMPUTED VALUES ==========
   const currentStepIndex = getStepIndex(currentStep)
   const progressPercentage = Math.round(((currentStepIndex + 1) / STEP_ORDER.length) * 100)
@@ -266,6 +289,7 @@ const SessionPage: React.FC = () => {
           continueEnabled={continueEnabled}
           onBack={handleBack}
           onContinue={handleContinue}
+          onSkip={handleSkipSession}
         />
       </div>
     </div>

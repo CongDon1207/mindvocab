@@ -1,5 +1,13 @@
 # CHANGELOG - mindvocab
 
+## 2025-11-01
+
+### Added - Skip Session Button
+- ✅ Thêm nút "Bỏ qua đến 10 từ tiếp theo" vào thanh điều hướng của session.
+- ✅ Nút này sẽ gọi API `POST /api/sessions/next` để tạo một session mới với 10 từ tiếp theo trong folder.
+- ✅ Sau khi tạo thành công, người dùng sẽ được chuyển hướng đến trang session mới.
+- ✅ Giúp người dùng có thể nhanh chóng chuyển qua các nhóm từ khác nhau mà không cần hoàn thành session hiện tại.
+
 ## 2025-10-30
 
 ### Added - Sequential Session Batches
