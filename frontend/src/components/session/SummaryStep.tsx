@@ -198,19 +198,21 @@ const SummaryStep: React.FC<SummaryStepProps> = ({ session }) => {
       <Card>
         <CardContent className="pt-6">
           <div className="flex gap-4 justify-center">
-            <Button
-              onClick={handleStartNext}
-              className="flex items-center gap-2"
-              disabled={isStartingNext || !hasNextBatch}
-            >
-              <RefreshCcw className="w-4 h-4" />
-              {hasNextBatch ? (isStartingNext ? 'Đang tạo...' : 'Học 10 từ kế tiếp') : 'Không còn từ mới'}
-            </Button>
+            {!session.isRetry && (
+              <Button
+                onClick={handleStartNext}
+                className="flex items-center gap-2"
+                disabled={isStartingNext || !hasNextBatch}
+              >
+                <RefreshCcw className="w-4 h-4" />
+                {hasNextBatch ? (isStartingNext ? 'Đang tạo...' : 'Học 10 từ kế tiếp') : 'Không còn từ mới'}
+              </Button>
+            )}
             {wrongWords.length > 0 && (
               <Button
                 onClick={handleRetryWrong}
                 className="flex items-center gap-2"
-                variant="default"
+                variant="secondary"
               >
                 <RefreshCcw className="w-4 h-4" />
                 Ôn lại từ sai ({wrongWords.length})

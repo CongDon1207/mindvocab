@@ -1,6 +1,6 @@
 // src/pages/FolderDetail.tsx
 import React, { useEffect, useState } from 'react'
-import { useParams, useNavigate } from 'react-router'
+import { useParams, useNavigate, useLocation } from 'react-router'
 import { Button } from '@/components/ui/button'
 import api from '@/lib/axios'
 import { WordFormDialog, WordsTable } from '@/components/word'
@@ -18,6 +18,7 @@ import { toast } from 'sonner'
 const FolderDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const location = useLocation()
 
   const [folder, setFolder] = useState<Folder | null>(null)
   const [words, setWords] = useState<Word[]>([])
@@ -41,6 +42,16 @@ const FolderDetail: React.FC = () => {
     fetchFolder()
     fetchWords()
   }, [id, page, searchQuery, posFilter])
+
+  // Handle retry session from summary
+  useEffect(() => {
+    const retryWords = location.state?.retryWords
+    if (retryWords && Array.isArray(retryWords) && retryWords.length > 0) {
+      // Clear state to prevent re-triggering on refresh or back navigation
+      navigate(location.pathname, { replace: true, state: {} })
+      handleStartRetrySession(retryWords)
+    }
+  }, [location.state, id, navigate])
 
   const fetchFolder = async () => {
     try {
@@ -169,6 +180,22 @@ const FolderDetail: React.FC = () => {
       navigate(`/sessions/${sessionId}`)
     } catch (err: any) {
       alert(err.response?.data?.error || 'Không thể tạo session học.')
+      console.error(err)
+    }
+  }
+
+  const handleStartRetrySession = async (wordIds: string[]) => {
+    if (!id) return
+    toast.info('Đang tạo session ôn tập cho các từ sai...')
+    try {
+      // Create new session with specific words
+      const res = await api.post('/sessions', { folderId: id, wordIds })
+      const sessionId = res.data._id
+
+      // Navigate to session page
+      navigate(`/sessions/${sessionId}`)
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Không thể tạo session ôn tập.')
       console.error(err)
     }
   }

@@ -34,6 +34,7 @@ export type Session = {
   }
   wordIds: Word[] | string[]  // Can be populated or just IDs
   step: SessionStep
+  isRetry: boolean
   wrongSet: string[]
   reviewNotes: string[]
   quizP1: {
