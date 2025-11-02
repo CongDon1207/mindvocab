@@ -49,7 +49,15 @@ const SessionPage: React.FC = () => {
   // ========== LIFECYCLE ==========
   useEffect(() => {
     if (!id) return
-    
+
+    // Reset local progress flags khi chuyển sang session khác
+    setCurrentStep('FLASHCARDS')
+    setFlashcardsCompleted(false)
+    setQuizP1Completed(false)
+    setQuizP2Completed(false)
+    setSpellingCompleted(false)
+    setFillBlankCompleted(false)
+
     // Try to resume from localStorage
     const savedState = loadLocalState(id)
     if (savedState) {

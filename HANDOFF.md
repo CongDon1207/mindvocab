@@ -19,6 +19,10 @@
 - Port: 5001
 
 ## Current Status
+✅ **Session State Reset - COMPLETED**
+- Sửa SessionPage reset các cờ hoàn thành (flashcards/quiz/spelling/fill) khi điều hướng tới session mới
+- Tránh trường hợp bước mới tự động mở khóa vì dùng lại trạng thái của session trước
+
 ✅ **BUG FIXES - Session & Quiz (Critical) - COMPLETED**
 - 🐛 Fixed duplicate words trong quiz - Backend filter unique by word.toLowerCase().trim() qua Map
 - 🐛 Fixed Quiz P2 không reset về câu 1 - Frontend useEffect reset state khi stepType thay đổi
