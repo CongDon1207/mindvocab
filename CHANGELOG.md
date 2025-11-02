@@ -1,5 +1,10 @@
 # CHANGELOG - mindvocab
 
+## 2025-11-02
+
+### Fix - Session State Reset
+- ✅ Reset cờ hoàn thành của các bước trong `frontend/src/pages/Session.tsx` khi chuyển sang session mới để tránh giữ trạng thái cũ; đảm bảo mỗi session luôn bắt đầu từ Flashcards.
+
 ## 2025-11-01
 
 ### Added - Skip Session Button

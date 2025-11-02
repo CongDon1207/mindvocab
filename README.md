@@ -63,6 +63,7 @@ npx shadcn@latest add <component-name>
 - Repo hiện đã cập nhật script `npm run build` ở thư mục gốc để luôn thực hiện `npm ci --include=dev` trong `frontend`, nên Render chỉ cần chạy script mặc định là đủ.
 
 ## Recent Updates
+- ✅ Sửa reset trạng thái session: khi chuyển sang session mới, tất cả bước được đưa về trạng thái mặc định để tránh giữ cờ hoàn thành từ phiên trước
 - ✅ Migrated from JavaScript to TypeScript
 - ✅ Configured Tailwind CSS v4 with Vite
 - ✅ Installed shadcn/ui with TypeScript support
