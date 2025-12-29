@@ -19,9 +19,7 @@ const app = express();
 
 // Middleware
 app.use(express.json());
-if (process.env.NODE_ENV !== 'production') {
-  app.use(cors());
-}
+app.use(cors()); // Always enable CORS for development
 
 // Routes - PHẢI ĐẶT TRƯỚC catch-all route
 app.use('/api/folders', folderRoute);

@@ -94,50 +94,75 @@ const Folder: React.FC = () => {
 
   // ========== RENDER ==========
   return (
-    <div className='bg-blue-200 min-h-screen p-8'>
-      <div className='flex flex-col items-center gap-6'>
-        {/* Danh sách folders */}
-        <FolderList 
-          folders={currentFolders} 
-          onCreate={handleOpenCreateDialog}
-          onDelete={handleDeleteFolder}
-          onEdit={handleOpenEditDialog}
-        />
-
-        {/* Điều khiển phân trang */}
-        {totalPages > 1 && (
-          <div className='flex items-center gap-4'>
-            <Button variant="outline" onClick={handlePrevPage} disabled={currentPage === 1}>
-              Trang trước
-            </Button>
-            <span className='text-sm font-medium'>
-              Trang {currentPage} / {totalPages}
-            </span>
-            <Button variant="outline" onClick={handleNextPage} disabled={currentPage === totalPages}>
-              Trang sau
-            </Button>
-          </div>
-        )}
-
-        {/* Dialog tạo folder mới */}
-        <CreateFolderDialog
-          open={isCreateDialogOpen}
-          onOpenChange={setIsCreateDialogOpen}
-          onSubmit={handleSubmitCreate}
-        />
-
-        {/* Dialog chỉnh sửa folder */}
-        {editingFolder && (
-          <CreateFolderDialog
-            open={isEditDialogOpen}
-            onOpenChange={setIsEditDialogOpen}
-            onSubmit={handleSubmitEdit}
-            defaultValues={{ name: editingFolder.name, description: '' }}
-            title="Chỉnh sửa thư mục"
-            submitButtonText="Cập nhật"
-          />
-        )}
+    <div className="space-y-8">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900">
+            Thư mục của bạn
+          </h1>
+          <p className="text-slate-500 mt-1">
+            Quản lý và học từ vựng theo chủ đề
+          </p>
+        </div>
+        <div className="flex items-center gap-2 text-sm text-slate-500">
+          <span className="px-3 py-1 rounded-full bg-slate-100">
+            {folders.length} thư mục
+          </span>
+        </div>
       </div>
+
+      {/* Danh sách folders */}
+      <FolderList 
+        folders={currentFolders} 
+        onCreate={handleOpenCreateDialog}
+        onDelete={handleDeleteFolder}
+        onEdit={handleOpenEditDialog}
+      />
+
+      {/* Điều khiển phân trang */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-4 pt-4">
+          <Button 
+            variant="outline" 
+            onClick={handlePrevPage} 
+            disabled={currentPage === 1}
+            className="shadow-sm"
+          >
+            ← Trang trước
+          </Button>
+          <span className="px-4 py-2 rounded-lg bg-white shadow-sm border border-slate-200 text-sm font-medium text-slate-700">
+            {currentPage} / {totalPages}
+          </span>
+          <Button 
+            variant="outline" 
+            onClick={handleNextPage} 
+            disabled={currentPage === totalPages}
+            className="shadow-sm"
+          >
+            Trang sau →
+          </Button>
+        </div>
+      )}
+
+      {/* Dialog tạo folder mới */}
+      <CreateFolderDialog
+        open={isCreateDialogOpen}
+        onOpenChange={setIsCreateDialogOpen}
+        onSubmit={handleSubmitCreate}
+      />
+
+      {/* Dialog chỉnh sửa folder */}
+      {editingFolder && (
+        <CreateFolderDialog
+          open={isEditDialogOpen}
+          onOpenChange={setIsEditDialogOpen}
+          onSubmit={handleSubmitEdit}
+          defaultValues={{ name: editingFolder.name, description: '' }}
+          title="Chỉnh sửa thư mục"
+          submitButtonText="Cập nhật"
+        />
+      )}
     </div>
   )
 }

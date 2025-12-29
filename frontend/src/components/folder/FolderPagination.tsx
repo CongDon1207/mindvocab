@@ -1,5 +1,6 @@
 import React from 'react'
 import { Button } from '@/components/ui/button'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 type FolderPaginationProps = {
   page: number
@@ -22,29 +23,33 @@ const FolderPagination: React.FC<FolderPaginationProps> = ({
   const end = Math.min(page * limit, total)
 
   return (
-    <div className="px-6 py-4 border-t flex items-center justify-between">
-      <div className="text-sm text-gray-600">
-        Hiển thị {start} - {end} / {total} từ
+    <div className="px-5 py-4 bg-slate-50/50 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 rounded-b-xl">
+      <div className="text-sm text-slate-500">
+        Hiển thị <span className="font-medium text-slate-700">{start} - {end}</span> / <span className="font-medium text-slate-700">{total}</span> từ
       </div>
-      <div className="flex gap-2">
+      <div className="flex items-center gap-2">
         <Button
           variant="outline"
           size="sm"
           onClick={() => onPageChange(Math.max(1, page - 1))}
           disabled={page === 1}
+          className="shadow-sm"
         >
+          <ChevronLeft className="w-4 h-4 mr-1" />
           Trước
         </Button>
-        <span className="px-3 py-1 text-sm">
-          Trang {page} / {totalPages}
+        <span className="px-3 py-1.5 text-sm bg-white rounded-lg border border-slate-200 font-medium text-slate-700 shadow-sm">
+          {page} / {totalPages}
         </span>
         <Button
           variant="outline"
           size="sm"
           onClick={() => onPageChange(Math.min(totalPages, page + 1))}
           disabled={page === totalPages}
+          className="shadow-sm"
         >
           Sau
+          <ChevronRight className="w-4 h-4 ml-1" />
         </Button>
       </div>
     </div>
