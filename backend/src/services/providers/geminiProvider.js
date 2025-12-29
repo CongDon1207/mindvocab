@@ -2,20 +2,20 @@ const GEMINI_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta'
 
 function buildPrompt(items) {
   const schema = {
-    id: 'number (copy from input)',
+    id: 'number (copy exactly from input)',
     word: 'string (must match input word exactly)',
-    pos: "string (one of noun|verb|adj|adv|prep|phrase|idiom|other)",
-    ipa: 'string (valid IPA symbols, no explanations)',
-    note: 'string (<= 2 câu, mẹo nhớ ngắn gọn)',
+    pos: 'string (one of: noun|verb|adj|adv|prep|phrase|idiom|other)',
+    ipa: 'string (valid IPA notation only, no brackets or explanations)',
+    note: 'string (1-2 sentences in Vietnamese, memory tip or usage note)',
     examples: [
       {
-        en: 'string (bắt buộc, câu chứa chính xác word; giữ nguyên phrasal verb nếu có)',
-        vi: 'string (bắt buộc, dịch ngắn gọn, khác với meaning_vi)',
+        en: 'string (required, English sentence containing the exact word)',
+        vi: 'string (required, Vietnamese translation, different from meaning_vi)',
         source: "'inferred'",
       },
       {
-        en: 'string (bắt buộc, khác câu 1, chứa đúng word)',
-        vi: 'string (bắt buộc)',
+        en: 'string (required, different from example 1, contains exact word)',
+        vi: 'string (required, Vietnamese translation)',
         source: "'inferred'",
       },
     ],
@@ -23,27 +23,34 @@ function buildPrompt(items) {
   }
 
   const instructions = [
-    'Bạn là trợ lý ngôn ngữ. Điền thông tin thiếu cho danh sách từ vựng dựa trên nghĩa tiếng Việt.',
-    'Trả về JSON thuần (không dùng Markdown, không thêm giải thích).',
-    'Phải trả mảng JSON với cùng số phần tử như input, giữ nguyên thứ tự.',
-    'Mỗi phần tử phải tuân thủ schema sau:',
+    'You are a language assistant. Fill in missing information for vocabulary items based on their Vietnamese meanings.',
+    '',
+    'OUTPUT FORMAT:',
+    '- Return pure JSON only (no markdown, no code blocks, no explanations).',
+    '- Return a JSON array with the SAME number of elements as input, in the SAME order.',
+    '',
+    'SCHEMA (each item must follow):',
     JSON.stringify(schema, null, 2),
-    'Quy tắc:',
-    '- Nếu input đã có pos/ipa/note thì giữ nguyên giá trị đó.',
-    '- Nếu input đã có 1 (hoặc 2) ví dụ thì giữ nguyên các ví dụ hiện có và BỔ SUNG cho đủ 2 ví dụ tổng cộng.',
-    '- Nghĩa_vi trong input đại diện cho ngữ cảnh chính, chọn nghĩa phổ biến khớp ngữ cảnh đó.',
-    '- BẮT BUỘC trả về đúng 2 ví dụ trong mảng "examples". Cả 2 câu đều phải chứa chính xác từ mục tiêu (không biến thể sai chính tả).',
-    '- IPA chỉ gồm ký tự IPA hợp lệ, không thêm ký tự khác.',
-    '- Tất cả trường do bạn suy luận phải gắn source:"inferred".',
-    '- Không để trống ví dụ. Nếu không chắc, tạo câu trung tính, đơn giản nhưng tự nhiên và đúng ngữ pháp.',
-    `Input: ${JSON.stringify(items, null, 2)}`,
+    '',
+    'RULES:',
+    '1. Preserve existing values: If input already has pos/ipa/note, keep them unchanged.',
+    '2. Preserve existing examples: If input has 1 or 2 examples, keep them and ADD more to reach exactly 2 total.',
+    '3. Context matching: The meaning_vi field represents the primary context. Choose the most common meaning that matches this context.',
+    '4. Examples requirement: MUST return exactly 2 examples in the "examples" array. Both sentences must contain the exact target word (no misspellings, preserve phrasal verbs).',
+    '5. IPA format: Use only valid IPA characters, no slashes, brackets, or extra characters.',
+    '6. Source marking: All fields you infer must have source: "inferred".',
+    '7. No empty examples: If unsure, create neutral, simple but natural and grammatically correct sentences.',
+    '8. Vietnamese fields: The "note" and "vi" fields in examples must be in Vietnamese.',
+    '',
+    'INPUT:',
+    JSON.stringify(items, null, 2),
   ]
 
   return instructions.join('\n')
 }
 
 export class GeminiProvider {
-  constructor({ apiKey, model = 'gemini-2.5-flash', timeoutMs = 30000 }) {
+  constructor({ apiKey, model = 'gemini-3-flash-preview', timeoutMs = 30000 }) {
     this.apiKey = apiKey
     this.model = model
     this.timeoutMs = timeoutMs
