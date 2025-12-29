@@ -36,6 +36,7 @@ const FolderDetail: React.FC = () => {
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false)
   const [isImportDrawerOpen, setIsImportDrawerOpen] = useState(false)
   const [activeJobId, setActiveJobId] = useState<string | null>(null)
+  const [enrichingIds, setEnrichingIds] = useState<string[]>([])
 
   useEffect(() => {
     if (!id) return
@@ -163,6 +164,23 @@ const FolderDetail: React.FC = () => {
     }
   }
 
+  const handleEnrichWord = async (wordId: string) => {
+    setEnrichingIds((prev) => [...prev, wordId])
+    try {
+      const res = await api.post(`/words/${wordId}/enrich`)
+      toast.success(res.data.message || 'Đã bổ sung thông tin cho từ.', {
+        description: res.data.enrichedFields?.length 
+          ? `Đã cập nhật: ${res.data.enrichedFields.join(', ')}`
+          : undefined
+      })
+      fetchWords()
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Không thể bổ sung thông tin.')
+    } finally {
+      setEnrichingIds((prev) => prev.filter((id) => id !== wordId))
+    }
+  }
+
   const handleStartLearning = async () => {
     if (!id) return
     
@@ -261,6 +279,8 @@ const FolderDetail: React.FC = () => {
             posFilter={posFilter}
             onEdit={setEditingWord}
             onDelete={handleDeleteWord}
+            onEnrich={handleEnrichWord}
+            enrichingIds={enrichingIds}
           />
 
           {!loading && words.length > 0 && (

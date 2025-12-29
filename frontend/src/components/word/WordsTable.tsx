@@ -2,7 +2,7 @@
 import React from 'react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Edit2, Trash2, Sparkles, BookOpen } from 'lucide-react'
+import { Edit2, Trash2, Sparkles, BookOpen, Wand2 } from 'lucide-react'
 import type { Word } from '@/types/word'
 
 interface WordsTableProps {
@@ -12,6 +12,8 @@ interface WordsTableProps {
   posFilter: string
   onEdit: (word: Word) => void
   onDelete: (wordId: string) => void
+  onEnrich?: (wordId: string) => void
+  enrichingIds?: string[]
 }
 
 const TableHeader = () => (
@@ -35,6 +37,8 @@ export const WordsTable: React.FC<WordsTableProps> = ({
   posFilter,
   onEdit,
   onDelete,
+  onEnrich,
+  enrichingIds = [],
 }) => {
   if (loading) {
     return (
@@ -146,13 +150,25 @@ export const WordsTable: React.FC<WordsTableProps> = ({
 
                 {/* Actions */}
                 <td className="px-4 py-4 text-right">
-                  <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="flex items-center justify-end gap-1">
+                    {onEnrich && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onEnrich(word._id)}
+                        disabled={enrichingIds.includes(word._id)}
+                        title="Bổ sung thông tin bằng AI"
+                        className="text-purple-500 hover:bg-purple-100 hover:text-purple-600"
+                      >
+                        <Wand2 className={`w-4 h-4 ${enrichingIds.includes(word._id) ? 'animate-spin' : ''}`} />
+                      </Button>
+                    )}
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => onEdit(word)}
                       title="Chỉnh sửa"
-                      className="hover:bg-blue-100 hover:text-blue-600"
+                      className="text-slate-400 hover:bg-blue-100 hover:text-blue-600"
                     >
                       <Edit2 className="w-4 h-4" />
                     </Button>
@@ -161,7 +177,7 @@ export const WordsTable: React.FC<WordsTableProps> = ({
                       size="sm"
                       onClick={() => onDelete(word._id)}
                       title="Xóa"
-                      className="hover:bg-red-100 hover:text-red-600"
+                      className="text-slate-400 hover:bg-red-100 hover:text-red-600"
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
