@@ -19,6 +19,18 @@
 - Port: 5001
 
 ## Current Status
+✅ **UI/UX Overhaul - COMPLETED**
+- Tạo AppLayout component mới với header (logo, badge Online), footer, gradient background với blur circles
+- Redesign FolderCard: gradient accent bar, stats với icons, progress bar, glassmorphism, hover effects
+- Redesign CreateFolderCard: dashed border, Sparkles decoration, hover animations
+- Redesign FolderDetailHeader: stats cards màu, progress bar, icon-based buttons
+- Cải thiện SessionHeader: progress bar với %, step badge, Zap icon
+- Cải thiện SessionStepper: icons riêng từng bước, gradient colors, connector lines animation
+- Cải thiện SessionNavigation: gradient buttons, centered step indicator
+- Cải thiện WordsTable: POS badges màu, AI badge, empty state với icon
+- FolderList responsive grid (1→2→3→4 columns theo breakpoint)
+- Fix CORS backend (enable unconditionally)
+
 ✅ **Session State Reset - COMPLETED**
 - Sửa SessionPage reset các cờ hoàn thành (flashcards/quiz/spelling/fill) khi điều hướng tới session mới
 - Tránh trường hợp bước mới tự động mở khóa vì dùng lại trạng thái của session trước

@@ -62,9 +62,6 @@ Before starting a new conversation, confirm you have read and understood:
 ## 6. MCP Tool Usage Protocol - Agent Rules
 **Primary directive:** Always choose the most specific tool. Call MCP tools only when necessary; never use them to summarize known context.
 
-**Serena - Local codebase intelligence**
-- Use when: analyzing or modifying the current project, navigating symbols or call graphs or ownership, performing small-to-medium refactors, updating tests, running lint or format or unit tests, preparing small patches with rationale.
-- Avoid when: you need official API details (use Context7), community patterns (DeepWiki), or news (Web Search).
 
 **Context7 - Official documentation search**
 - Use when: checking official docs for signatures, flags, breaking changes, migrations, or configuration; confirming behavior or versioning instead of guessing.

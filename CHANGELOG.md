@@ -1,5 +1,22 @@
 # CHANGELOG - mindvocab
 
+## 2025-01-16
+
+### Change - UI/UX Overhaul
+- ✅ **AppLayout mới**: Header với logo gradient, badge "Online", footer với copyright, background với blur circles decorative
+- ✅ **FolderCard redesign**: Gradient accent bar, stats với icons (BookOpen, Trophy), progress bar, glassmorphism (bg-white/80 backdrop-blur), action buttons show on hover
+- ✅ **CreateFolderCard**: Dashed border card với Sparkles decoration, hover animations
+- ✅ **FolderDetailHeader**: Stats cards (blue/amber), progress bar, icon-based action buttons
+- ✅ **SessionHeader**: Progress bar với phần trăm, step badge, Zap icon
+- ✅ **SessionStepper**: Icons riêng cho từng bước (Layers, HelpCircle, Keyboard, PenTool, Trophy), gradient colors, connector lines với animation
+- ✅ **SessionNavigation**: Gradient buttons, centered step indicator
+- ✅ **WordsTable**: POS badges với màu theo loại từ, AI badge cho inferred examples, empty state với icon
+- ✅ **FolderList responsive**: Grid từ cố định thành responsive (1→2→3→4 columns)
+- ✅ **FolderPagination/Filters**: Icons, improved styling
+
+### Fix - CORS
+- ✅ Backend: Enable CORS unconditionally (không còn conditional trên NODE_ENV)
+
 ## 2025-11-02
 
 ### Fix - Session State Reset

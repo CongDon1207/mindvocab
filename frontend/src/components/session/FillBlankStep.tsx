@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import api from '@/lib/axios'
 import type { Question } from '@/types/session'
+import { isFlexibleMatch } from '@/lib/string-utils'
 
 interface FillBlankStepProps {
   sessionId: string
@@ -40,7 +41,7 @@ const FillBlankStep: React.FC<FillBlankStepProps> = ({
   const handleWordClick = (word: string) => {
     if (isSubmitted) return
     const usedIndex = isWordUsed(word)
-    
+
     if (usedIndex !== null) {
       // Clear if already used
       setAnswers(prev => {
@@ -74,7 +75,7 @@ const FillBlankStep: React.FC<FillBlankStepProps> = ({
 
     questions.forEach((q, idx) => {
       const userAnswer = answers[idx] || ''
-      const isCorrect = userAnswer.toLowerCase().trim() === q.answer.toLowerCase().trim()
+      const isCorrect = isFlexibleMatch(userAnswer, q.answer)
       newResults[idx] = isCorrect
       if (isCorrect) correctCount++
     })
@@ -85,7 +86,7 @@ const FillBlankStep: React.FC<FillBlankStepProps> = ({
 
     try {
       await Promise.all([
-        ...questions.map((q, idx) => 
+        ...questions.map((q, idx) =>
           api.post('/attempts', {
             sessionId,
             step: 'FILL_BLANK',
@@ -129,7 +130,7 @@ const FillBlankStep: React.FC<FillBlankStepProps> = ({
       <div className="flex flex-wrap items-center gap-2 text-lg">
         <span className="text-gray-800">{parts[0]}</span>
         <div className="relative inline-flex items-center">
-          <div 
+          <div
             className={`min-w-[120px] px-4 py-2 border-2 rounded-lg text-center font-medium transition-all ${getBlankStyle(idx)}`}
             onClick={() => !isSubmitted && handleClearAnswer(idx)}
             style={{ cursor: isSubmitted ? 'default' : 'pointer' }}
@@ -201,11 +202,10 @@ const FillBlankStep: React.FC<FillBlankStepProps> = ({
           <div className="space-y-4">
             <h3 className="text-sm font-semibold text-gray-700 mb-4">Điền từ vào chỗ trống (10 câu)</h3>
             {questions.map((question, idx) => (
-              <div 
+              <div
                 key={idx}
-                className={`p-4 rounded-lg border-2 transition-all ${
-                  isSubmitted && !results[idx] ? 'bg-red-50 border-red-200' : 'bg-white border-gray-200'
-                }`}
+                className={`p-4 rounded-lg border-2 transition-all ${isSubmitted && !results[idx] ? 'bg-red-50 border-red-200' : 'bg-white border-gray-200'
+                  }`}
               >
                 <div className="flex items-start gap-3">
                   <div className="font-semibold text-gray-500 min-w-6">{idx + 1}.</div>
