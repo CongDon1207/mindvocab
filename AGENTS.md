@@ -14,7 +14,7 @@
 
 ## 3) File-reading rules (mandatory)
 - Before editing/creating files: read all relevant files in full to understand context.
-- Before starting a new task: read at minimum `README.md`, `HANDOFF.md`, `CHANGELOG.md`, and any relevant files in `docs/*`.
+- Before starting a new task: read at minimum `README.md`, `HANDOFF.md`, `CHANGELOG.md`, stucture.json, and any relevant files in `docs/*`.
 
 ## 4) Skills: discover and load dynamically from `.claude/skills`
 Goal: do not hardcode the skills list in AGENTS.md; always reference dynamically from the repository.

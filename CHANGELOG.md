@@ -1,6 +1,12 @@
 # Changelog
 
 ## [2025-12-30]
+- **Improve**: Skill `structure-index` - Converted to English, added tech stack auto-detection (React, Vue, Node, Python, Go, etc.), custom config support (`.structure-index.json`), `validate_structure.py` for JSON schema validation, better domain detection patterns, and language statistics.
+
+## [2025-12-30]
+- **Add**: Skill `structure-index` at `.claude/skills/structure-index/` - AI architecture analyzer for generating architecture documentation (`docs/structure.md`, `docs/structure.json`). Includes `scan_context.py` script and `design_standards.md` reference.
+- **Add**: AI-optimized architecture documentation at `docs/structure.md` and `docs/structure.json` - Machine-readable index with AI routing rules.
+
 ## [2025-12-30]
 - **Add**: Bảng theo dõi Trí nhớ ("Lịch ôn tập") on Home page. Specifically tracks 100% mastered folders and groups them by SRS retention intervals (3 days, 7 days, 2 weeks, 1 month).
 - **Add**: SRS Review Schedule & Statistics feature. Added a new tab in Folder Detail for "Thống kê & Lịch ôn" with SRS distribution and forecast charts.
