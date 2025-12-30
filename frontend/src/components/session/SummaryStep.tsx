@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { CheckCircle2, XCircle, AlertCircle, RefreshCcw, Home } from 'lucide-react'
+import { CheckCircle2, XCircle, AlertCircle, RefreshCcw, Home, Calendar } from 'lucide-react'
 import api from '@/lib/axios'
 import type { Session } from '@/types/session'
 import type { Word } from '@/types/word'
@@ -29,8 +29,8 @@ const SummaryStep: React.FC<SummaryStepProps> = ({ session }) => {
   const quizPercentage = Math.round((totalQuizScore / totalQuizQuestions) * 100)
 
   const totalFillQuestions = session.fillBlank.questions.length
-  const fillPercentage = totalFillQuestions > 0 
-    ? Math.round((fillBlankScore / totalFillQuestions) * 100) 
+  const fillPercentage = totalFillQuestions > 0
+    ? Math.round((fillBlankScore / totalFillQuestions) * 100)
     : 0
 
   const spellingRounds = session.spelling.rounds
@@ -62,8 +62,8 @@ const SummaryStep: React.FC<SummaryStepProps> = ({ session }) => {
     }
 
     // Tạo session mới từ wrongSet
-    navigate(`/folders/${session.folderId._id}`, { 
-      state: { retryWords: session.wrongSet } 
+    navigate(`/folders/${session.folderId._id}`, {
+      state: { retryWords: session.wrongSet }
     })
   }
 
@@ -93,67 +93,96 @@ const SummaryStep: React.FC<SummaryStepProps> = ({ session }) => {
     }
   }
 
+  // SRS Intervals helper
+  const getNextReviewLabel = (word: Word) => {
+    const stage = word.meta?.stage || 0
+    const intervals = ['Hôm nay', '3 ngày tới', '1 tuần tới', '2 tuần tới', '1 tháng tới', 'Đã thuộc lòng']
+    return intervals[stage] || '3 ngày tới'
+  }
+
+  const totalWords = words.length
+
   return (
     <div className="space-y-6">
       {/* Overall Performance */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-xl">
             <CheckCircle2 className="w-6 h-6 text-green-600" />
             Hoàn thành session!
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Quiz Summary */}
-          <div className="flex justify-between items-center p-4 bg-blue-50 rounded-lg">
-            <div>
-              <p className="text-sm text-gray-600">Quiz (Part 1 + Part 2)</p>
-              <p className="text-2xl font-bold text-blue-600">
-                {totalQuizScore}/{totalQuizQuestions}
-              </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Quiz Summary */}
+            <div className="p-4 bg-blue-50 rounded-xl border border-blue-100">
+              <p className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-1">Quiz</p>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-bold text-blue-700">{quizPercentage}%</span>
+                <span className="text-sm text-blue-500 font-medium">{totalQuizScore}/{totalQuizQuestions}</span>
+              </div>
             </div>
-            <div className="text-right">
-              <p className="text-3xl font-bold text-blue-600">{quizPercentage}%</p>
-              <p className="text-sm text-gray-500">
-                P1: {quizP1Score}/10 | P2: {quizP2Score}/10
-              </p>
+
+            {/* Spelling Summary */}
+            <div className="p-4 bg-purple-50 rounded-xl border border-purple-100">
+              <p className="text-xs font-semibold text-purple-600 uppercase tracking-wider mb-1">Spelling</p>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-bold text-purple-700">{spellingCorrect}</span>
+                <span className="text-sm text-purple-500 font-medium">/{totalWords} đúng</span>
+              </div>
+            </div>
+
+            {/* Fill Blank Summary */}
+            <div className="p-4 bg-green-50 rounded-xl border border-green-100">
+              <p className="text-xs font-semibold text-green-600 uppercase tracking-wider mb-1">Fill Blank</p>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-bold text-green-700">{fillPercentage}%</span>
+                <span className="text-sm text-green-500 font-medium">{fillBlankScore}/{totalFillQuestions}</span>
+              </div>
             </div>
           </div>
+        </CardContent>
+      </Card>
 
-          {/* Spelling Summary */}
-          <div className="flex justify-between items-center p-4 bg-purple-50 rounded-lg">
-            <div>
-              <p className="text-sm text-gray-600">Spelling</p>
-              <p className="text-2xl font-bold text-purple-600">
-                {spellingCorrect} từ đúng
-              </p>
-            </div>
-            <div className="text-right">
-              <p className="text-sm text-gray-500">
-                {spellingRounds}/{session.spelling.maxRounds} vòng
-              </p>
-            </div>
-          </div>
+      {/* SRS Progress Card */}
+      <Card className="border-blue-100 shadow-sm overflow-hidden">
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-blue-100">
+          <h3 className="font-bold text-slate-800 flex items-center gap-2">
+            <Calendar className="w-5 h-5 text-blue-600" />
+            Lộ trình ghi nhớ (Spaced Repetition)
+          </h3>
+        </div>
+        <CardContent className="p-0">
+          <div className="divide-y divide-slate-100">
+            {words.map((word) => {
+              const stage = word.meta?.stage || 0
+              const isInWrongSet = session.wrongSet.includes(word._id)
 
-          {/* Fill Blank Summary */}
-          <div className="flex justify-between items-center p-4 bg-green-50 rounded-lg">
-            <div>
-              <p className="text-sm text-gray-600">Fill in the Blank</p>
-              <p className="text-2xl font-bold text-green-600">
-                {fillBlankScore}/{totalFillQuestions}
-              </p>
-            </div>
-            <div className="text-right">
-              <p className="text-3xl font-bold text-green-600">{fillPercentage}%</p>
-              {inferredQuestionsCount > 0 && (
-                <p className="text-xs text-gray-500 mt-1">
-                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700">
-                    Inferred
-                  </span>
-                  {` ${inferredQuestionsCount} câu`}
-                </p>
-              )}
-            </div>
+              return (
+                <div key={word._id} className="flex items-center justify-between px-6 py-3 hover:bg-slate-50 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-2 h-2 rounded-full ${isInWrongSet ? 'bg-orange-500' : 'bg-green-500'}`} />
+                    <div>
+                      <p className="font-semibold text-slate-900">{word.word}</p>
+                      <p className="text-xs text-slate-500">{word.meaning_vi}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className={`text-sm font-bold ${isInWrongSet ? 'text-orange-600' : 'text-blue-600'}`}>
+                      {isInWrongSet ? 'Cần ôn ngay' : getNextReviewLabel(word)}
+                    </p>
+                    <div className="flex gap-0.5 mt-1 justify-end">
+                      {[1, 2, 3, 4, 5].map((s) => (
+                        <div
+                          key={s}
+                          className={`w-3 h-1 rounded-full ${s <= stage ? 'bg-blue-500' : 'bg-slate-200'}`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
           </div>
         </CardContent>
       </Card>

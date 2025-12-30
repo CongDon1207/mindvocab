@@ -65,7 +65,7 @@ const SessionPage: React.FC = () => {
     }
 
     fetchSession()
-    
+
     // Toast session start
     toast.success('Session bắt đầu!', {
       description: 'Chúc bạn học tập hiệu quả.'
@@ -75,14 +75,14 @@ const SessionPage: React.FC = () => {
   // ========== DATA FETCHING ==========
   const fetchSession = async () => {
     if (!id) return
-    
+
     setLoading(true)
     setError(null)
-    
+
     try {
       const res = await api.get<Session>(`/sessions/${id}`)
       setSession(res.data)
-      
+
       // Sync with server step if no local state or server is ahead
       const savedState = loadLocalState(id)
       if (!savedState || getStepIndex(res.data.step) > getStepIndex(savedState.currentStep)) {
@@ -122,6 +122,17 @@ const SessionPage: React.FC = () => {
     }
   }
 
+  // ========== SERVER SYNC HELPERS ==========
+  const syncSession = async (updates: any) => {
+    if (!id) return
+    try {
+      await api.put(`/sessions/${id}`, updates)
+      console.log('[SESSION] Synced with server:', updates)
+    } catch (err) {
+      console.error('[SESSION] Sync failed:', err)
+    }
+  }
+
   // ========== STATE MACHINE HELPERS ==========
   const getStepIndex = (step: SessionStep): number => {
     return STEP_ORDER.indexOf(step)
@@ -132,21 +143,17 @@ const SessionPage: React.FC = () => {
 
     switch (currentStep) {
       case 'FLASHCARDS':
-        // Require viewing all cards at least once
         return flashcardsCompleted
       case 'QUIZ_PART1':
-        // Require completing quiz part 1
         return quizP1Completed
       case 'QUIZ_PART2':
-        // Require completing quiz part 2
         return quizP2Completed
       case 'SPELLING':
-        // Require completing spelling (rounds >= maxRounds OR wrongSet empty)
         return spellingCompleted
       case 'FILL_BLANK':
         return fillBlankCompleted
       case 'SUMMARY':
-        return false // Cannot proceed from summary
+        return false
       default:
         return false
     }
@@ -159,9 +166,11 @@ const SessionPage: React.FC = () => {
     if (currentIndex < STEP_ORDER.length - 1) {
       const nextStep = STEP_ORDER[currentIndex + 1]
       setCurrentStep(nextStep)
-      if (id) saveLocalState(id, nextStep)
-      
-      // Toast step completion
+      if (id) {
+        saveLocalState(id, nextStep)
+        syncSession({ step: nextStep })
+      }
+
       toast.success(`✅ Hoàn thành ${STEP_LABELS[currentStep]}!`, {
         description: `Chuyển sang ${STEP_LABELS[nextStep]}`
       })
@@ -173,7 +182,10 @@ const SessionPage: React.FC = () => {
     if (currentIndex > 0) {
       const prevStep = STEP_ORDER[currentIndex - 1]
       setCurrentStep(prevStep)
-      if (id) saveLocalState(id, prevStep)
+      if (id) {
+        saveLocalState(id, prevStep)
+        syncSession({ step: prevStep })
+      }
     }
   }
 
@@ -190,7 +202,6 @@ const SessionPage: React.FC = () => {
         description: 'Bắt đầu học 10 từ tiếp theo.'
       })
 
-      // Chuyển hướng đến session mới
       navigate(`/sessions/${newSession._id}`)
     } catch (err: any) {
       toast.error(err.response?.data?.error || 'Không thể tạo session tiếp theo.', {
@@ -207,30 +218,22 @@ const SessionPage: React.FC = () => {
   const isLastStep = currentStepIndex === STEP_ORDER.length - 1
   const continueEnabled = canProceedToNextStep() && !isLastStep
 
-  // ========== RENDER ==========
   if (loading) return <SessionLoading />
   if (error) return <SessionError error={error} />
+  if (!session) return null
 
-  if (!session) {
-    return null
-  }
-
-  const folderIdValue =
-    typeof session.folderId === 'string' ? session.folderId : session.folderId._id
+  const folderIdValue = typeof session.folderId === 'string' ? session.folderId : session.folderId._id
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-4xl mx-auto space-y-6">
-        {/* Header */}
         <SessionHeader
           folderName={session.folderName || session.folderId.name}
           stepLabel={STEP_LABELS[currentStep]}
-          totalWords={session.totalWords || session.wordIds.length}
-          progressPercentage={progressPercentage}
+          folderStats={session.folderId.stats}
           onBackToFolder={() => navigate(`/folders/${folderIdValue}`)}
         />
 
-        {/* Stepper */}
         <SessionStepper
           steps={STEP_ORDER}
           stepLabels={STEP_LABELS}
@@ -238,7 +241,6 @@ const SessionPage: React.FC = () => {
           progressPercentage={progressPercentage}
         />
 
-        {/* Content Area */}
         <SessionContent
           currentStep={currentStep}
           stepLabel={STEP_LABELS[currentStep]}
@@ -246,49 +248,53 @@ const SessionPage: React.FC = () => {
           onFlashcardsComplete={(completed: boolean) => setFlashcardsCompleted(completed)}
           onQuizP1Complete={(score: number, wrongIds: string[]) => {
             setQuizP1Completed(true)
-            // Update session state with new score
             if (session) {
+              const newWrongSet = Array.from(new Set([...session.wrongSet, ...wrongIds]))
               setSession({
                 ...session,
                 quizP1: { ...session.quizP1, score },
-                wrongSet: Array.from(new Set([...session.wrongSet, ...wrongIds]))
+                wrongSet: newWrongSet
               })
+              syncSession({ 'quizP1.score': score, wrongSet: newWrongSet })
             }
           }}
           onQuizP2Complete={(score: number, wrongIds: string[]) => {
             setQuizP2Completed(true)
-            // Update session state with new score
             if (session) {
+              const newWrongSet = Array.from(new Set([...session.wrongSet, ...wrongIds]))
               setSession({
                 ...session,
                 quizP2: { ...session.quizP2, score },
-                wrongSet: Array.from(new Set([...session.wrongSet, ...wrongIds]))
+                wrongSet: newWrongSet
               })
+              syncSession({ 'quizP2.score': score, wrongSet: newWrongSet })
             }
           }}
           onSpellingComplete={(correct: number, rounds: number) => {
             setSpellingCompleted(true)
-            // Update session state with spelling results
             if (session) {
               setSession({
                 ...session,
                 spelling: { ...session.spelling, correct, rounds }
               })
+              syncSession({
+                'spelling.correct': correct,
+                'spelling.rounds': rounds
+              })
             }
           }}
           onFillBlankComplete={(score: number) => {
             setFillBlankCompleted(true)
-            // Update session state with fill-blank score
             if (session) {
               setSession({
                 ...session,
                 fillBlank: { ...session.fillBlank, score }
               })
+              syncSession({ 'fillBlank.score': score })
             }
           }}
         />
 
-        {/* Navigation Controls */}
         <SessionNavigation
           currentStepIndex={currentStepIndex}
           totalSteps={STEP_ORDER.length}

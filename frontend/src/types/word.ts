@@ -21,6 +21,8 @@ export type Word = {
   tags?: string[]
   meta?: {
     difficulty?: number
+    stage?: number
+    nextReviewDate?: string | Date
     lastSeenAt?: Date
     createdBy?: string
   }

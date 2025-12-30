@@ -49,15 +49,37 @@ export const createSession = async (req, res) => {
       return res.status(200).json(recentSession);
     }
 
-    const uniqueWords = await getUniqueFolderWords(folderId);
-    if (uniqueWords.length === 0) {
-      return res.status(400).json({ error: 'Folder không có từ vựng nào' });
+    // 1. Get words due for review or new (stage 0)
+    const srsWords = await Word.find({
+      folderId,
+      $or: [
+        { "meta.nextReviewDate": { $lte: new Date() } },
+        { "meta.stage": { $exists: false } },
+        { "meta.stage": 0 }
+      ]
+    })
+      .sort({ "meta.nextReviewDate": 1, "meta.stage": 1, createdAt: 1 })
+      .limit(10);
+
+    const selectedWords = [...srsWords];
+
+    // 2. If less than 10, fill with remaining words in folder (starting from oldest lastSeenAt)
+    if (selectedWords.length < 10) {
+      const existingIds = selectedWords.map(w => w._id);
+      const needed = 10 - selectedWords.length;
+
+      const fillWords = await Word.find({
+        folderId,
+        _id: { $nin: existingIds }
+      })
+        .sort({ "meta.lastSeenAt": 1, createdAt: 1 })
+        .limit(needed);
+
+      selectedWords.push(...fillWords);
     }
 
-    const selectedWords = uniqueWords.slice(0, 10);
-
-    if (selectedWords.length < 10) {
-      console.warn(`[SESSION] Folder ${folderId} chỉ có ${selectedWords.length} từ unique (< 10)`);
+    if (selectedWords.length === 0) {
+      return res.status(400).json({ error: 'Folder không có từ vựng nào' });
     }
 
     const wordIds = selectedWords.map(w => w._id);
@@ -177,7 +199,7 @@ export const getSession = async (req, res) => {
     const { id } = req.params;
 
     const session = await Session.findById(id)
-      .populate('folderId', 'name description')
+      .populate('folderId', 'name description stats')
       .populate('wordIds', 'word pos meaning_vi ipa note ex1 ex2');
 
     if (!session) {
@@ -188,17 +210,17 @@ export const getSession = async (req, res) => {
     let needsSave = false;
 
     if (!session.quizP1.questions || session.quizP1.questions.length === 0 ||
-        !session.quizP2.questions || session.quizP2.questions.length === 0 ||
-        !session.fillBlank.questions || session.fillBlank.questions.length === 0) {
-      
+      !session.quizP2.questions || session.quizP2.questions.length === 0 ||
+      !session.fillBlank.questions || session.fillBlank.questions.length === 0) {
+
       console.log(`[SESSION] Generating questions for session ${id} (seed: ${session.seed})`);
-      
+
       const questions = await generateAllQuestions(session, session.wordIds);
-      
+
       session.quizP1.questions = questions.quizP1;
       session.quizP2.questions = questions.quizP2;
       session.fillBlank.questions = questions.fillBlank;
-      
+
       needsSave = true;
     }
 
@@ -405,30 +427,33 @@ export const completeSession = async (req, res) => {
 
     let masteredCount = 0;
 
+    // SRS Intervals (in days)
+    const SRS_INTERVALS = [0, 3, 7, 14, 30, 90];
+
     // Lặp qua tất cả words trong session
     for (const wordObj of session.wordIds) {
       const word = await Word.findById(wordObj._id || wordObj);
       if (!word) continue;
 
-      // Cập nhật lastSeenAt
+      // Cập nhật tình trạng chung
       word.meta.lastSeenAt = new Date();
 
-      // Lấy attempts của word này trong session
-      const wordAttempts = await Attempt.find({
-        sessionId: id,
-        wordId: word._id
-      });
-
-      const correctAttempts = wordAttempts.filter(a => a.isCorrect).length;
-      const totalAttempts = wordAttempts.length;
-
-      // Tăng difficulty nếu từ xuất hiện trong wrongSet (sai nhiều)
       const isInWrongSet = session.wrongSet.some(wId => wId.toString() === word._id.toString());
+
       if (isInWrongSet) {
-        word.meta.difficulty = Math.min(word.meta.difficulty + 1, 4); // Max difficulty = 4
-      } else if (totalAttempts > 0 && correctAttempts === totalAttempts) {
-        // Giảm difficulty nếu đúng tất cả
-        word.meta.difficulty = Math.max(word.meta.difficulty - 1, 0); // Min difficulty = 0
+        // Nếu sai: Giảm stage và đặt lịch review ngay lập tức
+        word.meta.difficulty = Math.min(word.meta.difficulty + 1, 4);
+        word.meta.stage = Math.max(0, word.meta.stage - 1);
+        word.meta.nextReviewDate = new Date(); // Review ASAP
+      } else {
+        // Nếu đúng: Tăng stage và tính ngày review tiếp theo
+        word.meta.difficulty = Math.max(word.meta.difficulty - 1, 0);
+        word.meta.stage = Math.min(5, word.meta.stage + 1);
+
+        const daysToAdd = SRS_INTERVALS[word.meta.stage] || 3;
+        const nextDate = new Date();
+        nextDate.setDate(nextDate.getDate() + daysToAdd);
+        word.meta.nextReviewDate = nextDate;
       }
 
       await word.save();
@@ -445,13 +470,21 @@ export const completeSession = async (req, res) => {
       }
     }
 
-    // Cập nhật folder stats
+    // Cập nhật folder stats dựa trên dữ liệu thực tế trong DB
     const folder = await Folder.findById(session.folderId);
     if (folder) {
-      // Tăng mastered count (lưu ý: cần logic phức tạp hơn để tránh đếm trùng nếu retry)
-      folder.stats.mastered = Math.max(folder.stats.mastered, masteredCount);
+      const totalWordsCount = await Word.countDocuments({ folderId: session.folderId });
+      // "Đã thuộc" được tính là những từ đã từng xuất hiện trong session học (có lastSeenAt)
+      const learnedWordsCount = await Word.countDocuments({
+        folderId: session.folderId,
+        "meta.lastSeenAt": { $ne: null }
+      });
+
+      folder.stats.totalWords = totalWordsCount;
+      folder.stats.mastered = learnedWordsCount;
       await folder.save();
-      console.log(`[SESSION] Updated folder ${folder._id} mastered count: ${folder.stats.mastered}`);
+
+      console.log(`[SESSION] Updated folder ${folder._id} stats: ${learnedWordsCount}/${totalWordsCount}`);
     }
 
     console.log(`[SESSION] Completed session ${id}: mastered ${masteredCount}/${session.wordIds.length} words`);

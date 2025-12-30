@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ChevronLeft, ChevronRight, RotateCw, Star } from 'lucide-react'
+import { ChevronLeft, ChevronRight, RotateCw, Star, Volume2 } from 'lucide-react'
 import type { Word } from '@/types/word'
 
 interface FlashcardStepProps {
@@ -23,6 +23,30 @@ const FlashcardStep: React.FC<FlashcardStepProps> = ({ words, onComplete }) => {
   useEffect(() => {
     setViewedCards(prev => new Set(prev).add(currentIndex))
   }, [currentIndex])
+
+  const handleSpeak = (lang: 'en-US' | 'en-GB', e?: React.MouseEvent) => {
+    if (e) e.stopPropagation()
+    if (!('speechSynthesis' in window)) return
+
+    window.speechSynthesis.cancel() // Stop any current speech
+    const utterance = new SpeechSynthesisUtterance(currentWord.word)
+    utterance.lang = lang
+    utterance.rate = 0.9
+
+    // Try to find a specific voice for the language
+    const voices = window.speechSynthesis.getVoices()
+    const matchingVoices = voices.filter(v =>
+      v.lang.toLowerCase().replace('_', '-') === lang.toLowerCase()
+    )
+
+    if (matchingVoices.length > 0) {
+      // Prioritize Google voices if available as they usually sound better
+      const googleVoice = matchingVoices.find(v => v.name.includes('Google'))
+      utterance.voice = googleVoice || matchingVoices[0]
+    }
+
+    window.speechSynthesis.speak(utterance)
+  }
 
   // Check if all cards viewed at least once
   const allCardsViewed = viewedCards.size === totalCards
@@ -71,7 +95,7 @@ const FlashcardStep: React.FC<FlashcardStepProps> = ({ words, onComplete }) => {
   // Render example with [Inferred] badge
   const renderExample = (ex?: { en: string; vi: string; source?: 'user' | 'inferred' }) => {
     if (!ex || !ex.en) return null
-    
+
     return (
       <div className="space-y-2 rounded-lg bg-gray-50 p-4">
         <div className="flex items-start justify-between gap-2">
@@ -103,7 +127,7 @@ const FlashcardStep: React.FC<FlashcardStepProps> = ({ words, onComplete }) => {
 
       {/* Flashcard */}
       <div className="relative h-[420px]" style={{ perspective: '1200px' }}>
-        <div 
+        <div
           className="cursor-pointer relative h-full w-full"
           onClick={handleFlip}
           style={{
@@ -113,14 +137,35 @@ const FlashcardStep: React.FC<FlashcardStepProps> = ({ words, onComplete }) => {
           }}
         >
           {/* Front side - Word info */}
-          <Card 
+          <Card
             className="absolute inset-0 h-full"
             style={{ backfaceVisibility: 'hidden' }}
           >
             <CardContent className="flex h-full flex-col justify-between p-8">
               <div className="space-y-6 text-center">
                 <div className="flex justify-between items-start">
-                  <div className="flex-1" />
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={(e) => handleSpeak('en-US', e)}
+                      className="h-9 px-3 text-xs font-bold border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300 transition-all rounded-full shadow-sm"
+                      title="Giọng Mỹ (US)"
+                    >
+                      <Volume2 className="h-4 w-4 mr-1.5" />
+                      US
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={(e) => handleSpeak('en-GB', e)}
+                      className="h-9 px-3 text-xs font-bold border-slate-200 text-slate-600 hover:bg-slate-50 hover:border-slate-300 transition-all rounded-full shadow-sm"
+                      title="Giọng Anh (UK)"
+                    >
+                      <Volume2 className="h-4 w-4 mr-1.5" />
+                      UK
+                    </Button>
+                  </div>
                   <Button
                     variant="ghost"
                     size="icon"
@@ -155,7 +200,7 @@ const FlashcardStep: React.FC<FlashcardStepProps> = ({ words, onComplete }) => {
           </Card>
 
           {/* Back side - Meaning and examples */}
-          <Card 
+          <Card
             className="absolute inset-0 h-full"
             style={{
               backfaceVisibility: 'hidden',
@@ -164,11 +209,11 @@ const FlashcardStep: React.FC<FlashcardStepProps> = ({ words, onComplete }) => {
           >
             <CardContent className="flex h-full flex-col p-8">
               <div className="flex-1 space-y-5 overflow-y-auto pr-2 min-h-0">
-                  <div className="text-center space-y-2">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-blue-500">
-                      Nghĩa tiếng Việt
-                    </p>
-                    <h3 className="text-3xl font-bold text-gray-900 leading-tight">
+                <div className="text-center space-y-2">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-blue-500">
+                    Nghĩa tiếng Việt
+                  </p>
+                  <h3 className="text-3xl font-bold text-gray-900 leading-tight">
                     {currentWord.meaning_vi}
                   </h3>
                 </div>
@@ -180,9 +225,9 @@ const FlashcardStep: React.FC<FlashcardStepProps> = ({ words, onComplete }) => {
                     </h4>
                     <div className="space-y-3">
                       {renderExample(currentWord.ex1)}
-                    {currentWord.ex2 && currentWord.ex2.en && (
+                      {currentWord.ex2 && currentWord.ex2.en && (
                         renderExample(currentWord.ex2)
-                    )}
+                      )}
                     </div>
                   </div>
                 )}
@@ -227,13 +272,12 @@ const FlashcardStep: React.FC<FlashcardStepProps> = ({ words, onComplete }) => {
                 setCurrentIndex(idx)
                 setIsFlipped(false)
               }}
-              className={`w-2 h-2 rounded-full transition-all ${
-                idx === currentIndex
-                  ? 'bg-blue-600 w-4'
-                  : viewedCards.has(idx)
+              className={`w-2 h-2 rounded-full transition-all ${idx === currentIndex
+                ? 'bg-blue-600 w-4'
+                : viewedCards.has(idx)
                   ? 'bg-blue-300'
                   : 'bg-gray-300'
-              }`}
+                }`}
               aria-label={`Chuyển đến thẻ ${idx + 1}`}
             />
           ))}
