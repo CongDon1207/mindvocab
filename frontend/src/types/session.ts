@@ -1,12 +1,12 @@
 // src/types/session.ts
 import type { Word } from './word'
 
-export type SessionStep = 
-  | 'FLASHCARDS' 
-  | 'QUIZ_PART1' 
-  | 'QUIZ_PART2' 
-  | 'SPELLING' 
-  | 'FILL_BLANK' 
+export type SessionStep =
+  | 'FLASHCARDS'
+  | 'QUIZ_PART1'
+  | 'QUIZ_PART2'
+  | 'SPELLING'
+  | 'FILL_BLANK'
   | 'SUMMARY'
 
 export type SessionProgress = {
@@ -31,6 +31,10 @@ export type Session = {
     _id: string
     name: string
     description?: string
+    stats?: {
+      totalWords: number
+      mastered: number
+    }
   }
   wordIds: Word[] | string[]  // Can be populated or just IDs
   step: SessionStep

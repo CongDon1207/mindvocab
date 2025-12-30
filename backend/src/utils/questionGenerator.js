@@ -38,22 +38,39 @@ class SeededRandom {
 // ========== Helper: Lấy distractor candidates ==========
 async function getDistractors(folderId, targetWordId, targetPOS, count = 3) {
   try {
-    // Ưu tiên từ cùng POS
-    let candidates = await Word.find({
+    let candidates = [];
+    const existingIds = [targetWordId];
+
+    // 1. Ưu tiên từ cùng POS trong folder
+    const samePosInFolder = await Word.find({
       folderId,
-      _id: { $ne: targetWordId },
+      _id: { $nin: existingIds },
       pos: targetPOS
-    }).limit(count * 2); // Lấy nhiều hơn để có buffer
+    }).limit(count * 2);
 
-    // Nếu không đủ, mở rộng ra toàn folder
+    candidates.push(...samePosInFolder);
+    samePosInFolder.forEach(w => existingIds.push(w._id));
+
+    // 2. Nếu thiếu, lấy thêm từ khác POS trong folder
     if (candidates.length < count) {
-      const additional = await Word.find({
+      const needed = count - candidates.length;
+      const otherPosInFolder = await Word.find({
         folderId,
-        _id: { $ne: targetWordId },
-        pos: { $ne: targetPOS }
-      }).limit(count * 2);
+        _id: { $nin: existingIds }
+      }).limit(needed * 2);
 
-      candidates = [...candidates, ...additional];
+      candidates.push(...otherPosInFolder);
+      otherPosInFolder.forEach(w => existingIds.push(w._id));
+    }
+
+    // 3. Nếu vẫn thiếu (Folder quá ít từ), lấy từ bất kỳ folder nào khác (Global fallback)
+    if (candidates.length < count) {
+      const needed = count - candidates.length;
+      const globalUsing = await Word.find({
+        _id: { $nin: existingIds }
+      }).limit(needed * 3); // Lấy dư ra một chút
+
+      candidates.push(...globalUsing);
     }
 
     return candidates;
@@ -163,24 +180,24 @@ function findAndReplaceWordVariant(sentence, targetWord) {
     // 2. Xử lý các phrasal verbs (e.g., "call off")
     // Nếu targetWord là "call off", ta tìm "called off"
     if (targetLower.includes(' ')) {
-        const targetParts = targetLower.split(' ');
-        const firstPart = targetParts[0]; // "call"
-        const rest = targetParts.slice(1).join(' '); // "off"
+      const targetParts = targetLower.split(' ');
+      const firstPart = targetParts[0]; // "call"
+      const rest = targetParts.slice(1).join(' '); // "off"
 
-        // Logic tìm biến thể cho phần đầu của phrasal verb
-        const stem1 = tokenLower.endsWith('ed') ? tokenLower.slice(0, -2) : null; // called -> call
-        const stem2 = tokenLower.endsWith('ing') ? tokenLower.slice(0, -3) : null; // calling -> call
-        const stem3 = tokenLower.endsWith('s') ? tokenLower.slice(0, -1) : null; // calls -> call
+      // Logic tìm biến thể cho phần đầu của phrasal verb
+      const stem1 = tokenLower.endsWith('ed') ? tokenLower.slice(0, -2) : null; // called -> call
+      const stem2 = tokenLower.endsWith('ing') ? tokenLower.slice(0, -3) : null; // calling -> call
+      const stem3 = tokenLower.endsWith('s') ? tokenLower.slice(0, -1) : null; // calls -> call
 
-        if (stem1 === firstPart || stem2 === firstPart || stem3 === firstPart) {
-            // Kiểm tra xem các phần sau có khớp không
-            const nextTokens = tokens.slice(tokens.indexOf(token) + 1, tokens.indexOf(token) + 1 + targetParts.length - 1).join(' ');
-            if (nextTokens.toLowerCase() === rest) {
-                const fullPhrase = `${token} ${nextTokens}`;
-                const clozeSentence = sentence.replace(fullPhrase, '_____');
-                return { found: true, matchedWord: fullPhrase, clozeSentence };
-            }
+      if (stem1 === firstPart || stem2 === firstPart || stem3 === firstPart) {
+        // Kiểm tra xem các phần sau có khớp không
+        const nextTokens = tokens.slice(tokens.indexOf(token) + 1, tokens.indexOf(token) + 1 + targetParts.length - 1).join(' ');
+        if (nextTokens.toLowerCase() === rest) {
+          const fullPhrase = `${token} ${nextTokens}`;
+          const clozeSentence = sentence.replace(fullPhrase, '_____');
+          return { found: true, matchedWord: fullPhrase, clozeSentence };
         }
+      }
     }
 
 
@@ -191,8 +208,8 @@ function findAndReplaceWordVariant(sentence, targetWord) {
     const stem_ing = tokenLower.endsWith('ing') ? tokenLower.slice(0, -3) : null;
 
     if (stem_s === targetLower || stem_ed === targetLower || stem_d === targetLower || stem_ing === targetLower) {
-        const clozeSentence = sentence.replace(new RegExp(`\\b${token}\\b`, 'i'), '_____');
-        return { found: true, matchedWord: token, clozeSentence };
+      const clozeSentence = sentence.replace(new RegExp(`\\b${token}\\b`, 'i'), '_____');
+      return { found: true, matchedWord: token, clozeSentence };
     }
   }
 
@@ -227,23 +244,23 @@ export async function generateFillBlank(session, words) {
     } else {
       // Không có câu ví dụ, tự tạo câu placeholder
       const placeholderSentence = `The word is _____.`;
-      result = { 
-        found: true, 
-        matchedWord: word.word, 
-        clozeSentence: placeholderSentence.replace('_____', `[${word.meaning_vi}]`) 
+      result = {
+        found: true,
+        matchedWord: word.word,
+        clozeSentence: placeholderSentence.replace('_____', `[${word.meaning_vi}]`)
       };
       isInferred = true;
       console.warn(`[FILL_BLANK] Word ${word.word} không có ví dụ, dùng placeholder`);
     }
-    
+
     // Nếu không tìm thấy biến thể, thử lại với regex gốc để đảm bảo không bỏ sót
     if (!result.found && sentence) {
-        const targetRegex = new RegExp(`\\b${word.word}\\b`, 'gi');
-        if(targetRegex.test(sentence)){
-            result.found = true;
-            result.matchedWord = word.word;
-            result.clozeSentence = sentence.replace(targetRegex, '_____');
-        }
+      const targetRegex = new RegExp(`\\b${word.word}\\b`, 'gi');
+      if (targetRegex.test(sentence)) {
+        result.found = true;
+        result.matchedWord = word.word;
+        result.clozeSentence = sentence.replace(targetRegex, '_____');
+      }
     }
 
     matchedWords.push(result.matchedWord);

@@ -1,2 +1,8 @@
 .claude
 .codex
+.env
+.env.*
+!.env.example
+node_modules
+dist
+.DS_Store

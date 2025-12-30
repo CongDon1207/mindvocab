@@ -31,21 +31,25 @@ export async function createFolder(req, res) {
 export async function listFolders(_req, res) {
   try {
     const docs = await Folder.find().sort({ createdAt: -1 });
-    
+
     // Đếm số từ cho mỗi folder
     const foldersWithStats = await Promise.all(
       docs.map(async (folder) => {
         const totalWords = await Word.countDocuments({ folderId: folder._id });
+        const mastered = await Word.countDocuments({
+          folderId: folder._id,
+          "meta.lastSeenAt": { $ne: null }
+        });
         return {
           ...folder.toObject(),
           stats: {
             totalWords,
-            mastered: 0 // TODO: tính sau khi có learning progress
+            mastered
           }
         };
       })
     );
-    
+
     return res.json(foldersWithStats);
   } catch (err) {
     return res.status(500).json({
@@ -68,13 +72,17 @@ export async function getFolderById(req, res) {
 
     // Đếm số từ vựng trong folder
     const totalWords = await Word.countDocuments({ folderId: folder._id });
+    const mastered = await Word.countDocuments({
+      folderId: folder._id,
+      "meta.lastSeenAt": { $ne: null }
+    });
 
     // Trả về folder + stats
     return res.json({
       ...folder.toObject(),
       stats: {
         totalWords,
-        mastered: 0 // TODO: tính sau khi có learning progress
+        mastered
       }
     });
   } catch (err) {
@@ -85,8 +93,8 @@ export async function getFolderById(req, res) {
   }
 }
 
-export async function updateFolder(req, res){
-  try{
+export async function updateFolder(req, res) {
+  try {
     const id = req.params.id;
     const name = (req.body?.name || '').trim();
     const description = (req.body?.description || '').trim();
@@ -100,7 +108,7 @@ export async function updateFolder(req, res){
       return res.status(404).json({ error: 'Không tìm thấy thư mục để cập nhật.' });
     }
     return res.json(updatedFolder);
-  }catch(error){
+  } catch (error) {
     return res.status(500).json({
       error: 'Cập nhật thư mục thất bại.',
       detail: error.message,

@@ -25,6 +25,8 @@ const WordSchema = new mongoose.Schema({
   },
   meta: {
     difficulty: { type: Number, default: 0 },      // 0–2–4 ...
+    stage: { type: Number, default: 0 },           // SRS stage 0-5
+    nextReviewDate: { type: Date, default: Date.now },
     lastSeenAt: { type: Date },
     createdBy: { type: String, default: 'user' }
   }
