@@ -1,8 +1,9 @@
-import { FolderList, CreateFolderDialog } from '@/components/folder'
+import { FolderList, CreateFolderDialog, ReviewDashboard, type FolderReviewStats } from '@/components/folder'
 import type { Folder, CreateFolderValues } from '@/components/folder'
 import { Button } from '@/components/ui/button'
 import React, { useEffect, useState } from 'react'
 import api from '@/lib/axios'
+import { LayoutGrid, CalendarClock } from 'lucide-react'
 
 const Folder: React.FC = () => {
   // ========== STATE MANAGEMENT ==========
@@ -23,22 +24,39 @@ const Folder: React.FC = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [editingFolder, setEditingFolder] = useState<Folder | null>(null)
 
+  const [activeTab, setActiveTab] = useState<'list' | 'review'>('list')
+  const [reviewDashboardData, setReviewDashboardData] = useState<FolderReviewStats[]>([])
+  const [dashboardLoading, setDashboardLoading] = useState(false)
+
   // ========== LIFECYCLE ==========
   // Tải danh sách folder khi component mount
   useEffect(() => {
-    const fetchFolders = async () => {
-      try {
-        const res = await api.get<Folder[]>("/folders")
-        // Defensive: đảm bảo luôn là array
-        const data = Array.isArray(res.data) ? res.data : []
-        setFolders(data)
-      } catch (error) {
-        console.error("Lỗi khi tải danh sách folder:", error)
-        setFolders([])
-      }
-    }
     fetchFolders()
+    fetchReviewDashboard()
   }, [])
+
+  const fetchFolders = async () => {
+    try {
+      const res = await api.get<Folder[]>("/folders")
+      const data = Array.isArray(res.data) ? res.data : []
+      setFolders(data)
+    } catch (error) {
+      console.error("Lỗi khi tải danh sách folder:", error)
+      setFolders([])
+    }
+  }
+
+  const fetchReviewDashboard = async () => {
+    setDashboardLoading(true)
+    try {
+      const res = await api.get<FolderReviewStats[]>("/folders/review-dashboard")
+      setReviewDashboardData(res.data)
+    } catch (error) {
+      console.error("Lỗi khi tải dashboard ôn tập:", error)
+    } finally {
+      setDashboardLoading(false)
+    }
+  }
 
   // ========== HANDLERS - PHÂN TRANG ==========
   const handlePrevPage = () => setCurrentPage(prev => Math.max(1, prev - 1))
@@ -112,37 +130,69 @@ const Folder: React.FC = () => {
         </div>
       </div>
 
-      {/* Danh sách folders */}
-      <FolderList 
-        folders={currentFolders} 
-        onCreate={handleOpenCreateDialog}
-        onDelete={handleDeleteFolder}
-        onEdit={handleOpenEditDialog}
-      />
+      <div className="flex gap-2 p-1 bg-slate-100 w-fit rounded-2xl border border-slate-200">
+        <button
+          onClick={() => setActiveTab('list')}
+          className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all ${activeTab === 'list'
+            ? 'bg-white text-blue-600 shadow-sm'
+            : 'text-slate-500 hover:text-slate-700'
+            }`}
+        >
+          <LayoutGrid className="h-4 w-4" />
+          Thư mục của bạn
+        </button>
+        <button
+          onClick={() => setActiveTab('review')}
+          className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm transition-all relative ${activeTab === 'review'
+            ? 'bg-white text-blue-600 shadow-sm'
+            : 'text-slate-500 hover:text-slate-700'
+            }`}
+        >
+          <CalendarClock className="h-4 w-4" />
+          Lịch ôn tập
+          {reviewDashboardData.some(f => f.category === 'overdue') && (
+            <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-500 rounded-full border-2 border-slate-100"></span>
+          )}
+        </button>
+      </div>
 
-      {/* Điều khiển phân trang */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-4 pt-4">
-          <Button 
-            variant="outline" 
-            onClick={handlePrevPage} 
-            disabled={currentPage === 1}
-            className="shadow-sm"
-          >
-            ← Trang trước
-          </Button>
-          <span className="px-4 py-2 rounded-lg bg-white shadow-sm border border-slate-200 text-sm font-medium text-slate-700">
-            {currentPage} / {totalPages}
-          </span>
-          <Button 
-            variant="outline" 
-            onClick={handleNextPage} 
-            disabled={currentPage === totalPages}
-            className="shadow-sm"
-          >
-            Trang sau →
-          </Button>
-        </div>
+      {activeTab === 'list' ? (
+        <>
+          {/* Danh sách folders */}
+          <FolderList
+            folders={currentFolders}
+            onCreate={handleOpenCreateDialog}
+            onDelete={handleDeleteFolder}
+            onEdit={handleOpenEditDialog}
+          />
+
+          {/* Điều khiển phân trang */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-4 pt-4">
+              <Button
+                variant="outline"
+                onClick={handlePrevPage}
+                disabled={currentPage === 1}
+                className="shadow-sm"
+              >
+                ← Trang trước
+              </Button>
+              <span className="px-4 py-2 rounded-lg bg-white shadow-sm border border-slate-200 text-sm font-medium text-slate-700">
+                {currentPage} / {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                onClick={handleNextPage}
+                disabled={currentPage === totalPages}
+                className="shadow-sm"
+              >
+                Trang sau →
+              </Button>
+            </div>
+          )}
+        </>
+      ) : (
+        <ReviewDashboard data={reviewDashboardData} loading={dashboardLoading} />
       )}
 
       {/* Dialog tạo folder mới */}

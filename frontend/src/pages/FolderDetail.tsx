@@ -1,252 +1,42 @@
 // src/pages/FolderDetail.tsx
-import React, { useEffect, useState } from 'react'
-import { useParams, useNavigate, useLocation } from 'react-router'
+import React, { useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import api from '@/lib/axios'
-import { WordFormDialog, WordsTable } from '@/components/word'
-import { UploadWordsDialog, ImportStatusDrawer } from '@/components/import'
+import { WordsTable } from '@/components/word'
 import {
   FolderDetailHeader,
   FolderWordFilters,
   FolderPagination,
-  type Folder,
+  FolderStatsView,
+  FolderModals,
 } from '@/components/folder'
-import type { Word, GetWordsResponse, WordFormValues } from '@/types/word'
-import type { ImportJob } from '@/types/import'
-import { toast } from 'sonner'
+import { useFolderDetail } from '@/hooks/useFolderDetail'
+import { LayoutGrid, BarChart3 } from 'lucide-react'
 
 const FolderDetail: React.FC = () => {
-  const { id } = useParams<{ id: string }>()
-  const navigate = useNavigate()
-  const location = useLocation()
+  const {
+    id, folder, words, total, loading, error, page, totalPages, limit,
+    searchQuery, posFilter, isAddDialogOpen, editingWord, isUploadDialogOpen, isImportDrawerOpen,
+    activeJobId, enrichingIds, activeTab, folderStats, statsLoading,
+    setPage, setSearchQuery, setPosFilter, setIsAddDialogOpen, setEditingWord, setIsUploadDialogOpen,
+    setIsImportDrawerOpen, setActiveTab, handleAddWord, handleUpdateWord, handleDeleteWord,
+    handleEnrichWord, handleStartLearning, handleStartRetrySession,
+    handleImportJobCreated, handleJobFinished, navigate, location
+  } = useFolderDetail()
 
-  const [folder, setFolder] = useState<Folder | null>(null)
-  const [words, setWords] = useState<Word[]>([])
-  const [total, setTotal] = useState(0)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  const [page, setPage] = useState(1)
-  const [limit] = useState(20)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [posFilter, setPosFilter] = useState('')
-
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
-  const [editingWord, setEditingWord] = useState<Word | null>(null)
-  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false)
-  const [isImportDrawerOpen, setIsImportDrawerOpen] = useState(false)
-  const [activeJobId, setActiveJobId] = useState<string | null>(null)
-  const [enrichingIds, setEnrichingIds] = useState<string[]>([])
-
-  useEffect(() => {
-    if (!id) return
-    fetchFolder()
-    fetchWords()
-  }, [id, page, searchQuery, posFilter])
-
-  // Handle retry session from summary
+  // Handle retry session from individual summary redirections
   useEffect(() => {
     const retryWords = location.state?.retryWords
     if (retryWords && Array.isArray(retryWords) && retryWords.length > 0) {
-      // Clear state to prevent re-triggering on refresh or back navigation
       navigate(location.pathname, { replace: true, state: {} })
       handleStartRetrySession(retryWords)
     }
-  }, [location.state, id, navigate])
-
-  const fetchFolder = async () => {
-    try {
-      const res = await api.get<Folder>(`/folders/${id}`)
-      setFolder(res.data)
-    } catch (err: any) {
-      setError('Không tìm thấy folder.')
-      console.error(err)
-    }
-  }
-
-  const fetchWords = async () => {
-    if (!id) return
-    setLoading(true)
-    setError(null)
-    try {
-      const skip = (page - 1) * limit
-      const params: any = { skip, limit }
-      if (searchQuery) params.q = searchQuery
-      if (posFilter) params.pos = posFilter
-
-      const res = await api.get<GetWordsResponse>(`/folders/${id}/words`, { params })
-      // Defensive: đảm bảo words luôn là array
-      setWords(Array.isArray(res.data?.words) ? res.data.words : [])
-      setTotal(res.data?.total || 0)
-    } catch (err: any) {
-      setError('Không thể tải danh sách từ.')
-      setWords([]) // Reset về empty array khi lỗi
-      setTotal(0)
-      console.error(err)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleSearch = (value: string) => {
-    setSearchQuery(value)
-    setPage(1)
-  }
-
-  const handlePosFilter = (value: string) => {
-    setPosFilter(value)
-    setPage(1)
-  }
-
-  const handleAddWord = async (values: WordFormValues) => {
-    try {
-      const payload: any = {
-        folderId: id,
-        word: values.word,
-        pos: values.pos,
-        meaning_vi: values.meaning_vi,
-        ipa: values.ipa,
-        note: values.note,
-      }
-      // Chỉ thêm ex1/ex2 nếu có cả en và vi
-      if (values.ex1_en && values.ex1_vi) {
-        payload.ex1 = { en: values.ex1_en, vi: values.ex1_vi, source: 'user' }
-      }
-      if (values.ex2_en && values.ex2_vi) {
-        payload.ex2 = { en: values.ex2_en, vi: values.ex2_vi, source: 'user' }
-      }
-      
-      await api.post('/words', payload)
-      setIsAddDialogOpen(false)
-      fetchWords()
-      fetchFolder() // cập nhật totalWords
-      alert('Thêm từ thành công!')
-    } catch (err: any) {
-      alert(err.response?.data?.error || 'Không thể thêm từ.')
-    }
-  }
-
-  const handleUpdateWord = async (wordId: string, values: WordFormValues) => {
-    try {
-      const payload: any = {
-        word: values.word,
-        pos: values.pos,
-        meaning_vi: values.meaning_vi,
-        ipa: values.ipa,
-        note: values.note,
-      }
-      // Chỉ thêm ex1/ex2 nếu có cả en và vi
-      if (values.ex1_en && values.ex1_vi) {
-        payload.ex1 = { en: values.ex1_en, vi: values.ex1_vi, source: 'user' }
-      }
-      if (values.ex2_en && values.ex2_vi) {
-        payload.ex2 = { en: values.ex2_en, vi: values.ex2_vi, source: 'user' }
-      }
-      
-      await api.put(`/words/${wordId}`, payload)
-      setEditingWord(null)
-      fetchWords()
-      alert('Cập nhật từ thành công!')
-    } catch (err: any) {
-      alert(err.response?.data?.error || 'Không thể cập nhật từ.')
-    }
-  }
-
-  const handleDeleteWord = async (wordId: string) => {
-    if (!confirm('Bạn chắc chắn muốn xóa từ này?')) return
-    try {
-      await api.delete(`/words/${wordId}`)
-      fetchWords()
-      fetchFolder()
-      alert('Xóa từ thành công!')
-    } catch (err: any) {
-      alert(err.response?.data?.error || 'Không thể xóa từ.')
-    }
-  }
-
-  const handleEnrichWord = async (wordId: string) => {
-    setEnrichingIds((prev) => [...prev, wordId])
-    try {
-      const res = await api.post(`/words/${wordId}/enrich`)
-      toast.success(res.data.message || 'Đã bổ sung thông tin cho từ.', {
-        description: res.data.enrichedFields?.length 
-          ? `Đã cập nhật: ${res.data.enrichedFields.join(', ')}`
-          : undefined
-      })
-      fetchWords()
-    } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Không thể bổ sung thông tin.')
-    } finally {
-      setEnrichingIds((prev) => prev.filter((id) => id !== wordId))
-    }
-  }
-
-  const handleStartLearning = async () => {
-    if (!id) return
-    
-    if (!folder?.stats?.totalWords || folder.stats.totalWords === 0) {
-      alert('Folder chưa có từ vựng nào. Vui lòng thêm từ trước khi bắt đầu học.')
-      return
-    }
-
-    try {
-      // Create new session
-      const res = await api.post('/sessions', { folderId: id })
-      const sessionId = res.data._id
-      
-      // Navigate to session page
-      navigate(`/sessions/${sessionId}`)
-    } catch (err: any) {
-      alert(err.response?.data?.error || 'Không thể tạo session học.')
-      console.error(err)
-    }
-  }
-
-  const handleStartRetrySession = async (wordIds: string[]) => {
-    if (!id) return
-    toast.info('Đang tạo session ôn tập cho các từ sai...')
-    try {
-      // Create new session with specific words
-      const res = await api.post('/sessions', { folderId: id, wordIds })
-      const sessionId = res.data._id
-
-      // Navigate to session page
-      navigate(`/sessions/${sessionId}`)
-    } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Không thể tạo session ôn tập.')
-      console.error(err)
-    }
-  }
-
-  const handleImportJobCreated = (jobId: string) => {
-    setActiveJobId(jobId)
-    setIsImportDrawerOpen(true)
-    toast('Đang xử lý import', {
-      description: `Job #${jobId} đang chạy ở nền.`,
-    })
-  }
-
-  const handleJobFinished = (job: ImportJob) => {
-    if (job.status === 'DONE') {
-      toast.success('Import hoàn tất', {
-        description: `Đã nhập ${job.counters.parsedOk} dòng (AI bổ sung ${job.counters.enrichedOk}).`,
-      })
-    } else {
-      toast.error('Import thất bại', {
-        description: 'Vui lòng xem báo cáo để biết chi tiết lỗi.',
-      })
-    }
-    fetchWords()
-    fetchFolder()
-  }
-
-  const totalPages = Math.ceil(total / limit)
+  }, [location.state, id, navigate, handleStartRetrySession])
 
   if (error && !folder) {
     return (
       <div className="min-h-screen p-8 flex flex-col items-center justify-center">
         <p className="text-red-600 mb-4">{error}</p>
-        <Button onClick={() => navigate('/folders')}>Quay lại danh sách folder</Button>
+        <Button onClick={() => navigate('/')}>Quay lại danh sách folder</Button>
       </div>
     )
   }
@@ -265,79 +55,78 @@ const FolderDetail: React.FC = () => {
 
         <FolderWordFilters
           searchQuery={searchQuery}
-          onSearch={handleSearch}
+          onSearch={setSearchQuery}
           posFilter={posFilter}
-          onPosChange={handlePosFilter}
+          onPosChange={setPosFilter}
         />
 
-        {/* Words Table */}
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <WordsTable
-            words={words}
-            loading={loading}
-            searchQuery={searchQuery}
-            posFilter={posFilter}
-            onEdit={setEditingWord}
-            onDelete={handleDeleteWord}
-            onEnrich={handleEnrichWord}
-            enrichingIds={enrichingIds}
-          />
-
-          {!loading && words.length > 0 && (
-            <FolderPagination
-              page={page}
-              totalPages={totalPages}
-              total={total}
-              limit={limit}
-              onPageChange={setPage}
-            />
-          )}
+        {/* Tab Switcher */}
+        <div className="flex gap-2 mb-6 p-1 bg-gray-100/80 w-fit rounded-lg border border-gray-200">
+          <button
+            onClick={() => setActiveTab('words')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-md transition-all text-sm font-bold ${activeTab === 'words'
+                ? 'bg-white text-blue-600 shadow-sm'
+                : 'text-gray-500 hover:text-gray-700'
+              }`}
+          >
+            <LayoutGrid className="h-4 w-4" />
+            Danh sách từ
+          </button>
+          <button
+            onClick={() => setActiveTab('stats')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-md transition-all text-sm font-bold ${activeTab === 'stats'
+                ? 'bg-white text-blue-600 shadow-sm'
+                : 'text-gray-500 hover:text-gray-700'
+              }`}
+          >
+            <BarChart3 className="h-4 w-4" />
+            Thống kê & Lịch ôn
+          </button>
         </div>
+
+        {activeTab === 'words' ? (
+          <div className="bg-white rounded-lg shadow overflow-hidden">
+            <WordsTable
+              words={words}
+              loading={loading}
+              searchQuery={searchQuery}
+              posFilter={posFilter}
+              onEdit={setEditingWord}
+              onDelete={handleDeleteWord}
+              onEnrich={handleEnrichWord}
+              enrichingIds={enrichingIds}
+            />
+
+            {!loading && words.length > 0 && (
+              <FolderPagination
+                page={page}
+                totalPages={totalPages}
+                total={total}
+                limit={limit}
+                onPageChange={setPage}
+              />
+            )}
+          </div>
+        ) : (
+          <FolderStatsView stats={folderStats} loading={statsLoading} />
+        )}
       </div>
 
-      {/* Add Word Dialog */}
-      <WordFormDialog
-        open={isAddDialogOpen}
-        onOpenChange={setIsAddDialogOpen}
-        onSubmit={handleAddWord}
-        title="Thêm từ mới"
-        submitButtonText="Thêm"
-      />
-
-      {/* Edit Word Dialog */}
-      {editingWord && (
-        <WordFormDialog
-          open={!!editingWord}
-          onOpenChange={(open) => !open && setEditingWord(null)}
-          onSubmit={(values) => handleUpdateWord(editingWord._id, values)}
-          defaultValues={{
-            word: editingWord.word,
-            pos: editingWord.pos,
-            meaning_vi: editingWord.meaning_vi,
-            ipa: editingWord.ipa || '',
-            note: editingWord.note || '',
-            ex1_en: editingWord.ex1?.en || '',
-            ex1_vi: editingWord.ex1?.vi || '',
-            ex2_en: editingWord.ex2?.en || '',
-            ex2_vi: editingWord.ex2?.vi || '',
-          }}
-          title="Chỉnh sửa từ"
-          submitButtonText="Lưu"
-        />
-      )}
-
-      <UploadWordsDialog
-        open={isUploadDialogOpen}
-        onOpenChange={setIsUploadDialogOpen}
-        folderId={id!}
-        onJobCreated={handleImportJobCreated}
-      />
-
-      <ImportStatusDrawer
-        open={isImportDrawerOpen}
-        onOpenChange={setIsImportDrawerOpen}
-        jobId={activeJobId}
-        onJobFinished={handleJobFinished}
+      <FolderModals
+        id={id}
+        isAddDialogOpen={isAddDialogOpen}
+        setIsAddDialogOpen={setIsAddDialogOpen}
+        editingWord={editingWord}
+        setEditingWord={setEditingWord}
+        isUploadDialogOpen={isUploadDialogOpen}
+        setIsUploadDialogOpen={setIsUploadDialogOpen}
+        isImportDrawerOpen={isImportDrawerOpen}
+        setIsImportDrawerOpen={setIsImportDrawerOpen}
+        activeJobId={activeJobId}
+        handleAddWord={handleAddWord}
+        handleUpdateWord={handleUpdateWord}
+        handleImportJobCreated={handleImportJobCreated}
+        handleJobFinished={handleJobFinished}
       />
     </div>
   )
