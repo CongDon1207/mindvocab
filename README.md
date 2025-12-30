@@ -172,8 +172,6 @@ run
 7.  **tags:** Related tags (TOEIC, Business, Marketing, Daily...).
 ```
 
-**Lưu ý:** Sau khi AI tạo bảng, bạn chỉ cần copy cột `word` vào cột `Term` trong file Excel mẫu, `meaning_vi` vào `Definition`, `pos` vào `Type`, v.v. để nhập vào ứng dụng.
-
----
+**Lưu ý:** Sau khi AI tạo bảng, bạn chỉ cần copy bảng rồi đưa vào file excel là có 1 file chuẩn format, với file excel này bạn có thể đưa vào thư mục học từ vựng
 
 
