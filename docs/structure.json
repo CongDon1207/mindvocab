@@ -1,0 +1,271 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "meta": {
+    "version": "1.0.0",
+    "lastUpdated": "2025-12-30",
+    "projectName": "mindvocab",
+    "description": "AI routing index for MindVocab (React + Express + MongoDB + SRS)."
+  },
+  "techStack": {
+    "frontend": {
+      "framework": "React 19",
+      "language": "TypeScript",
+      "buildTool": "Vite",
+      "styling": "Tailwind CSS v4 + shadcn/ui (Radix)"
+    },
+    "backend": {
+      "runtime": "Node.js (ESM)",
+      "framework": "Express",
+      "database": "MongoDB (Mongoose)"
+    }
+  },
+  "directories": {
+    "backend": {
+      "path": "/backend",
+      "role": "API + SRS engine",
+      "description": "Express server, models, import pipeline, AI providers.",
+      "aiPriority": "high",
+      "children": {
+        "src": {
+          "path": "/backend/src",
+          "role": "Backend source",
+          "aiPriority": "high",
+          "children": {
+            "controllers": {
+              "path": "/backend/src/controllers",
+              "role": "HTTP handlers",
+              "aiPriority": "high"
+            },
+            "routes": {
+              "path": "/backend/src/routes",
+              "role": "Express routers",
+              "aiPriority": "high"
+            },
+            "model": {
+              "path": "/backend/src/model",
+              "role": "Mongoose models",
+              "aiPriority": "high"
+            },
+            "services": {
+              "path": "/backend/src/services",
+              "role": "Business logic",
+              "aiPriority": "high"
+            },
+            "utils": {
+              "path": "/backend/src/utils",
+              "role": "Parsing/helpers",
+              "aiPriority": "medium"
+            }
+          }
+        }
+      }
+    },
+    "frontend": {
+      "path": "/frontend",
+      "role": "Web UI",
+      "description": "React pages/components, typed API contracts.",
+      "aiPriority": "high",
+      "children": {
+        "src": {
+          "path": "/frontend/src",
+          "role": "Frontend source",
+          "aiPriority": "high",
+          "children": {
+            "pages": {
+              "path": "/frontend/src/pages",
+              "role": "Route pages",
+              "aiPriority": "high"
+            },
+            "components": {
+              "path": "/frontend/src/components",
+              "role": "UI components",
+              "aiPriority": "high"
+            },
+            "types": {
+              "path": "/frontend/src/types",
+              "role": "TypeScript types",
+              "aiPriority": "high"
+            },
+            "lib": {
+              "path": "/frontend/src/lib",
+              "role": "Shared client libs",
+              "aiPriority": "medium"
+            },
+            "hooks": {
+              "path": "/frontend/src/hooks",
+              "role": "Custom hooks",
+              "aiPriority": "medium"
+            }
+          }
+        }
+      }
+    },
+    "docs": {
+      "path": "/docs",
+      "role": "Documentation",
+      "description": "Project overview, import formats, architecture index.",
+      "aiPriority": "medium"
+    },
+    "template": {
+      "path": "/template",
+      "role": "Import templates",
+      "description": "Sample files for bulk import.",
+      "aiPriority": "low"
+    },
+    "claude": {
+      "path": "/.claude",
+      "role": "AI skills",
+      "description": "Internal agent workflows and scripts.",
+      "aiPriority": "low"
+    },
+    "codex": {
+      "path": "/.codex",
+      "role": "AI skills",
+      "description": "Internal agent workflows and scripts.",
+      "aiPriority": "low"
+    }
+  },
+  "domains": {
+    "folder": {
+      "description": "Folder CRUD + stats + review dashboard.",
+      "backendModel": "backend/src/model/Folder.js",
+      "frontendType": "frontend/src/types/folder.ts",
+      "controller": "backend/src/controllers/folderController.js",
+      "route": "backend/src/routes/folderRoute.js",
+      "page": "frontend/src/pages/Folder.tsx",
+      "components": "frontend/src/components/folder/"
+    },
+    "word": {
+      "description": "Word CRUD + AI enrich per word.",
+      "backendModel": "backend/src/model/Word.js",
+      "frontendType": "frontend/src/types/word.ts",
+      "controller": "backend/src/controllers/wordController.js",
+      "route": "backend/src/routes/wordRoute.js",
+      "components": "frontend/src/components/word/"
+    },
+    "session": {
+      "description": "10-word sessions + question generation + completion.",
+      "backendModel": "backend/src/model/Session.js",
+      "frontendType": "frontend/src/types/session.ts",
+      "controller": "backend/src/controllers/sessionController.js",
+      "route": "backend/src/routes/sessionRoute.js",
+      "page": "frontend/src/pages/Session.tsx",
+      "components": "frontend/src/components/session/",
+      "services": ["backend/src/utils/questionGenerator.js"]
+    },
+    "attempt": {
+      "description": "Per-step attempts recorded for sessions.",
+      "backendModel": "backend/src/model/Attempt.js",
+      "controller": "backend/src/controllers/sessionController.js",
+      "route": "backend/src/routes/sessionRoute.js",
+      "services": ["backend/src/controllers/sessionController.js"]
+    },
+    "importJob": {
+      "description": "Background import job lifecycle (parse/enrich/save).",
+      "backendModel": "backend/src/model/ImportJob.js",
+      "frontendType": "frontend/src/types/import.ts",
+      "controller": "backend/src/controllers/importJobController.js",
+      "route": "backend/src/routes/importJobRoute.js",
+      "components": "frontend/src/components/import/",
+      "services": ["backend/src/services/importJobService.js", "backend/src/services/importPipeline.js", "backend/src/utils/importParsers.js", "backend/src/services/importEnrich.js", "backend/src/services/importSave.js"]
+    },
+    "aiEnrichment": {
+      "description": "AI provider chain for vocabulary enrichment.",
+      "services": ["backend/src/services/aiProviders.js", "backend/src/services/providers/geminiProvider.js"]
+    },
+    "srs": {
+      "description": "SRS scheduling using stage + nextReviewDate.",
+      "services": ["backend/src/controllers/sessionController.js", "backend/src/controllers/folderController.js"]
+    }
+  },
+  "aiRouting": {
+    "rules": [
+      {
+        "pattern": "import|upload|xlsx|txt|ImportJob|ENRICHING|PARSING",
+        "targets": ["backend/src/routes/importJobRoute.js", "backend/src/controllers/importJobController.js", "backend/src/services/importJobService.js", "backend/src/services/importPipeline.js", "backend/src/utils/importParsers.js", "backend/src/services/importEnrich.js", "backend/src/services/providers/geminiProvider.js", "frontend/src/types/import.ts", "frontend/src/components/import/"],
+        "priority": 1
+      },
+      {
+        "pattern": "session|quiz|spelling|fill|attempt|questionGenerator",
+        "targets": ["backend/src/routes/sessionRoute.js", "backend/src/controllers/sessionController.js", "backend/src/utils/questionGenerator.js", "backend/src/model/Session.js", "backend/src/model/Attempt.js", "frontend/src/pages/Session.tsx", "frontend/src/types/session.ts", "frontend/src/components/session/"],
+        "priority": 1
+      },
+      {
+        "pattern": "srs|review|stage|nextReviewDate|mastery|forecast|review-dashboard",
+        "targets": ["backend/src/controllers/sessionController.js", "backend/src/controllers/folderController.js", "backend/src/model/Word.js", "frontend/src/types/folder.ts", "frontend/src/pages/Folder.tsx", "frontend/src/pages/FolderDetail.tsx", "frontend/src/hooks/useFolderDetail.ts"],
+        "priority": 2
+      },
+      {
+        "pattern": "folder|FolderDetail|pagination|filter",
+        "targets": ["backend/src/routes/folderRoute.js", "backend/src/controllers/folderController.js", "frontend/src/pages/Folder.tsx", "frontend/src/pages/FolderDetail.tsx", "frontend/src/components/folder/", "frontend/src/hooks/useFolderDetail.ts", "frontend/src/types/folder.ts"],
+        "priority": 2
+      },
+      {
+        "pattern": "word|WordsTable|enrichWord|meaning_vi|ipa|pos",
+        "targets": ["backend/src/routes/wordRoute.js", "backend/src/controllers/wordController.js", "backend/src/model/Word.js", "frontend/src/components/word/WordsTable.tsx", "frontend/src/components/word/WordFormDialog.tsx", "frontend/src/types/word.ts"],
+        "priority": 2
+      },
+      {
+        "pattern": "axios|baseURL|api client|http",
+        "targets": ["frontend/src/lib/axios.ts", "backend/src/server.js"],
+        "priority": 3
+      },
+      {
+        "pattern": "ui|shadcn|radix|tailwind|button|dialog|dropdown",
+        "targets": ["frontend/src/components/ui/", "frontend/src/index.css"],
+        "priority": 4
+      }
+    ],
+    "contextPriority": ["README.md", "docs/PROJECT_OVERVIEW.md", "HANDOFF.md", "docs/structure.md", "docs/structure.json", "CHANGELOG.md"]
+  },
+  "syncRequired": [
+    {
+      "source": "backend/src/model/Word.js",
+      "target": "frontend/src/types/word.ts",
+      "description": "Word shape + meta fields"
+    },
+    {
+      "source": "backend/src/model/Folder.js",
+      "target": "frontend/src/types/folder.ts",
+      "description": "Folder shape + stats"
+    },
+    {
+      "source": "backend/src/model/Session.js",
+      "target": "frontend/src/types/session.ts",
+      "description": "Session step + questions"
+    },
+    {
+      "source": "backend/src/model/ImportJob.js",
+      "target": "frontend/src/types/import.ts",
+      "description": "Import job status/progress/report"
+    },
+    {
+      "source": "backend/src/server.js",
+      "target": "frontend/src/lib/axios.ts",
+      "description": "API base path /api and port"
+    }
+  ],
+  "criticalPaths": {
+    "import_job": [
+      "backend/src/routes/importJobRoute.js",
+      "backend/src/controllers/importJobController.js",
+      "backend/src/services/importJobService.js",
+      "backend/src/services/importPipeline.js",
+      "backend/src/utils/importParsers.js",
+      "backend/src/services/importEnrich.js",
+      "backend/src/services/importSave.js"
+    ],
+    "study_session": [
+      "backend/src/routes/sessionRoute.js",
+      "backend/src/controllers/sessionController.js",
+      "backend/src/utils/questionGenerator.js",
+      "frontend/src/pages/Session.tsx",
+      "frontend/src/components/session/"
+    ],
+    "folder_stats": [
+      "backend/src/routes/folderRoute.js",
+      "backend/src/controllers/folderController.js",
+      "frontend/src/pages/FolderDetail.tsx"
+    ]
+  }
+}

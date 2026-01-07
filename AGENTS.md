@@ -1,4 +1,4 @@
-# AGENTS.md - Working Conventions
+﻿# AGENTS.md - Working Conventions
 
 > **Philosophy**: Zero-preload. Only read files when triggers match. Keep context minimal.
 
