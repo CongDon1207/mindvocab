@@ -23,9 +23,11 @@ const getUniqueFolderWords = async (folderId) => {
 };
 
 // ========== POST /api/sessions - Tạo session mới ==========
+// mode: 'srs' (default) - Spaced Repetition System
+// mode: 'sequential' - Tuần tự theo alphabet (1-10, 11-20...)
 export const createSession = async (req, res) => {
   try {
-    const { folderId } = req.body;
+    const { folderId, mode = 'srs', startOffset = 0 } = req.body;
 
     if (!folderId) {
       return res.status(400).json({ error: 'folderId là bắt buộc' });
@@ -49,33 +51,54 @@ export const createSession = async (req, res) => {
       return res.status(200).json(recentSession);
     }
 
-    // 1. Get words due for review or new (stage 0)
-    const srsWords = await Word.find({
-      folderId,
-      $or: [
-        { "meta.nextReviewDate": { $lte: new Date() } },
-        { "meta.stage": { $exists: false } },
-        { "meta.stage": 0 }
-      ]
-    })
-      .sort({ "meta.nextReviewDate": 1, "meta.stage": 1, createdAt: 1 })
-      .limit(10);
+    let selectedWords = [];
 
-    const selectedWords = [...srsWords];
+    if (mode === 'sequential') {
+      // ===== SEQUENTIAL MODE =====
+      // Lấy từ theo thứ tự alphabet, bắt đầu từ startOffset
+      const uniqueWords = await getUniqueFolderWords(folderId);
+      
+      if (uniqueWords.length === 0) {
+        return res.status(400).json({ error: 'Folder không có từ vựng nào' });
+      }
 
-    // 2. If less than 10, fill with remaining words in folder (starting from oldest lastSeenAt)
-    if (selectedWords.length < 10) {
-      const existingIds = selectedWords.map(w => w._id);
-      const needed = 10 - selectedWords.length;
+      if (startOffset >= uniqueWords.length) {
+        return res.status(400).json({ error: 'Đã học hết từ trong folder này' });
+      }
 
-      const fillWords = await Word.find({
+      selectedWords = uniqueWords.slice(startOffset, startOffset + 10);
+      console.log(`[SESSION] Sequential mode: offset ${startOffset}, lấy ${selectedWords.length} từ`);
+
+    } else {
+      // ===== SRS MODE (default) =====
+      // 1. Get words due for review or new (stage 0)
+      const srsWords = await Word.find({
         folderId,
-        _id: { $nin: existingIds }
+        $or: [
+          { "meta.nextReviewDate": { $lte: new Date() } },
+          { "meta.stage": { $exists: false } },
+          { "meta.stage": 0 }
+        ]
       })
-        .sort({ "meta.lastSeenAt": 1, createdAt: 1 })
-        .limit(needed);
+        .sort({ "meta.nextReviewDate": 1, "meta.stage": 1, createdAt: 1 })
+        .limit(10);
 
-      selectedWords.push(...fillWords);
+      selectedWords = [...srsWords];
+
+      // 2. If less than 10, fill with remaining words in folder (starting from oldest lastSeenAt)
+      if (selectedWords.length < 10) {
+        const existingIds = selectedWords.map(w => w._id);
+        const needed = 10 - selectedWords.length;
+
+        const fillWords = await Word.find({
+          folderId,
+          _id: { $nin: existingIds }
+        })
+          .sort({ "meta.lastSeenAt": 1, createdAt: 1 })
+          .limit(needed);
+
+        selectedWords.push(...fillWords);
+      }
     }
 
     if (selectedWords.length === 0) {
@@ -95,12 +118,13 @@ export const createSession = async (req, res) => {
       quizP2: { questions: [], score: 0 },
       spelling: { rounds: 0, correct: 0, maxRounds: 3 },
       fillBlank: { questions: [], score: 0 },
-      seed: Math.floor(Math.random() * 1e9)
+      seed: Math.floor(Math.random() * 1e9),
+      mode: mode // Lưu mode để biết khi tạo next session
     });
 
     await session.save();
 
-    console.log(`[SESSION] Created session ${session._id} with ${wordIds.length} words (seed: ${session.seed})`);
+    console.log(`[SESSION] Created session ${session._id} with ${wordIds.length} words (mode: ${mode}, seed: ${session.seed})`);
 
     res.status(201).json(session);
   } catch (err) {
@@ -130,11 +154,12 @@ export const createNextSession = async (req, res) => {
       return res.status(400).json({ error: 'Folder không có từ vựng nào' });
     }
 
-    // Map wordId -> index trong danh sách đã sort
+    // Map wordId -> index trong danh sách đã sort (alphabet)
     const idToIndex = new Map(
       uniqueWords.map((word, index) => [word._id.toString(), index])
     );
 
+    // Tìm index nhỏ nhất trong session trước (batch bắt đầu từ đâu)
     const previousIndices = previousSession.wordIds
       .map(word => {
         const id = word?._id ? word._id : word;
@@ -146,13 +171,17 @@ export const createNextSession = async (req, res) => {
       return res.status(400).json({ error: 'Không xác định được vị trí từ trong session trước' });
     }
 
-    const lastIndex = Math.max(...previousIndices);
-    const startIndex = lastIndex + 1;
+    // Logic Sequential đơn giản: 
+    // Tìm minIndex của session trước + 10 = startIndex của session mới
+    // Ví dụ: session trước là 0-9, session mới là 10-19
+    const minIndex = Math.min(...previousIndices);
+    const startIndex = minIndex + 10;
 
     if (startIndex >= uniqueWords.length) {
       return res.status(400).json({ error: 'Đã học hết từ trong folder này' });
     }
 
+    // Lấy tối đa 10 từ tiếp theo
     const nextWords = uniqueWords.slice(startIndex, startIndex + 10);
     const nextWordIds = nextWords.map(word => word._id);
 
@@ -179,12 +208,13 @@ export const createNextSession = async (req, res) => {
       quizP2: { questions: [], score: 0 },
       spelling: { rounds: 0, correct: 0, maxRounds: 3 },
       fillBlank: { questions: [], score: 0 },
-      seed: Math.floor(Math.random() * 1e9)
+      seed: Math.floor(Math.random() * 1e9),
+      mode: 'sequential' // Next session luôn là sequential
     });
 
     await session.save();
 
-    console.log(`[SESSION] Created next session ${session._id} với ${nextWordIds.length} từ (bắt đầu từ index ${startIndex})`);
+    console.log(`[SESSION] Created next session ${session._id} với ${nextWordIds.length} từ (index ${startIndex}-${startIndex + nextWordIds.length - 1}/${uniqueWords.length})`);
 
     res.status(201).json(session);
   } catch (err) {

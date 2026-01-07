@@ -131,14 +131,14 @@ export const useFolderDetail = () => {
         }
     }
 
-    const handleStartLearning = async () => {
+    const handleStartLearning = async (mode: 'srs' | 'sequential' = 'srs') => {
         if (!id) return
         if (!folder?.stats?.totalWords) {
             toast.error('Folder chưa có từ vựng nào.')
             return
         }
         try {
-            const res = await api.post('/sessions', { folderId: id })
+            const res = await api.post('/sessions', { folderId: id, mode })
             navigate(`/sessions/${res.data._id}`)
         } catch (err: any) {
             toast.error('Không thể tạo session học.')

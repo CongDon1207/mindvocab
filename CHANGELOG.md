@@ -1,5 +1,9 @@
 # Changelog
 
+## [2026-01-07]
+- **Add**: 2 chế độ học - **SRS** (ôn tập thông minh) và **Sequential** (tuần tự A-Z). Dropdown chọn mode ở nút "Bắt đầu học" trong FolderDetailHeader.
+- **Fix**: Logic "bỏ qua session" (skip to next 10 words) - Đơn giản hóa: tìm minIndex của session trước + 10 = startIndex mới. Ví dụ: 1-10 → 11-20 → 21-30...
+
 ## [2025-12-30]
 - **Improve**: Skill `structure-index` - Converted to English, added tech stack auto-detection (React, Vue, Node, Python, Go, etc.), custom config support (`.structure-index.json`), `validate_structure.py` for JSON schema validation, better domain detection patterns, and language statistics.
 

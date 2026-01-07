@@ -25,6 +25,8 @@ export type Question = {
   isInferred?: boolean
 }
 
+export type SessionMode = 'srs' | 'sequential'
+
 export type Session = {
   _id: string
   folderId: {
@@ -38,6 +40,7 @@ export type Session = {
   }
   wordIds: Word[] | string[]  // Can be populated or just IDs
   step: SessionStep
+  mode: SessionMode
   isRetry: boolean
   wrongSet: string[]
   reviewNotes: string[]

@@ -1,11 +1,17 @@
 import React from 'react'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, BookOpen, Trophy, Upload, PlusCircle, PlayCircle } from 'lucide-react'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { ArrowLeft, BookOpen, Trophy, Upload, PlusCircle, PlayCircle, Sparkles, ListOrdered, ChevronDown } from 'lucide-react'
 import type { Folder } from './FolderList'
 
 type FolderDetailHeaderProps = {
   folder: Folder | null
-  onStartLearning: () => void
+  onStartLearning: (mode: 'srs' | 'sequential') => void
   onOpenUpload: () => void
   onOpenAddWord: () => void
   canStart: boolean
@@ -50,14 +56,34 @@ const FolderDetailHeader: React.FC<FolderDetailHeaderProps> = ({
 
         {/* Action buttons */}
         <div className="flex flex-wrap gap-2.5">
-          <Button
-            onClick={onStartLearning}
-            disabled={!canStart}
-            className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 transition-all"
-          >
-            <PlayCircle className="w-4 h-4 mr-2" />
-            Bắt đầu học
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                disabled={!canStart}
+                className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 transition-all"
+              >
+                <PlayCircle className="w-4 h-4 mr-2" />
+                Bắt đầu học
+                <ChevronDown className="w-4 h-4 ml-1.5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem onClick={() => onStartLearning('srs')} className="cursor-pointer">
+                <Sparkles className="w-4 h-4 mr-2 text-purple-500" />
+                <div>
+                  <div className="font-medium">Chế độ SRS</div>
+                  <div className="text-xs text-slate-500">Ôn tập thông minh theo lịch</div>
+                </div>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onStartLearning('sequential')} className="cursor-pointer">
+                <ListOrdered className="w-4 h-4 mr-2 text-blue-500" />
+                <div>
+                  <div className="font-medium">Chế độ Tuần tự</div>
+                  <div className="text-xs text-slate-500">Học từ A-Z theo thứ tự</div>
+                </div>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button variant="outline" onClick={onOpenUpload} className="shadow-sm">
             <Upload className="w-4 h-4 mr-2" />
             Upload file

@@ -1,59 +1,207 @@
-﻿# WORKING CONVENTIONS (AGENTS) - mindvocab
+# AGENTS.md - Working Conventions
+
+> **Philosophy**: Zero-preload. Only read files when triggers match. Keep context minimal.
+
+---
 
 ## 1) Language
-- Mandatory: all responses, change descriptions, code comments, etc. must be written in Vietnamese.
+- **Mandatory**: All responses, change descriptions, code comments, explanations must be written in **Vietnamese**.
 
-## 2) Core principles (non-negotiable)
-- Clarify ambiguity first: if the request is unclear or missing information, ask at most 1–2 questions before starting; do not guess.
-- Stay within scope: only implement what the ticket/PRD/user context explicitly requires; do not add features.
-- Minimal changes: prefer small, idempotent patches; avoid large refactors unless strictly necessary.
-- Reuse before rewriting: prefer existing modules/utilities; avoid duplication.
-- File length limit: keep each file under 300 LOC; if it exceeds, stop and propose splitting the file.
-- Config/secrets: read only from environment variables; never hardcode.
-- Clean up: remove any temporary debug/test files immediately after finishing.
+---
 
-## 3) File-reading rules (mandatory)
-- Before editing/creating files: read all relevant files in full to understand context.
-- Before starting a new task: read at minimum `README.md`, `HANDOFF.md`, `CHANGELOG.md`, stucture.json, and any relevant files in `docs/*`.
+## 2) Core Principles (Non-negotiable)
+- **Clarify ambiguity first**: If request is unclear or missing info, ask at most 1-2 questions before starting; do not guess.
+- **Stay within scope**: Only implement what ticket/PRD/user explicitly requires; do not add "bonus" features.
+- **Minimal changes**: Prefer small, idempotent patches; avoid large refactors unless strictly necessary.
+- **Reuse before rewriting**: Prefer existing modules/utilities; avoid code duplication.
+- **File length limit**: Keep each file under 300 LOC; if exceeded, stop and propose splitting.
+- **Config/secrets**: Read only from environment variables; never hardcode.
+- **Clean up**: Remove temporary debug/test files immediately after finishing.
 
-## 4) Skills: discover and load dynamically from `.claude/skills`
-Goal: do not hardcode the skills list in AGENTS.md; always reference dynamically from the repository.
+---
 
-- Skills source: `.claude/skills/**/SKILL.md`.
-- Convention: each skill is a folder containing `SKILL.md` that starts with a YAML frontmatter including `name` and `description`.
-- Activation rules:
-  - If the user calls a skill by name (e.g., “use skill `ui-styling`”), you must load that skill.
-  - If the described work clearly matches the `description` of one or more skills, proactively select the minimum necessary skill(s) and load them.
-  - If multiple skills fit, choose the smallest set that covers the request; if still ambiguous, ask 1 question to confirm.
-- How to load a skill:
-  - Open the exact file `.claude/skills/<skill-name>/SKILL.md` and follow the workflow inside (read only what is needed to execute).
-  - If the skill points to `references/` or `scripts/`, open only the needed files; prefer running/patching existing scripts over writing new ones.
-- Fallback:
-  - If the skill cannot be found in `.claude/skills`, state it clearly and proceed with the normal (minimal) approach.
+## 3) File-reading Rules (Mandatory)
+- **Before editing/creating files**: Read all relevant files in full to understand context.
+- **Before starting new task**: Read at minimum `README.md` and relevant files in `docs/*`.
 
-## 5) Tooling priority (concise)
-- Code edits/local repo: file operations + shell commands.
-- API signatures/version changes: prefer official documentation (Context7 if available).
-- Real-time info/news: use Web Search.
-- Web UI automation (when needed): use `chrome-devtools-MCP`.
+---
 
-## 6) Response format (every answer)
-- Requirement: quote 1–2 lines of the user’s request (verbatim).
-- Plan: 2–3 steps you will take.
-- Changes: list modified files as `path:line` plus a minimal-change description.
-- Test: commands to run + pass criteria; state whether a service restart is needed and why.
-- Result: summarize changes + root cause (if a bug) + final status.
+## 4) Project Structure Index
 
-## 7) Command execution discipline
-- Run only necessary commands; avoid destructive commands (`rm`, `git reset`, …) unless the user explicitly requests.
-- Every command must have a timeout: default 60s; if it may hang/stream long, cap at 70–80s and stop if exceeded.
-- If you hit permission/resource errors: explain clearly and propose a safe manual step.
-- Do not add new dependencies unless truly necessary and the user has agreed.
+> **File**: `docs/structure.md` - Single source of truth for project layout.
 
-## 8) Auto-Docs (project state memory)
-After completing an “impactful” change (feature/bugfix/contract/schema/architecture change), update briefly:
+### When to Read
+- **Before searching for files**: Check `docs/structure.md` first to know where to look.
+- **Fix bug**: Read structure → Find related modules → Navigate to correct files.
+- **Add feature**: Read structure → Identify existing patterns → Follow conventions.
+- **Understand codebase**: Read structure → Get full overview without scanning all folders.
 
-- `README.md`: stable information (stack/versions/overview) if affected.
-- `HANDOFF.md`: current status + next steps + latest test results.
-- `CHANGELOG.md`: add one line in the format:
-  - `YYYY-MM-DD: <Fix|Add|Change|Remove> <what> at <path/module> - <impact/reason> (completed).`
+### When to Update
+- **Project has no `docs/structure.md`**: Generate it using `.claude/skills/project-index/SKILL.md`
+- **After major changes**: Added/removed modules, restructured folders
+- **Periodic refresh**: Weekly or when index feels outdated
+- **User says**: "update structure", "refresh index", "scan project"
+
+### How to Generate/Update
+```
+Load: .claude/skills/project-index/SKILL.md
+→ Scan project tree
+→ Identify key files and patterns
+→ Write to docs/structure.md
+```
+
+---
+
+## 5) Dynamic Context Loading
+
+> **Golden Rule**: Do not preload. Only load files when matching triggers are detected.
+
+### How This Works
+
+```
+Request arrives
+    │
+    ▼
+┌─────────────────────────────────────────┐
+│ STEP 1: Match Trigger Keywords (below)  │
+│ → Found? Load skill directly. FAST.     │
+└─────────────────────────────────────────┘
+    │ Not found / Complex
+    ▼
+┌─────────────────────────────────────────┐
+│ STEP 2: Read Router (detailed guide)    │
+│ → .claude/router/decision-flow.md       │
+└─────────────────────────────────────────┘
+```
+
+### Router Reference (for complex/unfamiliar requests)
+
+| What | Guide File | Purpose |
+|:---|:---|:---|
+| **Decision Flow** | `.claude/router/decision-flow.md` | Full pipeline: Analyze → Agent → Command → Skill → Workflow |
+| **Agents** | `.claude/router/agents-guide.md` | Full agent list with mindset descriptions |
+| **Commands** | `.claude/router/commands-guide.md` | Full command list with workflows |
+| **Skills** | `.claude/router/skills-guide.md` | Full skill list organized by domain |
+| **Workflows** | `.claude/router/workflows-guide.md` | Multi-step orchestration protocols |
+
+---
+
+### Trigger Keywords → Auto-Load Rules
+
+> **IMPORTANT**: When trigger keywords are detected in request, **MANDATORY** load in order: **Agent → Command → Skill**
+
+---
+
+### 🎯 Slash Commands (Direct Command Loading)
+
+> **Mechanism**: When user types slash command (e.g., `/fix`, `/design/fast`, `/plan/hard`), AI **routes to router** to match and load corresponding command file from `.claude/commands/`
+
+**Full details**: See `.claude/router/commands-guide.md`
+
+---
+
+#### 🐛 Debug / Fix Bug
+**Triggers**: `bug`, `lỗi`, `error`, `fix`, `sửa`, `không chạy`, `broken`, `crash`, `failed`, `exception`, `stack trace`, `debug`, `troubleshoot`, `issue`, `problem`, `không hoạt động`
+```
+→ Agent: .claude/agents/debugger.md
+→ Command: .claude/commands/fix.md (hoặc fix/hard.md nếu phức tạp)
+→ Skill: .claude/skills/bug-diagnosis/SKILL.md + .claude/skills/debugging/SKILL.md
+→ Context: docs/structure.md (để tìm file liên quan)
+```
+
+#### 📋 Planning / Lên kế hoạch
+**Triggers**: `plan`, `kế hoạch`, `lên kế hoạch`, `strategy`, `chiến lược`, `roadmap`, `approach`, `cách tiếp cận`, `how to`, `làm sao`, `outline`, `phác thảo`, `design system`, `thiết kế hệ thống`, `architect`
+```
+→ Agent: .claude/agents/planner.md
+→ Command: .claude/commands/plan.md (hoặc plan/hard.md nếu complex)
+→ Skill: .claude/skills/planning/SKILL.md + .claude/skills/sequential-thinking/SKILL.md
+```
+
+#### 💡 Idea Development / Phát triển ý tưởng
+**Triggers**: `ý tưởng`, `idea`, `brainstorm`, `suggest`, `đề xuất`, `recommend`, `gợi ý`, `consider`, `explore`, `khám phá`, `what if`, `nếu như`, `improve`, `cải thiện`, `enhance`, `nâng cao`
+```
+→ Agent: .claude/agents/brainstormer.md
+→ Command: .claude/commands/brainstorm.md
+→ Skill: .claude/skills/problem-solving/SKILL.md + .claude/skills/sequential-thinking/SKILL.md
+```
+
+#### 🔍 Research / Investigation
+**Triggers**: `research`, `nghiên cứu`, `investigate`, `điều tra`, `analyze`, `phân tích`, `understand`, `hiểu`, `how does`, `explain`, `giải thích`, `what is`, `là gì`, `why`, `tại sao`, `compare`, `so sánh`
+```
+→ Agent: .claude/agents/researcher.md
+→ Command: .claude/commands/scout.md (nếu tìm trong code)
+→ Skill: .claude/skills/research/SKILL.md + .claude/skills/feature-investigation/SKILL.md
+```
+
+#### ⚡ Feature Implementation
+**Triggers**: `implement`, `thực hiện`, `build`, `xây dựng`, `create`, `tạo`, `add`, `thêm`, `develop`, `phát triển`, `make`, `làm`, `new feature`, `tính năng mới`, `functionality`, `code`
+```
+→ Agent: .claude/agents/fullstack-developer.md
+→ Command: .claude/commands/code.md (hoặc create-feature.md)
+→ Skill: .claude/skills/feature-implementation/SKILL.md
+→ Context: docs/structure.md (BẮT BUỘC)
+→ Domain-specific: frontend-development/, backend-development/, etc.
+```
+
+#### 🧪 Testing
+**Triggers**: `test`, `kiểm tra`, `testing`, `unit test`, `integration`, `e2e`, `coverage`, `spec`, `verify`, `xác minh`, `validate`
+```
+→ Agent: .claude/agents/tester.md
+→ Command: .claude/commands/test.md
+→ Skill: .claude/skills/test-generation/SKILL.md + .claude/skills/tasks-test-generation/SKILL.md
+```
+
+#### 📝 Code Review
+**Triggers**: `review`, `đánh giá`, `check code`, `kiểm tra code`, `PR`, `pull request`, `merge`, `feedback`
+```
+→ Agent: .claude/agents/code-reviewer.md
+→ Command: .claude/commands/review-changes.md
+→ Skill: .claude/skills/code-review/SKILL.md + .claude/skills/dual-pass-review/SKILL.md
+```
+
+#### 📚 Documentation
+**Triggers**: `docs`, `document`, `tài liệu`, `README`, `guide`, `hướng dẫn`, `explain code`, `giải thích code`, `comment`, `changelog`
+```
+→ Agent: .claude/agents/docs-manager.md
+→ Command: .claude/commands/docs/update.md (hoặc docs/init.md)
+→ Skill: .claude/skills/documentation/SKILL.md + .claude/skills/tasks-documentation/SKILL.md
+```
+
+#### 🎨 UI/UX / Frontend Design
+**Triggers**: `UI`, `UX`, `design`, `thiết kế`, `beautiful`, `đẹp`, `styling`, `layout`, `component`, `responsive`, `animation`, `screenshot`
+```
+→ Agent: .claude/agents/ui-ux-designer.md
+→ Command: .claude/commands/design/good.md (hoặc design/screenshot.md)
+→ Skill: .claude/skills/ui-ux-pro-max/SKILL.md + .claude/skills/frontend-design/SKILL.md
+```
+
+#### 🔄 Refactoring
+**Triggers**: `refactor`, `tái cấu trúc`, `clean up`, `dọn dẹp`, `restructure`, `reorganize`, `simplify`, `đơn giản hóa`, `split`, `tách`, `modularize`, `optimize`
+```
+→ Agent: .claude/agents/code-reviewer.md
+→ Command: .claude/commands/code.md
+→ Skill: .claude/skills/code-review/SKILL.md
+→ Context: docs/structure.md
+→ Post-task: .claude/skills/dual-pass-review/SKILL.md
+```
+
+
+
+## 6) Execution Discipline
+- **Run only necessary commands**; avoid destructive commands (`rm`, `git reset`...) unless explicitly requested.
+- **Timeout**: Default 60s; cap at 70-80s for potentially long-running commands.
+- **Permission errors**: Explain clearly and propose safe manual steps.
+- **New dependencies**: Do not add unless truly necessary and user agrees.
+
+---
+
+## 7) Auto-Documentation
+After completing impactful changes (feature/bugfix/schema/architecture), update briefly:
+- `README.md`: If stable info (stack/versions/overview) affected.
+- `HANDOFF.md`: Current status + next steps + latest test results.
+- `CHANGELOG.md`: Add one line: `YYYY-MM-DD: <Fix|Add|Change|Remove> <what> at <path> - <impact> (completed).`
+- `docs/structure.md`: If added/removed files or restructured folders.
+
+---
+
+*This file is core principle and a router. Do not preload everything. Only read referenced files when needed.*

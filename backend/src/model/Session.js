@@ -17,6 +17,7 @@ const SessionSchema = new mongoose.Schema({
   folderId: { type: mongoose.Schema.Types.ObjectId, ref: 'Folder', required: true },
   wordIds: { type: [mongoose.Schema.Types.ObjectId], ref: 'Word', required: true }, // lô 10 từ
   step: { type: String, enum: StepEnum, default: 'FLASHCARDS' },
+  mode: { type: String, enum: ['srs', 'sequential'], default: 'srs' }, // chế độ học
   wrongSet: { type: [mongoose.Schema.Types.ObjectId], ref: 'Word', default: [] },
   reviewNotes: { type: [String], default: [] },
   quizP1: { questions: { type: [QuestionSchema], default: [] }, score: { type: Number, default: 0 } },
