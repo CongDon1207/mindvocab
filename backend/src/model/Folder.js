@@ -8,7 +8,10 @@ const FolderSchema = new mongoose.Schema(
     stats: {
       totalWords: { type: Number, default: 0 },
       mastered: { type: Number, default: 0 }
-    }
+    },
+    // Manual review scheduling (Forgetting Curve)
+    // User can set this manually to schedule a review reminder
+    nextReviewDate: { type: Date, default: null }
   },
   { timestamps: true }
 );

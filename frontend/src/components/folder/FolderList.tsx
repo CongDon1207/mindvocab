@@ -11,6 +11,7 @@ export type Folder = {
     totalWords?: number
     mastered?: number
   }
+  nextReviewDate?: string | null
   owner?: string
   createdAt?: string
   updatedAt?: string
@@ -21,9 +22,10 @@ export type FolderListProps = {
   onCreate?: () => void
   onDelete?: (folderId: string) => void
   onEdit?: (folder: Folder) => void
+  onScheduleReview?: (folderId: string, days: number | null) => void
 }
 
-export default function FolderList({ folders, onCreate, onDelete, onEdit }: FolderListProps) {
+export default function FolderList({ folders, onCreate, onDelete, onEdit, onScheduleReview }: FolderListProps) {
   const navigate = useNavigate()
 
   return (
@@ -35,9 +37,11 @@ export default function FolderList({ folders, onCreate, onDelete, onEdit }: Fold
           totalWords: f.stats?.totalWords ?? 0,
           mastered: f.stats?.mastered ?? 0,
           owner: f.owner ?? "You",
+          nextReviewDate: f.nextReviewDate,
           onClick: () => navigate(`/folders/${f._id}`),
           onEdit: () => onEdit?.(f),
           onDelete: () => onDelete?.(f._id),
+          onScheduleReview: (days) => onScheduleReview?.(f._id, days),
         }
         return <FolderCard key={f._id} {...props} />
       })}

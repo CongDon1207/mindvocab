@@ -6,6 +6,8 @@ export type Folder = {
         totalWords: number;
         mastered: number;
     };
+    // Manual review scheduling (Forgetting Curve)
+    nextReviewDate?: string | null;
     createdAt: string;
     updatedAt: string;
 };
@@ -30,7 +32,9 @@ export type FolderReviewStats = {
     folderId: string;
     folderName: string;
     totalWords: number;
+    masteredWords?: number;
     earliestReview: string;
     diffDays: number;
     category: 'overdue' | '3days' | '7days' | '14days' | '30days' | 'safe';
+    isManualSchedule?: boolean; // Flag to indicate manual vs auto scheduled
 };

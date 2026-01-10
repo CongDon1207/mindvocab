@@ -1,28 +1,40 @@
 ﻿# AGENTS.md - Working Conventions
 
-> **Philosophy**: Zero-preload. Only read files when triggers match. Keep context minimal.
-
 ---
 
 ## 1) Language
-- **Mandatory**: All responses, change descriptions, code comments, explanations must be written in **Vietnamese**.
+- **Repository artifacts (mandatory)**: All documentation/guides, code comments, and any text written into files must be in **English**.
+- **Conversation**: Replies in the chat should be in **Vietnamese**.
 
 ---
 
 ## 2) Core Principles (Non-negotiable)
-- **Clarify ambiguity first**: If request is unclear or missing info, ask at most 1-2 questions before starting; do not guess.
-- **Stay within scope**: Only implement what ticket/PRD/user explicitly requires; do not add "bonus" features.
-- **Minimal changes**: Prefer small, idempotent patches; avoid large refactors unless strictly necessary.
-- **Reuse before rewriting**: Prefer existing modules/utilities; avoid code duplication.
-- **File length limit**: Keep each file under 300 LOC; if exceeded, stop and propose splitting.
-- **Config/secrets**: Read only from environment variables; never hardcode.
-- **Clean up**: Remove temporary debug/test files immediately after finishing.
+- Clarify Ambiguity First: If a requirement is unclear or incomplete, ask 1-2 clarifying questions before proceeding. Never guess.
+- Code Only What Was Asked: Follow the PRD/ticket scope strictly; no extra features.
+- Minimum Viable Change: Deliver the simplest, most idempotent fix that works; avoid over-engineering.
+- Reuse Before Rewriting: Prefer existing modules or utilities; avoid duplication.
+- File Length Limit: Keep every file under 300 LOC; if a change would exceed this, pause and propose a refactor or split plan.
+- Configuration and Secrets: Load all secrets or config from environment variables only; never hardcode.
+- When writing code, aim for simplicity and readability, not just brevity. Short code that is hard to read is worse than slightly longer code that is clear.
+- Clean Up Temporary Files: Delete any temporary test files immediately after use.
+
+### Core Directives
+- WRITE CODE ONLY TO SPEC.
+- MINIMUM, NOT MAXIMUM.
+- ONE SIMPLE SOLUTION.
+- CLARIFY, DON'T ASSUME.
+
+### Philosophy (Non-negotiables)
+- Do not add unnecessary files or modules; if a new file is unavoidable, justify it.
+- Do not change architecture or patterns unless explicitly required and justified.
+- Prioritize readability and maintainability over clever or complex code.
 
 ---
 
 ## 3) File-reading Rules (Mandatory)
 - **Before editing/creating files**: Read all relevant files in full to understand context.
-- **Before starting new task**: Read at minimum `README.md` and relevant files in `docs/*`.
+- **Before starting a task**: Read at minimum `README.md` and relevant files in `docs/*` (if present).
+- **If docs are missing or likely stale**: Use `rg` to locate the source of truth quickly.
 
 ---
 
@@ -30,162 +42,102 @@
 
 > **File**: `docs/structure.md` - Single source of truth for project layout.
 
-### When to Read
-- **Before searching for files**: Check `docs/structure.md` first to know where to look.
-- **Fix bug**: Read structure → Find related modules → Navigate to correct files.
-- **Add feature**: Read structure → Identify existing patterns → Follow conventions.
-- **Understand codebase**: Read structure → Get full overview without scanning all folders.
+### When to use `docs/structure.md`
+- **Hard-to-locate tasks** (large repo/monorepo): read it first to get the map and narrow the search area.
+- **Very broad keywords** (e.g., auth/payment/logging): use structure to pick the right folder before searching deeper.
+- **New project / onboarding**: structure gives a fast overview of the main areas.
+
+### When to use `rg`
+- **Normal tasks**: use `rg` directly to find the real implementation (does not depend on whether structure is up to date).
+- **You already have concrete identifiers** (file name / function / class / route / endpoint): `rg` is faster than structure.
+- **You suspect structure is stale**: prefer `rg` first, then refresh structure if needed.
 
 ### When to Update
-- **Project has no `docs/structure.md`**: Generate it using `.claude/skills/project-index/SKILL.md`
-- **After major changes**: Added/removed modules, restructured folders
-- **Periodic refresh**: Weekly or when index feels outdated
-- **User says**: "update structure", "refresh index", "scan project"
+- **Project has no `docs/structure.md`**: Generate it using `.claude/skills/project-index/SKILL.md`.
+- **After major changes**: Added/removed modules, restructured folders.
+- **Periodic refresh**: Weekly or when index feels outdated.
+- **User says**: "update structure", "refresh index", "scan project".
 
 ### How to Generate/Update
 ```
 Load: .claude/skills/project-index/SKILL.md
-→ Scan project tree
-→ Identify key files and patterns
-→ Write to docs/structure.md
+- Scan project tree
+- Identify key files and patterns
+- Write to docs/structure.md
 ```
 
 ---
 
 ## 5) Dynamic Context Loading
 
-> **Golden Rule**: Do not preload. Only load files when matching triggers are detected.
+### Decision Framework: When to Load Skills/Commands
+**ALWAYS check catalogs first** before starting any work to determine if a specialized skill/command exists:
 
-### How This Works
+1. **User mentions keywords** → Check `.claude/scripts/skills_data.yaml`:
+   - Debugging/bug/error/fix → Load `bug-diagnosis` or `debugging` skill
+   - Feature/implement/add → Load `feature-implementation` skill
+   - Test/testing/unit test → Load `test-generation` skill
+   - Documentation/README/docs → Load `documentation` or `readme-improvement` skill
+   - Review/code review/PR → Load `code-review` skill
+   - Performance/optimize/slow → Load `performance-optimization` skill
+   - Security/vulnerability/auth → Load `security-review` skill
 
-```
-Request arrives
-    │
-    ▼
-┌─────────────────────────────────────────┐
-│ STEP 1: Match Trigger Keywords (below)  │
-│ → Found? Load skill directly. FAST.     │
-└─────────────────────────────────────────┘
-    │ Not found / Complex
-    ▼
-┌─────────────────────────────────────────┐
-│ STEP 2: Read Router (detailed guide)    │
-│ → .claude/router/decision-flow.md       │
-└─────────────────────────────────────────┘
-```
+2. **User types slash command** (`/fix`, `/test`, etc.) → Load corresponding `.claude/commands/<command>.md`
 
-### Router Reference (for complex/unfamiliar requests)
+3. **Complex multi-step tasks** → Load `.claude/workflows/**` for orchestration
 
-| What | Guide File | Purpose |
-|:---|:---|:---|
-| **Decision Flow** | `.claude/router/decision-flow.md` | Full pipeline: Analyze → Agent → Command → Skill → Workflow |
-| **Agents** | `.claude/router/agents-guide.md` | Full agent list with mindset descriptions |
-| **Commands** | `.claude/router/commands-guide.md` | Full command list with workflows |
-| **Skills** | `.claude/router/skills-guide.md` | Full skill list organized by domain |
-| **Workflows** | `.claude/router/workflows-guide.md` | Multi-step orchestration protocols |
+4. **If no match found** → Use catalogs to search by description/keywords, or ask user to clarify
+
+**Never skip this step!** Skills contain systematic approaches that prevent random fixes and ensure quality.
+
+### Standard Entry Points (6–8 lines)
+- If the request is **complex/unclear**: read `.claude/router/decision-flow.md` to decide the approach.
+- If you need the **overall workflow**: read `.claude/workflows/primary-workflow.md`.
+- If you need **quality rules**: read `.claude/workflows/development-rules.md`.
+- If you need a **command quick reference**: use `.claude/scripts/ck-help.py`.
+- If you add/update `.claude/commands/**`: regenerate `.claude/scripts/commands_data.yaml` via `python .claude/scripts/scan_commands.py`.
+- If you need a **project map**: create/read `docs/structure.md` via `.claude/skills/project-index/SKILL.md`.
+- If you need **exact matches in code**: use `rg` (preferred when you already have concrete keywords).
+
+### Workflows and Agents (When to use)
+- Use `.claude/workflows/**` when the task is **multi-step** (plan -> implement -> test -> review -> docs) and you want a consistent execution order.
+- Use `.claude/agents/**` when the task needs a specific **mindset/checklist** (e.g., debugging rigor, code review strictness, planning depth).
+- If unsure, start with `.claude/router/decision-flow.md` and pick (a) a workflow for structure, then (b) an agent for mindset.
+
+### Catalogs (Auto-generated)
+Use these when you need to decide **which command/skill** matches a natural-language request (cross-IDE, no hooks).
+- Commands catalog: `.claude/scripts/commands_data.yaml` (generated by `.claude/scripts/scan_commands.py`)
+- Skills catalog: `.claude/scripts/skills_data.yaml` (generated by `.claude/scripts/scan_skills.py`)
+- If catalogs look stale: re-run the scan scripts to refresh the YAML, then open the matching `.claude/commands/**` or `.claude/skills/**/SKILL.md`.
+
+### Slash Command Convention (Cross-IDE)
+> Slash commands are a **human convention** in this repo (not a guaranteed feature of any IDE). When the user types a slash command, treat it as an instruction to load the matching `.claude` docs and follow that workflow.
+
+1. **Resolve the command**
+   - If the prompt starts with `/...`, parse the first token as the command path.
+   - Try to open `.claude/commands/<command>.md` or `.claude/commands/<folder>/<command>.md` for nested commands (e.g., `/docs/update`).
+   - If no matching file exists, consult `.claude/router/commands-guide.md` (or `.claude/commands/README.md`) and/or `.claude/scripts/commands_data.yaml` to find the closest command, then ask 1 clarifying question if ambiguous.
+
+2. **Where to look (source of truth)**
+   - **Routing** (how to decide what to do): `.claude/router/decision-flow.md`
+   - **Commands** (step-by-step procedures): `.claude/commands/**`
+   - **Agents** (mindset/role): `.claude/agents/**`
+   - **Skills** (domain playbooks): `.claude/skills/**/SKILL.md`
+   - **Workflows** (multi-step orchestration): `.claude/workflows/**`
+   - **Catalogs** (lookup tables for matching): `.claude/scripts/commands_data.yaml`, `.claude/scripts/skills_data.yaml`
+
+3. **Common mappings**
+   - `/fix` -> `.claude/commands/fix.md`
+   - `/plan` -> `.claude/commands/plan.md`
+   - `/code` -> `.claude/commands/code.md`
+   - `/test` -> `.claude/commands/test.md`
+   - `/debug` -> `.claude/commands/debug.md`
+   - `/review` -> `.claude/commands/review-changes.md`
+   - `/docs/update` -> `.claude/commands/docs/update.md`
+   - `/scout` -> `.claude/commands/scout.md`
+   - `/structure` -> `.claude/skills/project-index/SKILL.md` (generate/read `docs/structure.md`)
 
 ---
-
-### Trigger Keywords → Auto-Load Rules
-
-> **IMPORTANT**: When trigger keywords are detected in request, **MANDATORY** load in order: **Agent → Command → Skill**
-
----
-
-### 🎯 Slash Commands (Direct Command Loading)
-
-> **Mechanism**: When user types slash command (e.g., `/fix`, `/design/fast`, `/plan/hard`), AI **routes to router** to match and load corresponding command file from `.claude/commands/`
-
-**Full details**: See `.claude/router/commands-guide.md`
-
----
-
-#### 🐛 Debug / Fix Bug
-**Triggers**: `bug`, `lỗi`, `error`, `fix`, `sửa`, `không chạy`, `broken`, `crash`, `failed`, `exception`, `stack trace`, `debug`, `troubleshoot`, `issue`, `problem`, `không hoạt động`
-```
-→ Agent: .claude/agents/debugger.md
-→ Command: .claude/commands/fix.md (hoặc fix/hard.md nếu phức tạp)
-→ Skill: .claude/skills/bug-diagnosis/SKILL.md + .claude/skills/debugging/SKILL.md
-→ Context: docs/structure.md (để tìm file liên quan)
-```
-
-#### 📋 Planning / Lên kế hoạch
-**Triggers**: `plan`, `kế hoạch`, `lên kế hoạch`, `strategy`, `chiến lược`, `roadmap`, `approach`, `cách tiếp cận`, `how to`, `làm sao`, `outline`, `phác thảo`, `design system`, `thiết kế hệ thống`, `architect`
-```
-→ Agent: .claude/agents/planner.md
-→ Command: .claude/commands/plan.md (hoặc plan/hard.md nếu complex)
-→ Skill: .claude/skills/planning/SKILL.md + .claude/skills/sequential-thinking/SKILL.md
-```
-
-#### 💡 Idea Development / Phát triển ý tưởng
-**Triggers**: `ý tưởng`, `idea`, `brainstorm`, `suggest`, `đề xuất`, `recommend`, `gợi ý`, `consider`, `explore`, `khám phá`, `what if`, `nếu như`, `improve`, `cải thiện`, `enhance`, `nâng cao`
-```
-→ Agent: .claude/agents/brainstormer.md
-→ Command: .claude/commands/brainstorm.md
-→ Skill: .claude/skills/problem-solving/SKILL.md + .claude/skills/sequential-thinking/SKILL.md
-```
-
-#### 🔍 Research / Investigation
-**Triggers**: `research`, `nghiên cứu`, `investigate`, `điều tra`, `analyze`, `phân tích`, `understand`, `hiểu`, `how does`, `explain`, `giải thích`, `what is`, `là gì`, `why`, `tại sao`, `compare`, `so sánh`
-```
-→ Agent: .claude/agents/researcher.md
-→ Command: .claude/commands/scout.md (nếu tìm trong code)
-→ Skill: .claude/skills/research/SKILL.md + .claude/skills/feature-investigation/SKILL.md
-```
-
-#### ⚡ Feature Implementation
-**Triggers**: `implement`, `thực hiện`, `build`, `xây dựng`, `create`, `tạo`, `add`, `thêm`, `develop`, `phát triển`, `make`, `làm`, `new feature`, `tính năng mới`, `functionality`, `code`
-```
-→ Agent: .claude/agents/fullstack-developer.md
-→ Command: .claude/commands/code.md (hoặc create-feature.md)
-→ Skill: .claude/skills/feature-implementation/SKILL.md
-→ Context: docs/structure.md (BẮT BUỘC)
-→ Domain-specific: frontend-development/, backend-development/, etc.
-```
-
-#### 🧪 Testing
-**Triggers**: `test`, `kiểm tra`, `testing`, `unit test`, `integration`, `e2e`, `coverage`, `spec`, `verify`, `xác minh`, `validate`
-```
-→ Agent: .claude/agents/tester.md
-→ Command: .claude/commands/test.md
-→ Skill: .claude/skills/test-generation/SKILL.md + .claude/skills/tasks-test-generation/SKILL.md
-```
-
-#### 📝 Code Review
-**Triggers**: `review`, `đánh giá`, `check code`, `kiểm tra code`, `PR`, `pull request`, `merge`, `feedback`
-```
-→ Agent: .claude/agents/code-reviewer.md
-→ Command: .claude/commands/review-changes.md
-→ Skill: .claude/skills/code-review/SKILL.md + .claude/skills/dual-pass-review/SKILL.md
-```
-
-#### 📚 Documentation
-**Triggers**: `docs`, `document`, `tài liệu`, `README`, `guide`, `hướng dẫn`, `explain code`, `giải thích code`, `comment`, `changelog`
-```
-→ Agent: .claude/agents/docs-manager.md
-→ Command: .claude/commands/docs/update.md (hoặc docs/init.md)
-→ Skill: .claude/skills/documentation/SKILL.md + .claude/skills/tasks-documentation/SKILL.md
-```
-
-#### 🎨 UI/UX / Frontend Design
-**Triggers**: `UI`, `UX`, `design`, `thiết kế`, `beautiful`, `đẹp`, `styling`, `layout`, `component`, `responsive`, `animation`, `screenshot`
-```
-→ Agent: .claude/agents/ui-ux-designer.md
-→ Command: .claude/commands/design/good.md (hoặc design/screenshot.md)
-→ Skill: .claude/skills/ui-ux-pro-max/SKILL.md + .claude/skills/frontend-design/SKILL.md
-```
-
-#### 🔄 Refactoring
-**Triggers**: `refactor`, `tái cấu trúc`, `clean up`, `dọn dẹp`, `restructure`, `reorganize`, `simplify`, `đơn giản hóa`, `split`, `tách`, `modularize`, `optimize`
-```
-→ Agent: .claude/agents/code-reviewer.md
-→ Command: .claude/commands/code.md
-→ Skill: .claude/skills/code-review/SKILL.md
-→ Context: docs/structure.md
-→ Post-task: .claude/skills/dual-pass-review/SKILL.md
-```
-
-
 
 ## 6) Execution Discipline
 - **Run only necessary commands**; avoid destructive commands (`rm`, `git reset`...) unless explicitly requested.
@@ -201,7 +153,3 @@ After completing impactful changes (feature/bugfix/schema/architecture), update 
 - `HANDOFF.md`: Current status + next steps + latest test results.
 - `CHANGELOG.md`: Add one line: `YYYY-MM-DD: <Fix|Add|Change|Remove> <what> at <path> - <impact> (completed).`
 - `docs/structure.md`: If added/removed files or restructured folders.
-
----
-
-*This file is core principle and a router. Do not preload everything. Only read referenced files when needed.*

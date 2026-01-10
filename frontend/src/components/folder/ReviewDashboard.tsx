@@ -8,15 +8,17 @@ import {
     Clock,
     Calendar,
     Hourglass,
-    ShieldCheck
+    ShieldCheck,
+    RotateCcw
 } from 'lucide-react'
 
 interface ReviewDashboardProps {
     data: FolderReviewStats[]
     loading: boolean
+    onResetProgress?: (folderId: string) => void
 }
 
-const ReviewDashboard: React.FC<ReviewDashboardProps> = ({ data, loading }) => {
+const ReviewDashboard: React.FC<ReviewDashboardProps> = ({ data, loading, onResetProgress }) => {
     const navigate = useNavigate()
 
     if (loading) {
@@ -38,8 +40,8 @@ const ReviewDashboard: React.FC<ReviewDashboardProps> = ({ data, loading }) => {
                 <div className="h-20 w-20 bg-slate-50 rounded-full flex items-center justify-center mb-6">
                     <ShieldCheck className="h-10 w-10 text-slate-400" />
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-2">Chưa có bộ từ vựng nào hoàn thành 100%</h3>
-                <p className="text-slate-500 max-w-sm">Hãy hoàn thành tất cả các từ trong một folder để mở khóa tính năng theo dõi lịch ôn tập dài hạn này nhé!</p>
+                <h3 className="text-xl font-bold text-slate-900 mb-2">Chưa có bộ từ vựng nào cần ôn tập</h3>
+                <p className="text-slate-500 max-w-sm">Hãy hoàn thành tất cả các từ trong một folder hoặc đặt lịch ôn tập thủ công từ menu thả xuống trên mỗi thư mục!</p>
             </div>
         )
     }
@@ -62,8 +64,9 @@ const ReviewDashboard: React.FC<ReviewDashboardProps> = ({ data, loading }) => {
                 <div className="relative z-10">
                     <h2 className="text-3xl font-black tracking-tight mb-2">Bảng theo dõi trí nhớ</h2>
                     <p className="text-emerald-100 font-medium max-w-2xl">
-                        Đây là danh sách các bộ từ vựng bạn đã <span className="text-white font-bold underline">thuộc lòng 100%</span>.
-                        Hệ thống sẽ tự động nhắc bạn ôn lại theo các mốc thời gian tối ưu để ghi nhớ lâu dài.
+                        Đây là danh sách các bộ từ vựng bạn đã <span className="text-white font-bold underline">thuộc lòng 100%</span> hoặc
+                        đã <span className="text-white font-bold underline">đặt lịch ôn tập thủ công</span>.
+                        Hệ thống sẽ nhắc bạn ôn lại theo các mốc thời gian tối ưu để ghi nhớ lâu dài.
                     </p>
                 </div>
                 <ShieldCheck className="absolute -bottom-6 -right-6 h-48 w-48 text-white/10 rotate-12" />
@@ -84,7 +87,13 @@ const ReviewDashboard: React.FC<ReviewDashboardProps> = ({ data, loading }) => {
                         <EmptyState message="Không có bài quá hạn" />
                     ) : (
                         groups.overdue.map(item => (
-                            <RetentionCard key={item.folderId} item={item} color="red" onClick={() => navigate(`/folders/${item.folderId}`)} />
+                            <RetentionCard 
+                                key={item.folderId} 
+                                item={item} 
+                                color="red" 
+                                onClick={() => navigate(`/folders/${item.folderId}`)}
+                                onReset={onResetProgress}
+                            />
                         ))
                     )}
                 </div>
@@ -102,10 +111,24 @@ const ReviewDashboard: React.FC<ReviewDashboardProps> = ({ data, loading }) => {
                     ) : (
                         <>
                             {groups.d3.map(item => (
-                                <RetentionCard key={item.folderId} item={item} color="orange" label="3 ngày" onClick={() => navigate(`/folders/${item.folderId}`)} />
+                                <RetentionCard 
+                                    key={item.folderId} 
+                                    item={item} 
+                                    color="orange" 
+                                    label="3 ngày" 
+                                    onClick={() => navigate(`/folders/${item.folderId}`)}
+                                    onReset={onResetProgress}
+                                />
                             ))}
                             {groups.d7.map(item => (
-                                <RetentionCard key={item.folderId} item={item} color="yellow" label="7 ngày" onClick={() => navigate(`/folders/${item.folderId}`)} />
+                                <RetentionCard 
+                                    key={item.folderId} 
+                                    item={item} 
+                                    color="yellow" 
+                                    label="7 ngày" 
+                                    onClick={() => navigate(`/folders/${item.folderId}`)}
+                                    onReset={onResetProgress}
+                                />
                             ))}
                         </>
                     )}
@@ -124,13 +147,34 @@ const ReviewDashboard: React.FC<ReviewDashboardProps> = ({ data, loading }) => {
                     ) : (
                         <>
                             {groups.d14.map(item => (
-                                <RetentionCard key={item.folderId} item={item} color="blue" label="2 tuần" onClick={() => navigate(`/folders/${item.folderId}`)} />
+                                <RetentionCard 
+                                    key={item.folderId} 
+                                    item={item} 
+                                    color="blue" 
+                                    label="2 tuần" 
+                                    onClick={() => navigate(`/folders/${item.folderId}`)}
+                                    onReset={onResetProgress}
+                                />
                             ))}
                             {groups.d30.map(item => (
-                                <RetentionCard key={item.folderId} item={item} color="indigo" label="1 tháng" onClick={() => navigate(`/folders/${item.folderId}`)} />
+                                <RetentionCard 
+                                    key={item.folderId} 
+                                    item={item} 
+                                    color="indigo" 
+                                    label="1 tháng" 
+                                    onClick={() => navigate(`/folders/${item.folderId}`)}
+                                    onReset={onResetProgress}
+                                />
                             ))}
                             {groups.safe.map(item => (
-                                <RetentionCard key={item.folderId} item={item} color="emerald" label="An toàn" onClick={() => navigate(`/folders/${item.folderId}`)} />
+                                <RetentionCard 
+                                    key={item.folderId} 
+                                    item={item} 
+                                    color="emerald" 
+                                    label="An toàn" 
+                                    onClick={() => navigate(`/folders/${item.folderId}`)}
+                                    onReset={onResetProgress}
+                                />
                             ))}
                         </>
                     )}
@@ -157,7 +201,13 @@ const CategoryHeader = ({ title, count, color, icon }: any) => {
     )
 }
 
-const RetentionCard = ({ item, color, label, onClick }: { item: FolderReviewStats, color: string, label?: string, onClick: () => void }) => {
+const RetentionCard = ({ item, color, label, onClick, onReset }: { 
+    item: FolderReviewStats, 
+    color: string, 
+    label?: string, 
+    onClick: () => void,
+    onReset?: (folderId: string) => void
+}) => {
     const badges: any = {
         red: 'bg-red-100 text-red-700',
         orange: 'bg-orange-100 text-orange-700',
@@ -176,31 +226,60 @@ const RetentionCard = ({ item, color, label, onClick }: { item: FolderReviewStat
         emerald: 'hover:border-emerald-300 hover:shadow-emerald-50',
     }
 
+    const handleReset = (e: React.MouseEvent) => {
+        e.stopPropagation()
+        if (onReset && confirm(`Bạn có chắc muốn reset toàn bộ tiến độ học của thư mục "${item.folderName}"?\n\nTất cả từ sẽ trở về trạng thái chưa học.`)) {
+            onReset(item.folderId)
+        }
+    }
+
     return (
-        <button
-            onClick={onClick}
-            className={`w-full bg-white p-4 rounded-2xl border border-slate-100 shadow-sm transition-all text-left group ${borderColors[color]} hover:-translate-y-1`}
-        >
-            <div className="flex justify-between items-start mb-2">
-                <h4 className="font-bold text-slate-800 line-clamp-1">{item.folderName}</h4>
-                {label && <span className={`text-[10px] font-black uppercase px-2 py-1 rounded-lg ${badges[color]}`}>{label}</span>}
-            </div>
+        <div className="relative group/card">
+            <button
+                onClick={onClick}
+                className={`w-full bg-white p-4 rounded-2xl border border-slate-100 shadow-sm transition-all text-left ${borderColors[color]} group-hover/card:-translate-y-1`}
+            >
+                <div className="flex justify-between items-start mb-2">
+                    <h4 className="font-bold text-slate-800 line-clamp-1 flex-1">{item.folderName}</h4>
+                    {label && <span className={`text-[10px] font-black uppercase px-2 py-1 rounded-lg ${badges[color]}`}>{label}</span>}
+                </div>
 
-            <div className="flex items-center gap-2 text-xs text-slate-400">
-                <CheckCircle2 className="h-3 w-3 text-emerald-500" />
-                <span>100% thuộc lòng ({item.totalWords} từ)</span>
-            </div>
+                <div className="flex items-center gap-2 text-xs text-slate-400">
+                    {item.isManualSchedule ? (
+                        <>
+                            <Clock className="h-3 w-3 text-blue-500" />
+                            <span>Đặt lịch thủ công • {item.masteredWords ?? 0}/{item.totalWords} từ</span>
+                        </>
+                    ) : (
+                        <>
+                            <CheckCircle2 className="h-3 w-3 text-emerald-500" />
+                            <span>100% thuộc lòng ({item.totalWords} từ)</span>
+                        </>
+                    )}
+                </div>
 
-            <div className="mt-3 pt-3 border-t border-slate-50 flex justify-between items-center">
-                <span className="text-xs font-medium text-slate-500">
-                    {item.category === 'overdue'
-                        ? <span className="text-red-500 font-bold">Cần ôn ngay!</span>
-                        : `Ôn lại sau ${item.diffDays} ngày`
-                    }
-                </span>
-                <ChevronRight className="h-4 w-4 text-slate-300 group-hover:text-slate-600" />
-            </div>
-        </button>
+                <div className="mt-3 pt-3 border-t border-slate-50 flex justify-between items-center">
+                    <span className="text-xs font-medium text-slate-500">
+                        {item.category === 'overdue'
+                            ? <span className="text-red-500 font-bold">Cần ôn ngay!</span>
+                            : `Ôn lại sau ${item.diffDays} ngày`
+                        }
+                    </span>
+                    <ChevronRight className="h-4 w-4 text-slate-300 group-hover/card:text-slate-600" />
+                </div>
+            </button>
+            
+            {/* Reset button - only show for 100% mastered (not manual schedule) */}
+            {!item.isManualSchedule && onReset && (
+                <button
+                    onClick={handleReset}
+                    className="absolute top-2 right-2 opacity-0 group-hover/card:opacity-100 transition-opacity p-2 bg-white hover:bg-red-50 rounded-lg border border-slate-200 hover:border-red-300 shadow-sm"
+                    title="Reset tiến độ học"
+                >
+                    <RotateCcw className="h-3.5 w-3.5 text-red-500" />
+                </button>
+            )}
+        </div>
     )
 }
 

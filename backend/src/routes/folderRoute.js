@@ -1,5 +1,5 @@
 import express from 'express';
-import { createFolder, deleteFolder, getFolderById, getFolderStats, getReviewDashboard, listFolders, updateFolder } from '../controllers/folderController.js';
+import { createFolder, deleteFolder, getFolderById, getFolderStats, getReviewDashboard, listFolders, updateFolder, resetFolderProgress } from '../controllers/folderController.js';
 import { getWordsInFolder } from '../controllers/wordController.js';
 
 const router = express.Router();
@@ -13,6 +13,9 @@ router.get('/', listFolders);
 router.put('/:id', updateFolder);
 
 router.delete('/:id', deleteFolder);
+
+// Reset folder learning progress
+router.post('/:id/reset-progress', resetFolderProgress);
 
 // Lấy danh sách từ trong folder (đặt trước /:id để tránh conflict)
 router.get('/:id/words', getWordsInFolder);

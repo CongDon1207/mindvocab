@@ -1,5 +1,17 @@
 # Changelog
 
+## [2026-01-11]
+- **Add**: Manual Review Scheduling (Forgetting Curve) - Users can now manually set review reminders for any folder (1 day, 3 days, 1 week, 2 weeks, 1 month) via dropdown menu on each folder card.
+- **Add**: Custom Day Input - Users can input any number of days (e.g., 5, 12, 45) for flexible review scheduling.
+- **Add**: Reset Progress Functionality - Users can reset learning progress for 100% mastered folders back to initial state. All words return to unlearned status.
+- **Add**: `nextReviewDate` field to Folder model for manual scheduling support.
+- **Add**: `POST /folders/:id/reset-progress` endpoint to reset all words' meta fields (lastSeenAt, stage, interval, nextReviewDate, correctCount, incorrectCount).
+- **Improve**: Review Dashboard now displays both 100% mastered folders AND manually scheduled folders.
+- **Add**: Countdown badge on FolderCard showing days until review (e.g., "Còn 3 ngày", "Cần ôn ngay!").
+- **Add**: "Đặt lịch thủ công" indicator in Review Dashboard to distinguish manual vs auto-scheduled items.
+- **Add**: Reset button (RotateCcw icon) on hover for 100% mastered folder cards in Review Dashboard.
+- **UI**: Reset button positioned absolutely (top-right), only visible on hover, with confirmation dialog.
+
 ## [2026-01-07]
 - **Add**: 2 chế độ học - **SRS** (ôn tập thông minh) và **Sequential** (tuần tự A-Z). Dropdown chọn mode ở nút "Bắt đầu học" trong FolderDetailHeader.
 - **Fix**: Logic "bỏ qua session" (skip to next 10 words) - Đơn giản hóa: tìm minIndex của session trước + 10 = startIndex mới. Ví dụ: 1-10 → 11-20 → 21-30...

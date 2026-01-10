@@ -110,6 +110,63 @@ const Folder: React.FC = () => {
     }
   }
 
+  // ========== HANDLERS - LÊN LỊCH ÔN TẬP ==========
+  const handleScheduleReview = async (folderId: string, days: number | null) => {
+    try {
+      // Find the folder to get its current name (required for update API)
+      const folder = folders.find(f => f._id === folderId)
+      if (!folder) return
+
+      // Calculate nextReviewDate
+      let nextReviewDate: string | null = null
+      if (days !== null) {
+        const reviewDate = new Date()
+        reviewDate.setDate(reviewDate.getDate() + days)
+        reviewDate.setHours(0, 0, 0, 0) // Set to start of day
+        nextReviewDate = reviewDate.toISOString()
+      }
+
+      // Update folder with new review date
+      const res = await api.put<Folder>(`/folders/${folderId}`, {
+        name: folder.name,
+        description: folder.description || '',
+        nextReviewDate
+      })
+
+      // Update local state
+      setFolders(prev => prev.map(f => f._id === folderId ? res.data : f))
+      
+      // Refresh dashboard data
+      fetchReviewDashboard()
+
+      // Show feedback
+      if (days !== null) {
+        alert(`Đã đặt lịch ôn tập sau ${days} ngày`)
+      } else {
+        alert('Đã gỡ lịch ôn tập')
+      }
+    } catch (err: any) {
+      console.error("Đặt lịch ôn tập thất bại:", err)
+      alert(err.response?.data?.error || "Không thể đặt lịch ôn tập.")
+    }
+  }
+
+  // ========== HANDLERS - RESET TIẾN ĐỘ ==========
+  const handleResetProgress = async (folderId: string) => {
+    try {
+      await api.post(`/folders/${folderId}/reset-progress`)
+      
+      // Refresh both folders list and dashboard
+      fetchFolders()
+      fetchReviewDashboard()
+      
+      alert('Đã reset tiến độ học. Tất cả từ trong thư mục đã trở về trạng thái chưa học.')
+    } catch (err: any) {
+      console.error("Reset tiến độ thất bại:", err)
+      alert(err.response?.data?.error || "Không thể reset tiến độ học.")
+    }
+  }
+
   // ========== RENDER ==========
   return (
     <div className="space-y-8">
@@ -164,6 +221,7 @@ const Folder: React.FC = () => {
             onCreate={handleOpenCreateDialog}
             onDelete={handleDeleteFolder}
             onEdit={handleOpenEditDialog}
+            onScheduleReview={handleScheduleReview}
           />
 
           {/* Điều khiển phân trang */}
@@ -192,7 +250,11 @@ const Folder: React.FC = () => {
           )}
         </>
       ) : (
-        <ReviewDashboard data={reviewDashboardData} loading={dashboardLoading} />
+        <ReviewDashboard 
+          data={reviewDashboardData} 
+          loading={dashboardLoading}
+          onResetProgress={handleResetProgress}
+        />
       )}
 
       {/* Dialog tạo folder mới */}

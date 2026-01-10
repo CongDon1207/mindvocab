@@ -98,12 +98,20 @@ export async function updateFolder(req, res) {
     const id = req.params.id;
     const name = (req.body?.name || '').trim();
     const description = (req.body?.description || '').trim();
+    const nextReviewDate = req.body?.nextReviewDate; // Can be Date string or null
 
     if (!name) {
       return res.status(400).json({ error: 'Tên thư mục (name) là bắt buộc.' });
     }
 
-    const updatedFolder = await Folder.findByIdAndUpdate(id, { name, description }, { new: true });
+    const updateData = { name, description };
+    
+    // Handle nextReviewDate: can be set to a date or cleared (null)
+    if (nextReviewDate !== undefined) {
+      updateData.nextReviewDate = nextReviewDate ? new Date(nextReviewDate) : null;
+    }
+
+    const updatedFolder = await Folder.findByIdAndUpdate(id, updateData, { new: true });
     if (!updatedFolder) {
       return res.status(404).json({ error: 'Không tìm thấy thư mục để cập nhật.' });
     }
@@ -219,7 +227,10 @@ export async function getFolderStats(req, res) {
  * Lấy dữ liệu tổng quan cho dashboard ôn tập (tất cả folder)
  */
 /**
- * Lấy dữ liệu Dashboard cho các Folder đã thuộc 100%
+ * Lấy dữ liệu Dashboard cho các Folder cần ôn tập
+ * Bao gồm: 
+ * - Folder đã thuộc 100% (auto-scheduled)
+ * - Folder được đặt lịch ôn thủ công (manual nextReviewDate)
  * Phân loại theo thời gian cần ôn lại (Retention Intervals)
  */
 export async function getReviewDashboard(req, res) {
@@ -235,7 +246,8 @@ export async function getReviewDashboard(req, res) {
       folderWords[fId].push(w);
     });
 
-    // 2. Identify 100% mastered folders and calculate min interval
+    // 2. Identify folders to include in dashboard
+    // Include if: 100% mastered OR has manual nextReviewDate set
     const retentionData = [];
     const now = new Date();
 
@@ -243,17 +255,26 @@ export async function getReviewDashboard(req, res) {
       const fId = folder._id.toString();
       const fWords = folderWords[fId] || [];
       const total = fWords.length;
-
-      if (total === 0) return;
-
       const mastered = fWords.filter(w => w.meta && w.meta.lastSeenAt).length;
 
-      // Chỉ lấy folder đã thuộc 100%
-      if (mastered === total) {
-        // Tìm ngày review sớm nhất của folder này
-        // Nếu không có nextReviewDate (hiếm), mặc định là now
-        let earliestReview = null;
+      // Check conditions to include folder
+      const isMastered = total > 0 && mastered === total;
+      const hasManualSchedule = folder.nextReviewDate != null;
 
+      // Skip if neither condition met
+      if (!isMastered && !hasManualSchedule) return;
+
+      // Determine review date:
+      // Priority: Manual schedule > Auto-calculated from words
+      let earliestReview = null;
+      let isManualSchedule = false;
+
+      if (hasManualSchedule) {
+        // Use manual schedule (user override)
+        earliestReview = new Date(folder.nextReviewDate);
+        isManualSchedule = true;
+      } else if (isMastered) {
+        // Calculate from word's nextReviewDate (auto)
         fWords.forEach(w => {
           if (w.meta && w.meta.nextReviewDate) {
             const date = new Date(w.meta.nextReviewDate);
@@ -262,30 +283,32 @@ export async function getReviewDashboard(req, res) {
             }
           }
         });
-
         if (!earliestReview) earliestReview = now;
-
-        // Tính khoảng cách ngày (Gap)
-        const diffMs = earliestReview - now;
-        const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24)); // Có thể âm nếu overdue
-
-        let category = '';
-        if (diffDays <= 0) category = 'overdue';
-        else if (diffDays <= 3) category = '3days';
-        else if (diffDays <= 7) category = '7days';
-        else if (diffDays <= 14) category = '14days';
-        else if (diffDays <= 30) category = '30days';
-        else category = 'safe';
-
-        retentionData.push({
-          folderId: folder._id,
-          folderName: folder.name,
-          totalWords: total,
-          earliestReview,
-          diffDays,
-          category
-        });
       }
+
+      // Calculate day difference
+      const diffMs = earliestReview - now;
+      const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+      // Categorize
+      let category = '';
+      if (diffDays <= 0) category = 'overdue';
+      else if (diffDays <= 3) category = '3days';
+      else if (diffDays <= 7) category = '7days';
+      else if (diffDays <= 14) category = '14days';
+      else if (diffDays <= 30) category = '30days';
+      else category = 'safe';
+
+      retentionData.push({
+        folderId: folder._id,
+        folderName: folder.name,
+        totalWords: total,
+        masteredWords: mastered,
+        earliestReview,
+        diffDays,
+        category,
+        isManualSchedule // Flag to indicate manual vs auto
+      });
     });
 
     // 3. Sort by urgency (overdue first, then nearest future date)
@@ -296,6 +319,48 @@ export async function getReviewDashboard(req, res) {
   } catch (err) {
     return res.status(500).json({
       error: 'Lấy dashboard ôn tập thất bại.',
+      detail: err.message
+    });
+  }
+}
+
+/**
+ * Reset folder progress - Clear all word learning progress
+ * This resets all words in folder back to initial state (not learned)
+ */
+export async function resetFolderProgress(req, res) {
+  try {
+    const folderId = req.params.id;
+    
+    // Verify folder exists
+    const folder = await Folder.findById(folderId);
+    if (!folder) {
+      return res.status(404).json({ error: 'Không tìm thấy thư mục.' });
+    }
+
+    // Reset all words in this folder
+    const result = await Word.updateMany(
+      { folderId },
+      {
+        $set: {
+          'meta.lastSeenAt': null,
+          'meta.stage': 0,
+          'meta.interval': 0,
+          'meta.nextReviewDate': null,
+          'meta.correctCount': 0,
+          'meta.incorrectCount': 0
+        }
+      }
+    );
+
+    return res.json({
+      message: 'Đã reset tiến độ học thành công.',
+      resetCount: result.modifiedCount,
+      totalWords: result.matchedCount
+    });
+  } catch (err) {
+    return res.status(500).json({
+      error: 'Reset tiến độ thất bại.',
       detail: err.message
     });
   }
