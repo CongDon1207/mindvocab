@@ -1,6 +1,6 @@
 // src/components/layout/AppLayout.tsx
 import React from 'react'
-import { BookOpen, Sparkles } from 'lucide-react'
+import { BookOpen, Sparkles, Cloud } from 'lucide-react'
 import { useNavigate } from 'react-router'
 
 interface AppLayoutProps {
@@ -11,42 +11,46 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const navigate = useNavigate()
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30">
-      {/* Decorative background elements */}
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50/60 via-purple-50/50 to-pink-50/60 font-sans selection:bg-pink-100 selection:text-pink-900">
+      {/* Aurora Background - Dreamy & Soft */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-100/40 to-indigo-100/40 rounded-full blur-3xl" />
-        <div className="absolute top-1/2 -left-20 w-60 h-60 bg-gradient-to-br from-emerald-100/30 to-teal-100/30 rounded-full blur-3xl" />
-        <div className="absolute -bottom-20 right-1/3 w-72 h-72 bg-gradient-to-br from-amber-100/30 to-orange-100/20 rounded-full blur-3xl" />
+        <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-blue-200/20 rounded-full blur-[100px] animate-pulse" />
+        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-pink-200/20 rounded-full blur-[100px]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-purple-200/10 rounded-full blur-[120px]" />
       </div>
 
-      {/* Navigation Header */}
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/70 border-b border-slate-200/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            {/* Logo */}
-            <button 
-              onClick={() => navigate('/')}
-              className="flex items-center gap-3 hover:opacity-80 transition-opacity"
-            >
-              <div className="relative">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/25">
-                  <BookOpen className="w-5 h-5 text-white" />
-                </div>
-                <Sparkles className="w-3 h-3 text-amber-400 absolute -top-1 -right-1" />
-              </div>
-              <div className="hidden sm:block">
-                <h1 className="text-xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
-                  MindVocab
-                </h1>
-                <p className="text-xs text-slate-500 -mt-0.5">Học từ vựng thông minh</p>
-              </div>
-            </button>
+      {/* Header - Glassmorphism */}
+      <header className="sticky top-0 z-50 px-4 pt-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="backdrop-blur-xl bg-white/60 border border-white/60 rounded-2xl shadow-sm shadow-purple-500/5">
+            <div className="px-4 sm:px-6">
+              <div className="flex items-center justify-between h-16">
+                {/* Logo - Playful */}
+                <button 
+                  onClick={() => navigate('/')}
+                  className="group flex items-center gap-3 hover:opacity-80 transition-all cursor-pointer"
+                >
+                  <div className="relative">
+                    <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center shadow-lg shadow-violet-200 group-hover:scale-105 transition-transform duration-300">
+                      <BookOpen className="w-5 h-5 text-white" />
+                    </div>
+                    <Sparkles className="w-4 h-4 text-yellow-400 absolute -top-2 -right-2 animate-bounce duration-[2000ms]" />
+                  </div>
+                  <div className="hidden sm:block text-left">
+                    <h1 className="text-xl font-black bg-gradient-to-r from-violet-600 to-pink-500 bg-clip-text text-transparent">
+                      MindVocab
+                    </h1>
+                    <p className="text-xs text-slate-500 font-medium pl-0.5">Học là mê!</p>
+                  </div>
+                </button>
 
-            {/* Right side actions */}
-            <div className="flex items-center gap-4">
-              <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200/50">
-                <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-sm font-medium text-emerald-700">Online</span>
+                {/* Right side actions */}
+                <div className="flex items-center gap-4">
+                  <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/50 border border-white shadow-sm">
+                    <Cloud className="w-4 h-4 text-sky-400" />
+                    <span className="text-xs font-bold text-slate-600">ONLINE</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -61,16 +65,16 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       </main>
 
       {/* Footer */}
-      <footer className="relative z-10 mt-auto border-t border-slate-200/50 bg-white/50 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <footer className="relative z-10 mt-auto border-t border-white/50 bg-white/30 backdrop-blur-md">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-slate-500">
-              © 2025 MindVocab. Học từ vựng mỗi ngày.
+            <p className="text-sm font-medium text-slate-500">
+              © 2025 MindVocab
             </p>
-            <div className="flex items-center gap-6">
-              <span className="text-xs text-slate-400">
-                Built with ❤️ for learners
-              </span>
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-pink-400" />
+              <span className="w-2 h-2 rounded-full bg-violet-400" />
+              <span className="w-2 h-2 rounded-full bg-sky-400" />
             </div>
           </div>
         </div>

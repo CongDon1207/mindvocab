@@ -17,15 +17,14 @@ interface WordsTableProps {
 }
 
 const TableHeader = () => (
-  <thead className="bg-gradient-to-r from-slate-50 to-slate-100/80 border-b border-slate-200">
+  <thead className="bg-stone-50/50 border-b border-white/60">
     <tr>
-      <th className="px-4 py-3.5 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Từ vựng</th>
-      <th className="px-4 py-3.5 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Loại</th>
-      <th className="px-4 py-3.5 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Nghĩa</th>
-      <th className="px-4 py-3.5 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">IPA</th>
-      <th className="px-4 py-3.5 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Ví dụ 1</th>
-      <th className="px-4 py-3.5 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Ví dụ 2</th>
-      <th className="px-4 py-3.5 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">Thao tác</th>
+      <th className="px-6 py-4 text-left text-xs font-bold text-slate-400 uppercase tracking-widest">Từ vựng</th>
+      <th className="px-6 py-4 text-left text-xs font-bold text-slate-400 uppercase tracking-widest">Loại</th>
+      <th className="px-6 py-4 text-left text-xs font-bold text-slate-400 uppercase tracking-widest">Nghĩa</th>
+      <th className="px-6 py-4 text-left text-xs font-bold text-slate-400 uppercase tracking-widest">IPA</th>
+      <th className="px-6 py-4 text-left text-xs font-bold text-slate-400 uppercase tracking-widest">Ví dụ</th>
+      <th className="px-6 py-4 text-right text-xs font-bold text-slate-400 uppercase tracking-widest">Thao tác</th>
     </tr>
   </thead>
 )
@@ -42,20 +41,19 @@ export const WordsTable: React.FC<WordsTableProps> = ({
 }) => {
   if (loading) {
     return (
-      <div className="overflow-x-auto bg-white/80 backdrop-blur-sm rounded-xl border border-slate-200/60">
+      <div className="overflow-x-auto bg-white/40 backdrop-blur-md rounded-3xl border border-white/60">
         <table className="w-full">
           <TableHeader />
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-white/20">
             {[...Array(5)].map((_, idx) => (
               <tr key={idx} className="animate-pulse">
-                <td className="px-4 py-4"><Skeleton className="h-5 w-28 rounded-md" /></td>
-                <td className="px-4 py-4"><Skeleton className="h-5 w-14 rounded-md" /></td>
-                <td className="px-4 py-4"><Skeleton className="h-5 w-36 rounded-md" /></td>
-                <td className="px-4 py-4"><Skeleton className="h-5 w-20 rounded-md" /></td>
-                <td className="px-4 py-4"><Skeleton className="h-12 w-44 rounded-md" /></td>
-                <td className="px-4 py-4"><Skeleton className="h-12 w-44 rounded-md" /></td>
-                <td className="px-4 py-4 text-right">
-                  <Skeleton className="h-8 w-20 ml-auto rounded-md" />
+                <td className="px-6 py-5"><Skeleton className="h-5 w-28 rounded-lg" /></td>
+                <td className="px-6 py-5"><Skeleton className="h-5 w-14 rounded-full" /></td>
+                <td className="px-6 py-5"><Skeleton className="h-5 w-36 rounded-lg" /></td>
+                <td className="px-6 py-5"><Skeleton className="h-5 w-20 rounded-lg" /></td>
+                <td className="px-6 py-5"><Skeleton className="h-12 w-44 rounded-lg" /></td>
+                <td className="px-6 py-5 text-right">
+                  <Skeleton className="h-8 w-20 ml-auto rounded-xl" />
                 </td>
               </tr>
             ))}
@@ -67,119 +65,107 @@ export const WordsTable: React.FC<WordsTableProps> = ({
 
   if (words.length === 0) {
     return (
-      <div className="bg-white/80 backdrop-blur-sm rounded-xl border border-slate-200/60 p-12 text-center">
-        <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-slate-100 flex items-center justify-center">
-          <BookOpen className="w-8 h-8 text-slate-400" />
+      <div className="bg-white/40 backdrop-blur-md rounded-3xl border border-white/60 p-16 text-center shadow-sm">
+        <div className="w-20 h-20 mx-auto mb-6 rounded-3xl bg-white/50 flex items-center justify-center shadow-sm border border-white">
+          <BookOpen className="w-10 h-10 text-violet-300" />
         </div>
-        <h3 className="text-lg font-semibold text-slate-700 mb-2">
-          {searchQuery || posFilter ? 'Không tìm thấy từ' : 'Chưa có từ vựng'}
+        <h3 className="text-xl font-black text-violet-900 mb-2">
+          {searchQuery || posFilter ? 'Hổng thấy từ nào hết!' : 'Chưa có từ vựng'}
         </h3>
-        <p className="text-sm text-slate-500">
+        <p className="text-slate-500 font-medium">
           {searchQuery || posFilter
-            ? 'Thử tìm kiếm với từ khóa khác hoặc bỏ bộ lọc.'
-            : 'Hãy thêm từ mới hoặc upload file để bắt đầu!'}
+            ? 'Thử tìm cái tên khác coi sao bạn ơi.'
+            : 'Hãy thêm từ mới để khu vườn trí nhớ thêm rực rỡ!'}
         </p>
       </div>
     )
   }
 
+  const posStyles: any = {
+    noun: 'bg-sky-100 text-sky-600 border-sky-200',
+    verb: 'bg-rose-100 text-rose-600 border-rose-200',
+    adj: 'bg-amber-100 text-amber-600 border-amber-200',
+    adv: 'bg-violet-100 text-violet-600 border-violet-200',
+    prep: 'bg-emerald-100 text-emerald-600 border-emerald-200',
+    phrase: 'bg-fuchsia-100 text-fuchsia-600 border-fuchsia-200',
+  }
+
   return (
-    <div className="overflow-hidden bg-white/80 backdrop-blur-sm rounded-xl border border-slate-200/60">
+    <div className="overflow-hidden bg-white/40 backdrop-blur-md rounded-3xl border border-white shadow-sm transition-all duration-500">
       <div className="overflow-x-auto">
-        <table className="w-full">
+        <table className="w-full border-collapse">
           <TableHeader />
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-white/40">
             {words.map((word) => (
               <tr 
                 key={word._id} 
-                className="group hover:bg-blue-50/50 transition-colors duration-150"
+                className="group relative hover:bg-white/80 transition-all duration-300 cursor-default"
               >
-                <td className="px-4 py-4">
-                  <div className="font-semibold text-slate-800">{word.word}</div>
+                {/* Decorative hover indicator */}
+                <div className="absolute left-0 top-1 bottom-1 w-1 bg-gradient-to-b from-violet-400 to-fuchsia-400 rounded-r-full opacity-0 group-hover:opacity-100 transition-all duration-300 -translate-x-1 group-hover:translate-x-0" />
+                
+                <td className="px-6 py-5">
+                  <div className="font-bold text-slate-800 text-base group-hover:text-violet-700 transition-colors">{word.word}</div>
                   {word.note && (
-                    <div className="text-xs text-slate-500 mt-1 italic line-clamp-2">{word.note}</div>
+                    <div className="text-[11px] text-slate-500 mt-1 font-medium italic line-clamp-1 opacity-60 group-hover:opacity-100 transition-opacity">{word.note}</div>
                   )}
                 </td>
-                <td className="px-4 py-4">
-                  <span className="inline-flex px-2.5 py-1 text-xs font-medium rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100">
+                <td className="px-6 py-5">
+                  <span className={`inline-flex px-2.5 py-0.5 text-[10px] font-black uppercase rounded-lg border shadow-sm ${posStyles[word.pos] || 'bg-slate-100 text-slate-600 border-slate-200'}`}>
                     {word.pos}
                   </span>
                 </td>
-                <td className="px-4 py-4 text-sm text-slate-700 max-w-[200px]">
+                <td className="px-6 py-5 text-sm text-slate-600 font-bold max-w-[200px]">
                   {word.meaning_vi}
                 </td>
-                <td className="px-4 py-4 text-sm text-slate-500 font-mono">
-                  {word.ipa || <span className="text-slate-300">—</span>}
+                <td className="px-6 py-5 text-sm text-slate-400 font-mono font-medium">
+                  {word.ipa || <span className="opacity-20">—</span>}
                 </td>
                 
-                {/* Example 1 */}
-                <td className="px-4 py-4 max-w-[220px]">
+                {/* Simplified Example column */}
+                <td className="px-6 py-5 max-w-[300px]">
                   {word.ex1 ? (
-                    <div className="text-xs space-y-1">
-                      <div className="text-slate-700 line-clamp-2">{word.ex1.en}</div>
-                      <div className="text-slate-500 line-clamp-2">{word.ex1.vi}</div>
-                      {word.ex1.source === 'inferred' && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-600 text-[10px] rounded-full border border-blue-100">
-                          <Sparkles className="w-3 h-3" />
-                          AI
-                        </span>
-                      )}
+                    <div className="space-y-1">
+                      <div className="text-xs text-slate-700 font-medium line-clamp-1">{word.ex1.en}</div>
+                      <div className="text-[10px] text-slate-400 font-medium line-clamp-1">{word.ex1.vi}</div>
                     </div>
                   ) : (
-                    <span className="text-slate-300">—</span>
-                  )}
-                </td>
-
-                {/* Example 2 */}
-                <td className="px-4 py-4 max-w-[220px]">
-                  {word.ex2 ? (
-                    <div className="text-xs space-y-1">
-                      <div className="text-slate-700 line-clamp-2">{word.ex2.en}</div>
-                      <div className="text-slate-500 line-clamp-2">{word.ex2.vi}</div>
-                      {word.ex2.source === 'inferred' && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-600 text-[10px] rounded-full border border-blue-100">
-                          <Sparkles className="w-3 h-3" />
-                          AI
-                        </span>
-                      )}
-                    </div>
-                  ) : (
-                    <span className="text-slate-300">—</span>
+                    <span className="opacity-20">—</span>
                   )}
                 </td>
 
                 {/* Actions */}
-                <td className="px-4 py-4 text-right">
-                  <div className="flex items-center justify-end gap-1">
+                <td className="px-6 py-5 text-right">
+                  <div className="flex items-center justify-end gap-1.5">
                     {onEnrich && (
                       <Button
                         variant="ghost"
-                        size="sm"
+                        size="icon-sm"
                         onClick={() => onEnrich(word._id)}
                         disabled={enrichingIds.includes(word._id)}
-                        title="Bổ sung thông tin bằng AI"
-                        className="text-purple-500 hover:bg-purple-100 hover:text-purple-600"
+                        title="AI Magic"
+                        className="text-violet-400 hover:bg-violet-50 hover:text-violet-600 rounded-lg transition-colors"
                       >
-                        <Wand2 className={`w-4 h-4 ${enrichingIds.includes(word._id) ? 'animate-spin' : ''}`} />
+                        <Sparkles className={`w-3.5 h-3.5 ${enrichingIds.includes(word._id) ? 'animate-spin' : ''}`} />
                       </Button>
                     )}
                     <Button
                       variant="ghost"
-                      size="sm"
+                      size="icon-sm"
                       onClick={() => onEdit(word)}
-                      title="Chỉnh sửa"
-                      className="text-slate-400 hover:bg-blue-100 hover:text-blue-600"
+                      title="Sửa"
+                      className="text-slate-300 hover:bg-sky-50 hover:text-sky-500 rounded-lg transition-colors"
                     >
-                      <Edit2 className="w-4 h-4" />
+                      <Edit2 className="w-3.5 h-3.5" />
                     </Button>
                     <Button
                       variant="ghost"
-                      size="sm"
+                      size="icon-sm"
                       onClick={() => onDelete(word._id)}
                       title="Xóa"
-                      className="text-slate-400 hover:bg-red-100 hover:text-red-600"
+                      className="text-slate-300 hover:bg-rose-50 hover:text-rose-500 rounded-lg transition-colors"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-3.5 h-3.5" />
                     </Button>
                   </div>
                 </td>

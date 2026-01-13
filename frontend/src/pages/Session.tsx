@@ -160,6 +160,12 @@ const SessionPage: React.FC = () => {
   }
 
   const handleContinue = () => {
+    // Nếu là bước cuối, cho phép quay lại folder
+    if (isLastStep) {
+      navigate(`/folders/${folderIdValue}`)
+      return
+    }
+
     if (!canProceedToNextStep()) return
 
     const currentIndex = getStepIndex(currentStep)
@@ -216,84 +222,92 @@ const SessionPage: React.FC = () => {
   const progressPercentage = Math.round(((currentStepIndex + 1) / STEP_ORDER.length) * 100)
   const isFirstStep = currentStepIndex === 0
   const isLastStep = currentStepIndex === STEP_ORDER.length - 1
-  const continueEnabled = canProceedToNextStep() && !isLastStep
+  
+  // Logic fix: Ở bước cuối (Summary), nút Hoàn thành luôn được bật để người dùng thoát ra
+  const continueEnabled = isLastStep || canProceedToNextStep()
 
   if (loading) return <SessionLoading />
   if (error) return <SessionError error={error} />
   if (!session) return null
 
   const folderIdValue = typeof session.folderId === 'string' ? session.folderId : session.folderId._id
+  const folderName = session.folderName || (typeof session.folderId !== 'string' ? session.folderId.name : 'Folder')
+  const folderStats = typeof session.folderId !== 'string' ? session.folderId.stats : undefined
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-4xl mx-auto space-y-6">
+    <div className="min-h-screen bg-transparent">
+      <div className="max-w-4xl mx-auto space-y-8 py-8 px-4">
         <SessionHeader
-          folderName={session.folderName || session.folderId.name}
+          folderName={folderName}
           stepLabel={STEP_LABELS[currentStep]}
-          folderStats={session.folderId.stats}
+          folderStats={folderStats}
           onBackToFolder={() => navigate(`/folders/${folderIdValue}`)}
         />
 
-        <SessionStepper
-          steps={STEP_ORDER}
-          stepLabels={STEP_LABELS}
-          currentStepIndex={currentStepIndex}
-          progressPercentage={progressPercentage}
-        />
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <SessionStepper
+            steps={STEP_ORDER}
+            stepLabels={STEP_LABELS}
+            currentStepIndex={currentStepIndex}
+            progressPercentage={progressPercentage}
+          />
+        </div>
 
-        <SessionContent
-          currentStep={currentStep}
-          stepLabel={STEP_LABELS[currentStep]}
-          session={session}
-          onFlashcardsComplete={(completed: boolean) => setFlashcardsCompleted(completed)}
-          onQuizP1Complete={(score: number, wrongIds: string[]) => {
-            setQuizP1Completed(true)
-            if (session) {
-              const newWrongSet = Array.from(new Set([...session.wrongSet, ...wrongIds]))
-              setSession({
-                ...session,
-                quizP1: { ...session.quizP1, score },
-                wrongSet: newWrongSet
-              })
-              syncSession({ 'quizP1.score': score, wrongSet: newWrongSet })
-            }
-          }}
-          onQuizP2Complete={(score: number, wrongIds: string[]) => {
-            setQuizP2Completed(true)
-            if (session) {
-              const newWrongSet = Array.from(new Set([...session.wrongSet, ...wrongIds]))
-              setSession({
-                ...session,
-                quizP2: { ...session.quizP2, score },
-                wrongSet: newWrongSet
-              })
-              syncSession({ 'quizP2.score': score, wrongSet: newWrongSet })
-            }
-          }}
-          onSpellingComplete={(correct: number, rounds: number) => {
-            setSpellingCompleted(true)
-            if (session) {
-              setSession({
-                ...session,
-                spelling: { ...session.spelling, correct, rounds }
-              })
-              syncSession({
-                'spelling.correct': correct,
-                'spelling.rounds': rounds
-              })
-            }
-          }}
-          onFillBlankComplete={(score: number) => {
-            setFillBlankCompleted(true)
-            if (session) {
-              setSession({
-                ...session,
-                fillBlank: { ...session.fillBlank, score }
-              })
-              syncSession({ 'fillBlank.score': score })
-            }
-          }}
-        />
+        <div className="animate-in fade-in zoom-in-95 duration-300">
+          <SessionContent
+            currentStep={currentStep}
+            stepLabel={STEP_LABELS[currentStep]}
+            session={session}
+            onFlashcardsComplete={(completed: boolean) => setFlashcardsCompleted(completed)}
+            onQuizP1Complete={(score: number, wrongIds: string[]) => {
+              setQuizP1Completed(true)
+              if (session) {
+                const newWrongSet = Array.from(new Set([...session.wrongSet, ...wrongIds]))
+                setSession({
+                  ...session,
+                  quizP1: { ...session.quizP1, score },
+                  wrongSet: newWrongSet
+                })
+                syncSession({ 'quizP1.score': score, wrongSet: newWrongSet })
+              }
+            }}
+            onQuizP2Complete={(score: number, wrongIds: string[]) => {
+              setQuizP2Completed(true)
+              if (session) {
+                const newWrongSet = Array.from(new Set([...session.wrongSet, ...wrongIds]))
+                setSession({
+                  ...session,
+                  quizP2: { ...session.quizP2, score },
+                  wrongSet: newWrongSet
+                })
+                syncSession({ 'quizP2.score': score, wrongSet: newWrongSet })
+              }
+            }}
+            onSpellingComplete={(correct: number, rounds: number) => {
+              setSpellingCompleted(true)
+              if (session) {
+                setSession({
+                  ...session,
+                  spelling: { ...session.spelling, correct, rounds }
+                })
+                syncSession({
+                  'spelling.correct': correct,
+                  'spelling.rounds': rounds
+                })
+              }
+            }}
+            onFillBlankComplete={(score: number) => {
+              setFillBlankCompleted(true)
+              if (session) {
+                setSession({
+                  ...session,
+                  fillBlank: { ...session.fillBlank, score }
+                })
+                syncSession({ 'fillBlank.score': score })
+              }
+            }}
+          />
+        </div>
 
         <SessionNavigation
           currentStepIndex={currentStepIndex}

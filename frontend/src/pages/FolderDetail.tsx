@@ -42,8 +42,8 @@ const FolderDetail: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-transparent">
+      <div className="max-w-7xl mx-auto px-4 py-8">
         <FolderDetailHeader
           folder={folder}
           onStartLearning={handleStartLearning}
@@ -60,32 +60,32 @@ const FolderDetail: React.FC = () => {
           onPosChange={setPosFilter}
         />
 
-        {/* Tab Switcher */}
-        <div className="flex gap-2 mb-6 p-1 bg-gray-100/80 w-fit rounded-lg border border-gray-200">
+        {/* Tab Switcher - Dreamy style */}
+        <div className="flex gap-2 mb-6 p-1.5 bg-white/40 backdrop-blur-md w-fit rounded-2xl border border-white/60 shadow-sm">
           <button
             onClick={() => setActiveTab('words')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-md transition-all text-sm font-bold ${activeTab === 'words'
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
+            className={`flex items-center gap-2 px-6 py-2 rounded-xl transition-all text-sm font-black tracking-wide ${activeTab === 'words'
+                ? 'bg-white text-violet-600 shadow-sm scale-[1.02]'
+                : 'text-slate-500 hover:text-slate-700 hover:bg-white/20'
               }`}
           >
             <LayoutGrid className="h-4 w-4" />
-            Danh sách từ
+            TỪ VỰNG
           </button>
           <button
             onClick={() => setActiveTab('stats')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-md transition-all text-sm font-bold ${activeTab === 'stats'
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
+            className={`flex items-center gap-2 px-6 py-2 rounded-xl transition-all text-sm font-black tracking-wide ${activeTab === 'stats'
+                ? 'bg-white text-violet-600 shadow-sm scale-[1.02]'
+                : 'text-slate-500 hover:text-slate-700 hover:bg-white/20'
               }`}
           >
             <BarChart3 className="h-4 w-4" />
-            Thống kê & Lịch ôn
+            THỐNG KÊ
           </button>
         </div>
 
         {activeTab === 'words' ? (
-          <div className="bg-white rounded-lg shadow overflow-hidden">
+          <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
             <WordsTable
               words={words}
               loading={loading}
@@ -98,17 +98,21 @@ const FolderDetail: React.FC = () => {
             />
 
             {!loading && words.length > 0 && (
-              <FolderPagination
-                page={page}
-                totalPages={totalPages}
-                total={total}
-                limit={limit}
-                onPageChange={setPage}
-              />
+              <div className="mt-6 flex justify-center">
+                <FolderPagination
+                  page={page}
+                  totalPages={totalPages}
+                  total={total}
+                  limit={limit}
+                  onPageChange={setPage}
+                />
+              </div>
             )}
           </div>
         ) : (
-          <FolderStatsView stats={folderStats} loading={statsLoading} />
+          <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+            <FolderStatsView stats={folderStats} loading={statsLoading} />
+          </div>
         )}
       </div>
 

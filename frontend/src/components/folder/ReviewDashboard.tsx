@@ -1,3 +1,4 @@
+// src/components/folder/ReviewDashboard.tsx
 import React from 'react'
 import { FolderReviewStats } from '@/types/folder'
 import { useNavigate } from 'react-router'
@@ -9,7 +10,9 @@ import {
     Calendar,
     Hourglass,
     ShieldCheck,
-    RotateCcw
+    RotateCcw,
+    Sparkles,
+    Zap
 } from 'lucide-react'
 
 interface ReviewDashboardProps {
@@ -25,23 +28,22 @@ const ReviewDashboard: React.FC<ReviewDashboardProps> = ({ data, loading, onRese
         return (
             <div className="flex flex-col items-center justify-center py-20">
                 <div className="relative">
-                    <div className="h-16 w-16 rounded-full border-4 border-slate-100 border-t-emerald-600 animate-spin"></div>
-                    <Hourglass className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-6 w-6 text-emerald-600 animate-pulse" />
+                    <div className="h-16 w-16 rounded-full border-4 border-violet-100 border-t-violet-500 animate-spin"></div>
+                    <Sparkles className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-6 w-6 text-violet-500 animate-pulse" />
                 </div>
-                <p className="mt-6 text-slate-500 font-medium animate-pulse">Đang phân tích dữ liệu...</p>
+                <p className="mt-6 text-violet-500 font-bold animate-pulse">Đang tải phép thuật...</p>
             </div>
         )
     }
 
-    // Nếu không có folder nào 100%
     if (data.length === 0) {
         return (
-            <div className="bg-white rounded-3xl p-12 text-center border-2 border-dashed border-slate-100 flex flex-col items-center">
-                <div className="h-20 w-20 bg-slate-50 rounded-full flex items-center justify-center mb-6">
-                    <ShieldCheck className="h-10 w-10 text-slate-400" />
+            <div className="bg-white/60 backdrop-blur-md rounded-3xl p-12 text-center border-2 border-dashed border-violet-200 flex flex-col items-center">
+                <div className="h-20 w-20 bg-violet-50 rounded-full flex items-center justify-center mb-6 animate-bounce">
+                    <ShieldCheck className="h-10 w-10 text-violet-400" />
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-2">Chưa có bộ từ vựng nào cần ôn tập</h3>
-                <p className="text-slate-500 max-w-sm">Hãy hoàn thành tất cả các từ trong một folder hoặc đặt lịch ôn tập thủ công từ menu thả xuống trên mỗi thư mục!</p>
+                <h3 className="text-xl font-black text-violet-900 mb-2">Chưa có bài nào xong hết á!</h3>
+                <p className="text-slate-500 max-w-sm">Học hết 100% từ vựng đi rồi quay lại đây nha!</p>
             </div>
         )
     }
@@ -57,40 +59,46 @@ const ReviewDashboard: React.FC<ReviewDashboardProps> = ({ data, loading, onRese
     }
 
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
 
-            {/* Header */}
-            <div className="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-3xl p-8 text-white shadow-xl shadow-emerald-100 relative overflow-hidden">
+            {/* Header - Dreamy Gradient */}
+            <div className="bg-gradient-to-r from-violet-500 via-purple-500 to-fuchsia-500 rounded-3xl p-8 text-white shadow-xl shadow-purple-200 relative overflow-hidden">
                 <div className="relative z-10">
-                    <h2 className="text-3xl font-black tracking-tight mb-2">Bảng theo dõi trí nhớ</h2>
-                    <p className="text-emerald-100 font-medium max-w-2xl">
-                        Đây là danh sách các bộ từ vựng bạn đã <span className="text-white font-bold underline">thuộc lòng 100%</span> hoặc
-                        đã <span className="text-white font-bold underline">đặt lịch ôn tập thủ công</span>.
-                        Hệ thống sẽ nhắc bạn ôn lại theo các mốc thời gian tối ưu để ghi nhớ lâu dài.
+                    <div className="flex items-center gap-3 mb-2">
+                        <span className="bg-white/20 p-2 rounded-xl backdrop-blur-sm">
+                            <Sparkles className="w-6 h-6 text-yellow-300" />
+                        </span>
+                        <h2 className="text-3xl font-black tracking-tight">Hồ Sơ Trí Nhớ</h2>
+                    </div>
+                    <p className="text-purple-100 font-medium max-w-2xl text-lg">
+                        Danh sách các bộ từ vựng bạn đã <span className="text-white font-bold underline decoration-yellow-400 decoration-4">thuộc làu làu</span>!
+                        Hệ thống sẽ nhắc bạn ôn lại đúng lúc để không bao giờ quên.
                     </p>
                 </div>
-                <ShieldCheck className="absolute -bottom-6 -right-6 h-48 w-48 text-white/10 rotate-12" />
+                {/* Decorative blobs */}
+                <div className="absolute -bottom-10 -right-10 w-64 h-64 bg-pink-400 rounded-full blur-3xl opacity-50 mix-blend-overlay" />
+                <div className="absolute -top-10 -left-10 w-64 h-64 bg-blue-400 rounded-full blur-3xl opacity-50 mix-blend-overlay" />
             </div>
 
             {/* Main Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
 
-                {/* Column 1: Active Review (Overdue) */}
+                {/* Column 1: Cần ôn ngay (Red/Rose) */}
                 <div className="space-y-4">
                     <CategoryHeader
-                        title="Cần ôn ngay"
+                        title="Cần ôn gấp!"
                         count={groups.overdue.length}
-                        color="red"
-                        icon={<AlertCircle className="h-5 w-5" />}
+                        color="rose"
+                        icon={<Zap className="h-5 w-5" />}
                     />
                     {groups.overdue.length === 0 ? (
-                        <EmptyState message="Không có bài quá hạn" />
+                        <EmptyState message="Tuyệt vời! Không có bài nợ." color="rose" />
                     ) : (
                         groups.overdue.map(item => (
                             <RetentionCard 
                                 key={item.folderId} 
                                 item={item} 
-                                color="red" 
+                                color="rose" 
                                 onClick={() => navigate(`/folders/${item.folderId}`)}
                                 onReset={onResetProgress}
                             />
@@ -98,23 +106,23 @@ const ReviewDashboard: React.FC<ReviewDashboardProps> = ({ data, loading, onRese
                     )}
                 </div>
 
-                {/* Column 2: Short Term (3-7 Days) */}
+                {/* Column 2: Sắp tới (Amber/Yellow) */}
                 <div className="space-y-4">
                     <CategoryHeader
                         title="Sắp tới (3-7 ngày)"
                         count={groups.d3.length + groups.d7.length}
-                        color="orange"
+                        color="amber"
                         icon={<Clock className="h-5 w-5" />}
                     />
                     {[...groups.d3, ...groups.d7].length === 0 ? (
-                        <EmptyState message="Trống" />
+                        <EmptyState message="Chưa có lịch sắp tới." color="amber" />
                     ) : (
                         <>
                             {groups.d3.map(item => (
                                 <RetentionCard 
                                     key={item.folderId} 
                                     item={item} 
-                                    color="orange" 
+                                    color="amber" 
                                     label="3 ngày" 
                                     onClick={() => navigate(`/folders/${item.folderId}`)}
                                     onReset={onResetProgress}
@@ -124,7 +132,7 @@ const ReviewDashboard: React.FC<ReviewDashboardProps> = ({ data, loading, onRese
                                 <RetentionCard 
                                     key={item.folderId} 
                                     item={item} 
-                                    color="yellow" 
+                                    color="amber" 
                                     label="7 ngày" 
                                     onClick={() => navigate(`/folders/${item.folderId}`)}
                                     onReset={onResetProgress}
@@ -134,23 +142,23 @@ const ReviewDashboard: React.FC<ReviewDashboardProps> = ({ data, loading, onRese
                     )}
                 </div>
 
-                {/* Column 3: Long Term (14-30+ Days) */}
+                {/* Column 3: Dài hạn (Sky/Blue) */}
                 <div className="space-y-4">
                     <CategoryHeader
                         title="Dài hạn (> 2 tuần)"
                         count={groups.d14.length + groups.d30.length + groups.safe.length}
-                        color="blue"
+                        color="sky"
                         icon={<Calendar className="h-5 w-5" />}
                     />
                     {[...groups.d14, ...groups.d30, ...groups.safe].length === 0 ? (
-                        <EmptyState message="Chưa có folder nào đạt mốc này" />
+                        <EmptyState message="Chưa có folder nào siêu trí nhớ." color="sky" />
                     ) : (
                         <>
                             {groups.d14.map(item => (
                                 <RetentionCard 
                                     key={item.folderId} 
                                     item={item} 
-                                    color="blue" 
+                                    color="sky" 
                                     label="2 tuần" 
                                     onClick={() => navigate(`/folders/${item.folderId}`)}
                                     onReset={onResetProgress}
@@ -160,7 +168,7 @@ const ReviewDashboard: React.FC<ReviewDashboardProps> = ({ data, loading, onRese
                                 <RetentionCard 
                                     key={item.folderId} 
                                     item={item} 
-                                    color="indigo" 
+                                    color="violet" 
                                     label="1 tháng" 
                                     onClick={() => navigate(`/folders/${item.folderId}`)}
                                     onReset={onResetProgress}
@@ -186,17 +194,20 @@ const ReviewDashboard: React.FC<ReviewDashboardProps> = ({ data, loading, onRese
 }
 
 const CategoryHeader = ({ title, count, color, icon }: any) => {
-    const colors: any = {
-        red: 'bg-red-50 text-red-600 border-red-100',
-        orange: 'bg-orange-50 text-orange-600 border-orange-100',
-        blue: 'bg-blue-50 text-blue-600 border-blue-100',
+    // Vibrant Pastel Headers
+    const styles: any = {
+        rose: 'bg-rose-100 text-rose-600 border-rose-200',
+        amber: 'bg-amber-100 text-amber-600 border-amber-200',
+        sky: 'bg-sky-100 text-sky-600 border-sky-200',
     }
 
     return (
-        <div className={`flex items-center gap-3 p-3 rounded-xl border ${colors[color]}`}>
-            {icon}
-            <span className="font-bold flex-1">{title}</span>
-            <span className="bg-white/50 px-2 py-0.5 rounded-md text-xs font-black shadow-sm">{count}</span>
+        <div className={`flex items-center gap-3 p-4 rounded-2xl border-2 border-white shadow-sm ${styles[color]}`}>
+            <div className="p-2 bg-white/60 rounded-xl backdrop-blur-sm shadow-sm">
+                {icon}
+            </div>
+            <span className="font-bold flex-1 text-lg">{title}</span>
+            <span className="bg-white px-3 py-1 rounded-full text-xs font-black shadow-sm">{count}</span>
         </div>
     )
 }
@@ -208,27 +219,50 @@ const RetentionCard = ({ item, color, label, onClick, onReset }: {
     onClick: () => void,
     onReset?: (folderId: string) => void
 }) => {
-    const badges: any = {
-        red: 'bg-red-100 text-red-700',
-        orange: 'bg-orange-100 text-orange-700',
-        yellow: 'bg-yellow-100 text-yellow-700',
-        blue: 'bg-blue-100 text-blue-700',
-        indigo: 'bg-indigo-100 text-indigo-700',
-        emerald: 'bg-emerald-100 text-emerald-700',
+    // Dreamy Card Styles
+    const styles: any = {
+        rose: {
+            bg: 'hover:bg-rose-50',
+            border: 'hover:border-rose-200',
+            iconBg: 'bg-rose-100',
+            iconColor: 'text-rose-500',
+            badge: 'bg-rose-100 text-rose-600'
+        },
+        amber: {
+            bg: 'hover:bg-amber-50',
+            border: 'hover:border-amber-200',
+            iconBg: 'bg-amber-100',
+            iconColor: 'text-amber-500',
+            badge: 'bg-amber-100 text-amber-600'
+        },
+        sky: {
+            bg: 'hover:bg-sky-50',
+            border: 'hover:border-sky-200',
+            iconBg: 'bg-sky-100',
+            iconColor: 'text-sky-500',
+            badge: 'bg-sky-100 text-sky-600'
+        },
+        violet: {
+            bg: 'hover:bg-violet-50',
+            border: 'hover:border-violet-200',
+            iconBg: 'bg-violet-100',
+            iconColor: 'text-violet-500',
+            badge: 'bg-violet-100 text-violet-600'
+        },
+        emerald: {
+            bg: 'hover:bg-emerald-50',
+            border: 'hover:border-emerald-200',
+            iconBg: 'bg-emerald-100',
+            iconColor: 'text-emerald-500',
+            badge: 'bg-emerald-100 text-emerald-600'
+        }
     }
 
-    const borderColors: any = {
-        red: 'hover:border-red-300 hover:shadow-red-50',
-        orange: 'hover:border-orange-300 hover:shadow-orange-50',
-        yellow: 'hover:border-yellow-300 hover:shadow-yellow-50',
-        blue: 'hover:border-blue-300 hover:shadow-blue-50',
-        indigo: 'hover:border-indigo-300 hover:shadow-indigo-50',
-        emerald: 'hover:border-emerald-300 hover:shadow-emerald-50',
-    }
+    const s = styles[color] || styles.sky
 
     const handleReset = (e: React.MouseEvent) => {
         e.stopPropagation()
-        if (onReset && confirm(`Bạn có chắc muốn reset toàn bộ tiến độ học của thư mục "${item.folderName}"?\n\nTất cả từ sẽ trở về trạng thái chưa học.`)) {
+        if (onReset && confirm(`Reset tiến độ?`)) {
             onReset(item.folderId)
         }
     }
@@ -237,56 +271,66 @@ const RetentionCard = ({ item, color, label, onClick, onReset }: {
         <div className="relative group/card">
             <button
                 onClick={onClick}
-                className={`w-full bg-white p-4 rounded-2xl border border-slate-100 shadow-sm transition-all text-left ${borderColors[color]} group-hover/card:-translate-y-1`}
+                className={`w-full bg-white/80 backdrop-blur-sm p-5 rounded-3xl border border-white shadow-sm transition-all text-left ${s.bg} ${s.border} hover:shadow-md hover:-translate-y-1 hover:scale-[1.02] duration-300`}
             >
-                <div className="flex justify-between items-start mb-2">
-                    <h4 className="font-bold text-slate-800 line-clamp-1 flex-1">{item.folderName}</h4>
-                    {label && <span className={`text-[10px] font-black uppercase px-2 py-1 rounded-lg ${badges[color]}`}>{label}</span>}
+                <div className="flex justify-between items-start mb-3">
+                    <h4 className="font-bold text-slate-700 text-base line-clamp-1 flex-1">{item.folderName}</h4>
+                    {label && <span className={`text-[10px] font-black uppercase px-2 py-1 rounded-lg ${s.badge}`}>{label}</span>}
                 </div>
 
-                <div className="flex items-center gap-2 text-xs text-slate-400">
+                <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
                     {item.isManualSchedule ? (
-                        <>
-                            <Clock className="h-3 w-3 text-blue-500" />
-                            <span>Đặt lịch thủ công • {item.masteredWords ?? 0}/{item.totalWords} từ</span>
-                        </>
+                        <div className={`flex items-center gap-1.5 px-2 py-1 rounded-lg ${s.iconBg} ${s.iconColor}`}>
+                            <Clock className="h-3.5 w-3.5" />
+                            <span>Thủ công</span>
+                        </div>
                     ) : (
-                        <>
-                            <CheckCircle2 className="h-3 w-3 text-emerald-500" />
-                            <span>100% thuộc lòng ({item.totalWords} từ)</span>
-                        </>
+                        <div className={`flex items-center gap-1.5 px-2 py-1 rounded-lg ${s.iconBg} ${s.iconColor}`}>
+                            <CheckCircle2 className="h-3.5 w-3.5" />
+                            <span>Đã thuộc lòng</span>
+                        </div>
                     )}
+                    <span className="opacity-60">• {item.totalWords} từ</span>
                 </div>
 
-                <div className="mt-3 pt-3 border-t border-slate-50 flex justify-between items-center">
-                    <span className="text-xs font-medium text-slate-500">
+                <div className="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center">
+                    <span className="text-xs font-bold text-slate-400">
                         {item.category === 'overdue'
-                            ? <span className="text-red-500 font-bold">Cần ôn ngay!</span>
-                            : `Ôn lại sau ${item.diffDays} ngày`
+                            ? <span className="text-rose-500 animate-pulse">CẦN ÔN NGAY!</span>
+                            : `Sau ${item.diffDays} ngày nữa`
                         }
                     </span>
-                    <ChevronRight className="h-4 w-4 text-slate-300 group-hover/card:text-slate-600" />
+                    <div className="w-6 h-6 rounded-full bg-slate-50 flex items-center justify-center group-hover/card:bg-white group-hover/card:shadow-sm transition-all">
+                        <ChevronRight className="h-3.5 w-3.5 text-slate-400 group-hover/card:text-slate-600" />
+                    </div>
                 </div>
             </button>
             
-            {/* Reset button - only show for 100% mastered (not manual schedule) */}
             {!item.isManualSchedule && onReset && (
                 <button
                     onClick={handleReset}
-                    className="absolute top-2 right-2 opacity-0 group-hover/card:opacity-100 transition-opacity p-2 bg-white hover:bg-red-50 rounded-lg border border-slate-200 hover:border-red-300 shadow-sm"
-                    title="Reset tiến độ học"
+                    className="absolute top-3 right-3 opacity-0 group-hover/card:opacity-100 transition-opacity p-1.5 hover:bg-rose-50 rounded-lg text-slate-300 hover:text-rose-500"
+                    title="Reset"
                 >
-                    <RotateCcw className="h-3.5 w-3.5 text-red-500" />
+                    <RotateCcw className="h-4 w-4" />
                 </button>
             )}
         </div>
     )
 }
 
-const EmptyState = ({ message }: { message: string }) => (
-    <div className="h-24 rounded-xl border-2 border-dashed border-slate-100 flex items-center justify-center">
-        <span className="text-slate-400 text-sm font-medium">{message}</span>
-    </div>
-)
+const EmptyState = ({ message, color }: { message: string, color: string }) => {
+    const bgs: any = {
+        rose: 'bg-rose-50 border-rose-100 text-rose-400',
+        amber: 'bg-amber-50 border-amber-100 text-amber-400',
+        sky: 'bg-sky-50 border-sky-100 text-sky-400',
+    }
+
+    return (
+        <div className={`h-24 rounded-2xl border-2 border-dashed flex items-center justify-center ${bgs[color]}`}>
+            <span className="font-bold text-sm">{message}</span>
+        </div>
+    )
+}
 
 export default ReviewDashboard

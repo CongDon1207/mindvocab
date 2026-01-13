@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { AlertCircle, CheckCircle2, ChevronRight } from 'lucide-react'
 import api from '@/lib/axios'
 import type { Question } from '@/types/session'
 
@@ -164,18 +165,18 @@ const QuizStep: React.FC<QuizStepProps> = ({
   const getOptionStyle = (option: string) => {
     if (!isAnswered) {
       return option === selectedAnswer
-        ? 'bg-blue-100 border-blue-500 text-blue-900'
-        : 'bg-white border-gray-300 text-gray-900 hover:bg-gray-50'
+        ? 'bg-violet-50 border-violet-400 text-violet-900 shadow-md scale-[1.02]'
+        : 'bg-white/60 border-white/60 text-slate-600 hover:bg-white hover:border-violet-200'
     }
 
     // After answered: show correct/incorrect
     if (option === currentQuestion.answer) {
-      return 'bg-green-100 border-green-500 text-green-900'
+      return 'bg-emerald-50 border-emerald-400 text-emerald-900 shadow-sm'
     }
     if (option === selectedAnswer && option !== currentQuestion.answer) {
-      return 'bg-red-100 border-red-500 text-red-900'
+      return 'bg-rose-50 border-rose-400 text-rose-900 shadow-sm'
     }
-    return 'bg-white border-gray-300 text-gray-400'
+    return 'bg-white/40 border-white/20 text-slate-300 opacity-60'
   }
 
   const optionLabels = ['A', 'B', 'C', 'D']
@@ -183,108 +184,91 @@ const QuizStep: React.FC<QuizStepProps> = ({
   return (
     <div className="space-y-6">
       {/* Progress Bar */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between text-sm text-gray-600">
+      <div className="space-y-3 px-2">
+        <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-slate-400">
           <span>
             Câu {currentQuestionIndex + 1} / {totalQuestions}
           </span>
-          <span>
-            Điểm: {score} / {totalQuestions}
+          <span className="text-violet-500 font-black">
+            Đúng: {score} / {totalQuestions}
           </span>
         </div>
-        {/* Visual progress bar */}
-        <div className="w-full bg-gray-200 rounded-full h-2">
+        <div className="w-full bg-slate-200/50 rounded-full h-1.5 overflow-hidden">
           <div
-            className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+            className="bg-gradient-to-r from-violet-400 to-fuchsia-400 h-full rounded-full transition-all duration-300"
             style={{ width: `${((currentQuestionIndex + 1) / totalQuestions) * 100}%` }}
           />
         </div>
       </div>
 
       {/* Question card */}
-      <Card>
-        <CardContent className="p-8">
-          <div className="space-y-6">
+      <Card className="rounded-[2rem] border-white bg-white/70 backdrop-blur-md shadow-xl shadow-violet-500/5 overflow-hidden">
+        <CardContent className="p-10">
+          <div className="space-y-8">
             {/* Question prompt */}
             <div className="text-center">
-              <p className="text-sm text-gray-500 mb-2">
-                {stepType === 'QUIZ_PART1' ? 'Chọn từ tiếng Anh phù hợp:' : 'Chọn nghĩa tiếng Việt phù hợp:'}
+              <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">
+                {stepType === 'QUIZ_PART1' ? 'Chọn từ tiếng Anh phù hợp' : 'Chọn nghĩa tiếng Việt phù hợp'}
               </p>
-              <h2 className="text-2xl font-bold text-gray-900">
+              <h2 className="text-3xl font-black text-slate-800 tracking-tight leading-snug">
                 {currentQuestion.prompt}
               </h2>
             </div>
 
             {/* Options */}
-            <div className="space-y-3">
+            <div className="grid grid-cols-1 gap-3">
               {currentQuestion.options.map((option, idx) => (
                 <button
                   key={idx}
                   onClick={() => !isAnswered && setSelectedAnswer(option)}
                   disabled={isAnswered}
-                  className={`w-full p-4 text-left border-2 rounded-lg transition-all ${getOptionStyle(option)}`}
+                  className={`w-full p-5 text-left border-2 rounded-2xl transition-all duration-300 font-bold group ${getOptionStyle(option)}`}
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="font-semibold text-lg min-w-8">
-                      {optionLabels[idx]}.
+                  <div className="flex items-center gap-4">
+                    <span className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-black border transition-colors ${
+                      option === selectedAnswer ? 'bg-violet-500 border-violet-400 text-white' : 'bg-slate-50 border-slate-100 text-slate-400 group-hover:border-violet-200'
+                    }`}>
+                      {optionLabels[idx]}
                     </span>
-                    <span className="font-medium">{option}</span>
+                    <span className="text-base">{option}</span>
                     {isAnswered && option === currentQuestion.answer && (
-                      <span className="ml-auto text-green-600 font-bold">✓</span>
+                      <span className="ml-auto text-emerald-500"><CheckCircle2 className="w-5 h-5" /></span>
                     )}
                     {isAnswered && option === selectedAnswer && option !== currentQuestion.answer && (
-                      <span className="ml-auto text-red-600 font-bold">✗</span>
+                      <span className="ml-auto text-rose-500"><AlertCircle className="w-5 h-5" /></span>
                     )}
                   </div>
                 </button>
               ))}
             </div>
 
-            {/* Feedback */}
-            {feedback && (
-              <div className={`p-4 rounded-lg text-center font-medium ${
-                feedback === 'correct'
-                  ? 'bg-green-50 text-green-800 border border-green-200'
-                  : 'bg-red-50 text-red-800 border border-red-200'
-              }`}>
-                {feedback === 'correct' ? '✓ Chính xác!' : `✗ Sai rồi. Đáp án đúng: ${currentQuestion.answer}`}
-              </div>
-            )}
-
             {/* Action buttons */}
-            <div className="flex gap-3 justify-center">
+            <div className="flex gap-3 justify-center pt-4">
               {!isAnswered ? (
                 <>
                   <Button
-                    variant="outline"
+                    variant="ghost"
                     onClick={handleSkip}
+                    className="rounded-xl text-slate-400 hover:text-slate-600"
                   >
-                    Bỏ qua (Skip)
+                    Bỏ qua
                   </Button>
                   <Button
                     onClick={handleSubmit}
                     disabled={!selectedAnswer}
-                    className="min-w-[120px]"
+                    className="min-w-[160px] rounded-xl bg-violet-600 hover:bg-violet-700 shadow-lg shadow-violet-200 transition-all font-black uppercase tracking-widest text-xs"
                   >
-                    Trả lời
+                    Xác nhận
                   </Button>
                 </>
               ) : (
                 <Button
                   onClick={handleNext}
-                  className="min-w-[120px]"
+                  className="min-w-[180px] rounded-xl bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:scale-105 shadow-xl shadow-violet-200 transition-all font-black uppercase tracking-widest text-xs"
                 >
-                  {isLastQuestion ? 'Hoàn thành' : 'Câu tiếp theo'}
+                  {isLastQuestion ? 'Xem kết quả' : 'Tiếp theo'}
+                  <ChevronRight className="w-4 h-4 ml-2" />
                 </Button>
-              )}
-            </div>
-
-            {/* Keyboard hints */}
-            <div className="text-center text-sm text-gray-500">
-              {!isAnswered ? (
-                <p>Phím tắt: 1-4 để chọn, Enter để trả lời</p>
-              ) : (
-                <p>Phím tắt: Enter để tiếp tục</p>
               )}
             </div>
           </div>
