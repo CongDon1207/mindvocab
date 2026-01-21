@@ -118,6 +118,18 @@ const FolderStatsView: React.FC<FolderStatsViewProps> = ({ stats, loading }) => 
                         bgColor="bg-purple-50"
                     />
                     <ForecastCard
+                        label="2 tuần tới"
+                        count={stats.forecast.next2Weeks}
+                        color="text-indigo-600"
+                        bgColor="bg-indigo-50"
+                    />
+                    <ForecastCard
+                        label="1 tháng tới"
+                        count={stats.forecast.nextMonth}
+                        color="text-violet-600"
+                        bgColor="bg-violet-50"
+                    />
+                    <ForecastCard
                         label="Dài hạn"
                         count={stats.forecast.later}
                         color="text-gray-600"

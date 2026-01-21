@@ -7,6 +7,7 @@ import folderRoute from './routes/folderRoute.js';
 import wordRoute from './routes/wordRoute.js';
 import sessionRoute from './routes/sessionRoute.js';
 import importJobRoute from './routes/importJobRoute.js';
+import { notFound, errorHandler } from './middleware/errorMiddleware.js';
 import path from 'path';
 
 dotenv.config();
@@ -41,6 +42,10 @@ if (process.env.NODE_ENV == 'production') {
     res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
   });
 }
+
+// Error Handling Middleware
+app.use(notFound);
+app.use(errorHandler);
 
 // Kết nối DB và khởi động server
 connectDB().then(() => {

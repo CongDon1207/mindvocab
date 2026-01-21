@@ -28,34 +28,54 @@ export async function createFolder(req, res) {
 /**
  * Lấy danh sách thư mục (mới nhất trước)
  */
-export async function listFolders(_req, res) {
+/**
+ * Lấy danh sách thư mục (mới nhất trước)
+ * Tối ưu: Sử dụng Aggregation để tránh lỗi N+1 Query
+ */
+export async function listFolders(_req, res, next) {
   try {
-    const docs = await Folder.find().sort({ createdAt: -1 });
-
-    // Đếm số từ cho mỗi folder
-    const foldersWithStats = await Promise.all(
-      docs.map(async (folder) => {
-        const totalWords = await Word.countDocuments({ folderId: folder._id });
-        const mastered = await Word.countDocuments({
-          folderId: folder._id,
-          "meta.lastSeenAt": { $ne: null }
-        });
-        return {
-          ...folder.toObject(),
+    const foldersWithStats = await Folder.aggregate([
+      { $sort: { createdAt: -1 } },
+      {
+        $lookup: {
+          from: 'words',
+          let: { folderId: '$_id' },
+          pipeline: [
+            { $match: { $expr: { $eq: ['$folderId', '$$folderId'] } } },
+            {
+              $group: {
+                _id: null,
+                totalWords: { $sum: 1 },
+                mastered: {
+                  $sum: { $cond: [{ $ne: ['$meta.lastSeenAt', null] }, 1, 0] }
+                }
+              }
+            }
+          ],
+          as: 'statsInfo' // dùng tên tạm
+        }
+      },
+      {
+        $addFields: {
           stats: {
-            totalWords,
-            mastered
+            $ifNull: [
+              { $arrayElemAt: ['$statsInfo', 0] },
+              { totalWords: 0, mastered: 0 }
+            ]
           }
-        };
-      })
-    );
+        }
+      },
+      {
+        $project: {
+          statsInfo: 0,
+          'stats._id': 0
+        }
+      }
+    ]);
 
     return res.json(foldersWithStats);
   } catch (err) {
-    return res.status(500).json({
-      error: 'Không lấy được danh sách thư mục.',
-      detail: err.message,
-    });
+    next(err);
   }
 }
 
@@ -105,7 +125,7 @@ export async function updateFolder(req, res) {
     }
 
     const updateData = { name, description };
-    
+
     // Handle nextReviewDate: can be set to a date or cleared (null)
     if (nextReviewDate !== undefined) {
       updateData.nextReviewDate = nextReviewDate ? new Date(nextReviewDate) : null;
@@ -168,6 +188,8 @@ export async function getFolderStats(req, res) {
       tomorrow: 0,
       next3Days: 0,
       nextWeek: 0,
+      next2Weeks: 0,
+      nextMonth: 0,
       later: 0
     };
 
@@ -184,6 +206,14 @@ export async function getFolderStats(req, res) {
     const in7Days = new Date(now);
     in7Days.setDate(now.getDate() + 7);
     in7Days.setHours(24, 0, 0, 0);
+
+    const in14Days = new Date(now);
+    in14Days.setDate(now.getDate() + 14);
+    in14Days.setHours(24, 0, 0, 0);
+
+    const in30Days = new Date(now);
+    in30Days.setDate(now.getDate() + 30);
+    in30Days.setHours(24, 0, 0, 0);
 
     for (const word of words) {
       // Đếm stage
@@ -204,6 +234,10 @@ export async function getFolderStats(req, res) {
           forecast.next3Days++;
         } else if (nextReview < in7Days) {
           forecast.nextWeek++;
+        } else if (nextReview < in14Days) {
+          forecast.next2Weeks++;
+        } else if (nextReview < in30Days) {
+          forecast.nextMonth++;
         } else {
           forecast.later++;
         }
@@ -331,7 +365,7 @@ export async function getReviewDashboard(req, res) {
 export async function resetFolderProgress(req, res) {
   try {
     const folderId = req.params.id;
-    
+
     // Verify folder exists
     const folder = await Folder.findById(folderId);
     if (!folder) {

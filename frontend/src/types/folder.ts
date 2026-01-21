@@ -24,6 +24,8 @@ export type FolderStatistics = {
         tomorrow: number;
         next3Days: number;
         nextWeek: number;
+        next2Weeks: number;
+        nextMonth: number;
         later: number;
     };
 };

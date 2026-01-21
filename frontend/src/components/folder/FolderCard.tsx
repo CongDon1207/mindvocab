@@ -55,6 +55,10 @@ function getReviewStatus(daysUntil: number | null): { text: string; color: strin
     return { text: `Còn ${daysUntil} ngày`, color: "text-amber-600", bgColor: "bg-amber-100 border-amber-200" }
   } else if (daysUntil <= 7) {
     return { text: `Còn ${daysUntil} ngày`, color: "text-sky-600", bgColor: "bg-sky-100 border-sky-200" }
+  } else if (daysUntil <= 14) {
+    return { text: `Còn ${daysUntil} ngày`, color: "text-indigo-600", bgColor: "bg-indigo-100 border-indigo-200" }
+  } else if (daysUntil <= 30) {
+    return { text: `Còn ${daysUntil} ngày`, color: "text-violet-600", bgColor: "bg-violet-100 border-violet-200" }
   } else {
     return { text: `Còn ${daysUntil} ngày`, color: "text-slate-600", bgColor: "bg-slate-100 border-slate-200" }
   }
@@ -150,6 +154,14 @@ export default function FolderCard({
               <DropdownMenuItem onClick={() => handleSchedule(7)} className="cursor-pointer rounded-lg">
                 <Clock className="mr-2 h-4 w-4 text-sky-500" />
                 1 tuần tới
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleSchedule(14)} className="cursor-pointer rounded-lg">
+                <Clock className="mr-2 h-4 w-4 text-indigo-500" />
+                2 tuần tới
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleSchedule(30)} className="cursor-pointer rounded-lg">
+                <Clock className="mr-2 h-4 w-4 text-violet-500" />
+                1 tháng tới
               </DropdownMenuItem>
               
               <DropdownMenuSeparator />
