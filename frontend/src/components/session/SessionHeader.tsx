@@ -1,7 +1,7 @@
 // src/components/session/SessionHeader.tsx
 import React from 'react'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, Zap, BookOpen } from 'lucide-react'
+import { ArrowLeft, Zap, BookOpen, Layers } from 'lucide-react'
 
 interface SessionHeaderProps {
   folderName: string
@@ -10,6 +10,10 @@ interface SessionHeaderProps {
     totalWords: number
     mastered: number
   }
+  batchInfo?: {
+    currentBatchIndex: number
+    totalBatches: number
+  }
   onBackToFolder?: () => void
 }
 
@@ -17,6 +21,7 @@ const SessionHeader: React.FC<SessionHeaderProps> = ({
   folderName,
   stepLabel,
   folderStats,
+  batchInfo,
   onBackToFolder
 }) => {
   const mastered = folderStats?.mastered || 0
@@ -36,6 +41,12 @@ const SessionHeader: React.FC<SessionHeaderProps> = ({
           Dừng học
         </Button>
         <div className="flex items-center gap-2">
+          {batchInfo && (
+            <span className="px-4 py-1.5 bg-emerald-100/50 text-emerald-600 border border-emerald-200 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm flex items-center gap-1.5">
+              <Layers className="w-3 h-3" />
+              Lô {batchInfo.currentBatchIndex}/{batchInfo.totalBatches}
+            </span>
+          )}
           <span className="px-4 py-1.5 bg-violet-100/50 text-violet-600 border border-violet-200 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm">
             {stepLabel}
           </span>

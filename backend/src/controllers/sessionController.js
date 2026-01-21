@@ -119,7 +119,8 @@ export const createSession = async (req, res) => {
       spelling: { rounds: 0, correct: 0, maxRounds: 3 },
       fillBlank: { questions: [], score: 0 },
       seed: Math.floor(Math.random() * 1e9),
-      mode: mode // Lưu mode để biết khi tạo next session
+      mode: mode, // Lưu mode để biết khi tạo next session
+      batchStartIndex: mode === 'sequential' ? startOffset : 0 // Sequential: vị trí batch
     });
 
     await session.save();
@@ -209,7 +210,8 @@ export const createNextSession = async (req, res) => {
       spelling: { rounds: 0, correct: 0, maxRounds: 3 },
       fillBlank: { questions: [], score: 0 },
       seed: Math.floor(Math.random() * 1e9),
-      mode: 'sequential' // Next session luôn là sequential
+      mode: 'sequential', // Next session luôn là sequential
+      batchStartIndex: startIndex // Lưu vị trí batch
     });
 
     await session.save();

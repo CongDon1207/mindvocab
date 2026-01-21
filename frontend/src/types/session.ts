@@ -62,6 +62,7 @@ export type Session = {
     score: number
   }
   seed: number
+  batchStartIndex?: number // Sequential mode: vị trí batch trong folder (0, 10, 20...)
   createdAt: string
   updatedAt: string
   // Enriched fields from backend

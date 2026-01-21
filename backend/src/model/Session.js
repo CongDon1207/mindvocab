@@ -29,6 +29,7 @@ const SessionSchema = new mongoose.Schema({
   },
   fillBlank: { questions: { type: [QuestionSchema], default: [] }, score: { type: Number, default: 0 } },
   seed: { type: Number, default: () => Math.floor(Math.random()*1e9) }, // tái lập ngẫu nhiên
+  batchStartIndex: { type: Number, default: 0 } // Sequential mode: vị trí batch trong folder (0, 10, 20...)
 }, { timestamps: true });
 
 export default mongoose.model('Session', SessionSchema);

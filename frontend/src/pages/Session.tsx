@@ -11,6 +11,7 @@ import {
   SessionError
 } from '@/components/session'
 import api from '@/lib/axios'
+import { computeBatchProgress } from '@/lib/batch-utils'
 import type { Session, SessionStep, SessionLocalState } from '@/types/session'
 
 const STEP_ORDER: SessionStep[] = [
@@ -234,6 +235,11 @@ const SessionPage: React.FC = () => {
   const folderName = session.folderName || (typeof session.folderId !== 'string' ? session.folderId.name : 'Folder')
   const folderStats = typeof session.folderId !== 'string' ? session.folderId.stats : undefined
 
+  // Compute batch info for sequential mode
+  const batchInfo = session.mode === 'sequential' && session.batchStartIndex !== undefined && folderStats?.totalWords
+    ? computeBatchProgress(folderStats.totalWords, session.batchStartIndex)
+    : undefined
+
   return (
     <div className="min-h-screen bg-transparent">
       <div className="max-w-4xl mx-auto space-y-8 py-8 px-4">
@@ -241,6 +247,7 @@ const SessionPage: React.FC = () => {
           folderName={folderName}
           stepLabel={STEP_LABELS[currentStep]}
           folderStats={folderStats}
+          batchInfo={batchInfo}
           onBackToFolder={() => navigate(`/folders/${folderIdValue}`)}
         />
 

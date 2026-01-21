@@ -1,5 +1,10 @@
 # Changelog
 
+## [2026-01-21]
+- **Add**: Batch progress indicator for sequential sessions - UI now displays "Lô X/Y" (e.g., "Lô 3/12") in session header for sequential mode, showing current batch and total batches (10 words per batch) at `frontend/src/components/session/SessionHeader.tsx:43-47`.
+- **Add**: `batchStartIndex` field to Session model at `backend/src/model/Session.js:32` to track batch position in sequential mode.
+- **Add**: `computeBatchProgress()` helper at `frontend/src/lib/batch-utils.ts` for calculating batch index from folder total words and batch start index.
+
 ## [2026-01-11]
 - **Add**: Manual Review Scheduling (Forgetting Curve) - Users can now manually set review reminders for any folder (1 day, 3 days, 1 week, 2 weeks, 1 month) via dropdown menu on each folder card.
 - **Add**: Custom Day Input - Users can input any number of days (e.g., 5, 12, 45) for flexible review scheduling.
