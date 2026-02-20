@@ -26,7 +26,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             <div className="px-4 sm:px-6">
               <div className="flex items-center justify-between h-16">
                 {/* Logo - Playful */}
-                <button 
+                <button
                   onClick={() => navigate('/')}
                   className="group flex items-center gap-3 hover:opacity-80 transition-all cursor-pointer"
                 >
@@ -43,6 +43,19 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                     <p className="text-xs text-slate-500 font-medium pl-0.5">Học là mê!</p>
                   </div>
                 </button>
+
+                {/* Navigation Links */}
+                <nav className="hidden md:flex items-center gap-6 ml-8 flex-1">
+                  <button onClick={() => navigate('/')} className="text-sm font-bold text-slate-600 hover:text-pink-500 transition-colors">
+                    Từ vựng
+                  </button>
+                  <button onClick={() => navigate('/notebook')} className="text-sm font-bold text-slate-600 hover:text-pink-500 transition-colors">
+                    Sổ tay
+                  </button>
+                  <button onClick={() => navigate('/notebook-reviews')} className="text-sm font-bold text-slate-600 hover:text-pink-500 transition-colors">
+                    Ôn tập Sổ tay
+                  </button>
+                </nav>
 
                 {/* Right side actions */}
                 <div className="flex items-center gap-4">

@@ -7,6 +7,7 @@ import folderRoute from './routes/folderRoute.js';
 import wordRoute from './routes/wordRoute.js';
 import sessionRoute from './routes/sessionRoute.js';
 import importJobRoute from './routes/importJobRoute.js';
+import notebookEntryRoute from './routes/notebookEntryRoute.js';
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
 import path from 'path';
 
@@ -27,6 +28,7 @@ app.use('/api/folders', folderRoute);
 app.use('/api/words', wordRoute);
 app.use('/api', sessionRoute); // /api/sessions, /api/attempts
 app.use('/api/import-jobs', importJobRoute);
+app.use('/api/notebook-entries', notebookEntryRoute);
 
 // Route kiểm tra server
 app.get('/api/health', (_req, res) => {
