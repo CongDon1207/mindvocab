@@ -1,7 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router';
-import { ArrowLeft, Edit3, Save, FileUp, Trash2, Play, Download, AlertCircle, BookOpen, ChevronDown, ChevronRight, CheckCircle2, HelpCircle } from 'lucide-react';
+import { ArrowLeft, Edit3, Save, FileUp, Trash2, Play, Download, AlertCircle, BookOpen, ChevronDown, ChevronRight, CheckCircle2, HelpCircle, Info } from 'lucide-react';
 import { NotebookEntry, ExerciseItem } from '../types/notebook';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 const NotebookDetail: React.FC = () => {
     const { id } = useParams();
@@ -152,18 +154,54 @@ const NotebookDetail: React.FC = () => {
 
             {/* Content Section */}
             <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
-                <h2 className="text-lg font-bold text-slate-800 mb-4">Nội dung ghi chép</h2>
+                <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-bold text-slate-800">Nội dung ghi chép</h2>
+                    {!isEditing && (
+                        <span className="text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded-lg">Markdown</span>
+                    )}
+                </div>
                 {!isEditing ? (
-                    <div className="prose max-w-none text-slate-600 whitespace-pre-wrap">
-                        {entry.content || <span className="italic text-slate-400">Không có dữ liệu</span>}
-                    </div>
+                    entry.content ? (
+                        <div className="prose prose-slate max-w-none overflow-x-auto prose-headings:text-slate-800 prose-p:text-slate-600 prose-p:my-3 prose-strong:text-slate-700 prose-ul:text-slate-600 prose-ul:my-3 prose-ol:text-slate-600 prose-ol:my-3 prose-li:marker:text-violet-500 prose-li:my-1 prose-a:text-violet-600 prose-code:bg-slate-100 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-pink-600 prose-code:before:content-none prose-code:after:content-none prose-pre:bg-slate-900 prose-pre:text-slate-100 prose-pre:my-3 prose-blockquote:border-l-violet-500 prose-blockquote:bg-violet-50 prose-blockquote:py-1 prose-blockquote:px-4 prose-blockquote:not-italic prose-blockquote:my-3 prose-hr:my-6 [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+                            <ReactMarkdown 
+                                remarkPlugins={[remarkGfm]}
+                                components={{
+                                    table: ({children}) => (
+                                        <table className="w-full border-collapse my-4 text-sm">{children}</table>
+                                    ),
+                                    thead: ({children}) => (
+                                        <thead className="bg-slate-100">{children}</thead>
+                                    ),
+                                    th: ({children}) => (
+                                        <th className="border border-slate-300 px-3 py-2 text-left font-semibold">{children}</th>
+                                    ),
+                                    td: ({children}) => (
+                                        <td className="border border-slate-200 px-3 py-2">{children}</td>
+                                    ),
+                                }}
+                            >
+                                {entry.content}
+                            </ReactMarkdown>
+                        </div>
+                    ) : (
+                        <span className="italic text-slate-400">Không có dữ liệu</span>
+                    )
                 ) : (
-                    <textarea
-                        value={editContent}
-                        onChange={e => setEditContent(e.target.value)}
-                        rows={10}
-                        className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-violet-500 outline-none"
-                    />
+                    <div className="space-y-3">
+                        <div className="flex items-start gap-2 p-3 bg-sky-50 border border-sky-200 rounded-xl text-sm text-sky-700">
+                            <Info className="w-4 h-4 mt-0.5 shrink-0" />
+                            <div>
+                                <strong>Hỗ trợ Markdown:</strong> **in đậm**, *in nghiêng*, # Tiêu đề, - Danh sách, `code`, [link](url)
+                            </div>
+                        </div>
+                        <textarea
+                            value={editContent}
+                            onChange={e => setEditContent(e.target.value)}
+                            rows={12}
+                            placeholder="Viết nội dung ở đây... Hỗ trợ Markdown!"
+                            className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-violet-500 outline-none font-mono text-sm"
+                        />
+                    </div>
                 )}
             </div>
 
