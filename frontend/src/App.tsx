@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 import { AppLayout } from './components/layout';
 import Folder from './pages/Folder';
 import FolderDetail from './pages/FolderDetail';
@@ -6,7 +6,6 @@ import Session from './pages/Session';
 import NotebookList from './pages/NotebookList';
 import NotebookDetail from './pages/NotebookDetail';
 import NotebookReview from './pages/NotebookReview';
-import NotebookReviewsList from './pages/NotebookReviewsList';
 
 function App() {
   return (
@@ -20,7 +19,8 @@ function App() {
             <Route path="/notebook" element={<NotebookList />} />
             <Route path="/notebook/:id" element={<NotebookDetail />} />
             <Route path="/notebook/:id/review" element={<NotebookReview />} />
-            <Route path="/notebook-reviews" element={<NotebookReviewsList />} />
+            {/* Redirect old route to new unified page */}
+            <Route path="/notebook-reviews" element={<Navigate to="/notebook" replace />} />
           </Routes>
         </AppLayout>
       </BrowserRouter>

@@ -6,7 +6,8 @@ import {
     updateNotebookEntry,
     deleteNotebookEntry,
     importExercises,
-    submitReview
+    submitReview,
+    scheduleReview
 } from '../controllers/notebookEntryController.js';
 import multer from 'multer';
 import path from 'path';
@@ -27,5 +28,6 @@ router.route('/:id')
 
 router.post('/:id/exercises/import', upload.single('file'), importExercises);
 router.post('/:id/review', submitReview);
+router.post('/:id/schedule', scheduleReview);
 
 export default router;

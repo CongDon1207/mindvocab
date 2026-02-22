@@ -1,29 +1,68 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { BookOpen, Calendar, Clock, ChevronRight, Play } from 'lucide-react';
+import { BookOpen } from 'lucide-react';
 import { NotebookEntry } from '../types/notebook';
+import { NotebookCard } from '../components/notebook';
 
 const NotebookReviewsList: React.FC = () => {
     const navigate = useNavigate();
     const [entries, setEntries] = useState<NotebookEntry[]>([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const fetchDueEntries = async () => {
-            try {
-                const res = await fetch('/api/notebook-entries?due=true');
-                if (res.ok) {
-                    const data = await res.json();
-                    setEntries(data);
-                }
-            } catch (error) {
-                console.error('Error fetching due reviews:', error);
-            } finally {
-                setLoading(false);
+    const fetchDueEntries = async () => {
+        try {
+            const res = await fetch('/api/notebook-entries?due=true');
+            if (res.ok) {
+                const data = await res.json();
+                setEntries(data);
             }
-        };
+        } catch (error) {
+            console.error('Error fetching due reviews:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
         fetchDueEntries();
     }, []);
+
+    const handleDelete = async (entryId: string) => {
+        if (!window.confirm('Bạn có chắc chắn muốn xóa sổ tay này?')) return;
+        try {
+            const res = await fetch(`/api/notebook-entries/${entryId}`, { method: 'DELETE' });
+            if (res.ok) {
+                setEntries(prev => prev.filter(e => e._id !== entryId));
+            }
+        } catch (error) {
+            console.error('Error deleting notebook:', error);
+        }
+    };
+
+    const handleScheduleReview = async (entryId: string, days: number | null) => {
+        try {
+            const res = await fetch(`/api/notebook-entries/${entryId}/schedule`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ days })
+            });
+            
+            if (res.ok) {
+                // If scheduled for later, remove from due list
+                if (days !== null && days > 0) {
+                    setEntries(prev => prev.filter(e => e._id !== entryId));
+                    alert(`Đã đặt lịch ôn tập sau ${days} ngày`);
+                } else {
+                    // Refresh the list
+                    fetchDueEntries();
+                    alert('Đã cập nhật lịch ôn tập');
+                }
+            }
+        } catch (error) {
+            console.error('Error scheduling review:', error);
+            alert('Không thể đặt lịch ôn tập');
+        }
+    };
 
     return (
         <div className="space-y-6">
@@ -47,34 +86,19 @@ const NotebookReviewsList: React.FC = () => {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {entries.map((entry) => (
-                        <div
+                        <NotebookCard
                             key={entry._id}
+                            id={entry._id}
+                            title={entry.title}
+                            content={entry.content}
+                            exerciseCount={entry.exercises?.length || 0}
+                            stage={entry.meta.stage}
+                            nextReviewDate={entry.meta.nextReviewDate}
                             onClick={() => navigate(`/notebook/${entry._id}`)}
-                            className="group cursor-pointer bg-white rounded-3xl p-6 shadow-sm hover:shadow-xl hover:shadow-purple-500/10 border border-violet-100 transition-all hover:-translate-y-1 relative overflow-hidden"
-                        >
-                            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-violet-500/10 to-pink-500/10 rounded-bl-full -z-10" />
-                            <div className="flex items-start justify-between mb-4">
-                                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white flex items-center justify-center shadow-lg shadow-violet-200">
-                                    <Play className="w-5 h-5 fill-white" />
-                                </div>
-                                <div className="bg-orange-100 text-orange-600 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 border border-orange-200">
-                                    <Clock className="w-3 h-3" />
-                                    Đến hạn ôn
-                                </div>
-                            </div>
-                            <h3 className="font-bold text-slate-800 text-lg mb-2 line-clamp-1">{entry.title}</h3>
-                            <p className="text-sm text-slate-500 mb-4">
-                                Đang ở giai đoạn SRS: <strong className="text-violet-600">{entry.meta.stage}</strong>
-                            </p>
-
-                            <div className="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between text-sm">
-                                <div className="flex items-center text-slate-500 gap-2">
-                                    <Calendar className="w-4 h-4" />
-                                    <span>Cần ôn: ngay bây giờ</span>
-                                </div>
-                                <ChevronRight className="w-5 h-5 text-violet-400 group-hover:text-violet-600 transition-colors" />
-                            </div>
-                        </div>
+                            onStartReview={() => navigate(`/notebook/${entry._id}/review`)}
+                            onDelete={() => handleDelete(entry._id)}
+                            onScheduleReview={(days) => handleScheduleReview(entry._id, days)}
+                        />
                     ))}
                 </div>
             )}

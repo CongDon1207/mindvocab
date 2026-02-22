@@ -245,3 +245,48 @@ export const submitReview = async (req, res, next) => {
         next(error);
     }
 };
+
+/**
+ * Manually schedule a notebook entry for review
+ * POST /api/notebook-entries/:id/schedule
+ * Body: { days: number | null }
+ *   - days > 0: schedule review in X days from now
+ *   - days = null: clear the scheduled review (set to now for immediate availability)
+ */
+export const scheduleReview = async (req, res, next) => {
+    try {
+        const { days } = req.body;
+        const entry = await NotebookEntry.findById(req.params.id);
+        
+        if (!entry) {
+            res.status(404);
+            throw new Error('Notebook entry not found');
+        }
+
+        let nextReviewDate;
+        
+        if (days === null || days === undefined) {
+            // Clear schedule - set to now so it appears in due list
+            nextReviewDate = new Date();
+        } else if (typeof days === 'number' && days > 0) {
+            // Schedule for X days from now
+            nextReviewDate = new Date();
+            nextReviewDate.setDate(nextReviewDate.getDate() + days);
+            nextReviewDate.setHours(0, 0, 0, 0); // Start of that day
+        } else {
+            res.status(400);
+            throw new Error('days must be a positive number or null');
+        }
+
+        entry.meta.nextReviewDate = nextReviewDate;
+        await entry.save();
+
+        res.json({
+            _id: entry._id,
+            title: entry.title,
+            meta: entry.meta
+        });
+    } catch (error) {
+        next(error);
+    }
+};

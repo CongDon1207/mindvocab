@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router';
-import { ArrowLeft, Edit3, Save, FileUp, Trash2, Play, Download, AlertCircle, BookOpen } from 'lucide-react';
-import { NotebookEntry } from '../types/notebook';
+import { ArrowLeft, Edit3, Save, FileUp, Trash2, Play, Download, AlertCircle, BookOpen, ChevronDown, ChevronRight, CheckCircle2, HelpCircle } from 'lucide-react';
+import { NotebookEntry, ExerciseItem } from '../types/notebook';
 
 const NotebookDetail: React.FC = () => {
     const { id } = useParams();
@@ -20,6 +20,10 @@ const NotebookDetail: React.FC = () => {
     const [uploadting, setUploading] = useState(false);
     const [importMode, setImportMode] = useState<'replace' | 'append'>('replace');
     const [importResult, setImportResult] = useState<any>(null);
+
+    // Exercise list view states
+    const [expandedExercises, setExpandedExercises] = useState<Set<number>>(new Set());
+    const [showAllExercises, setShowAllExercises] = useState(false);
 
     const fetchEntry = async () => {
         try {
@@ -233,6 +237,136 @@ const NotebookDetail: React.FC = () => {
                                     )}
                                 </div>
                             </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Exercises List Preview */}
+                {entry.exercises && entry.exercises.length > 0 && (
+                    <div className="mb-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-sm font-bold text-slate-600 flex items-center gap-2">
+                                <HelpCircle className="w-4 h-4 text-violet-500" />
+                                Danh sách câu hỏi
+                            </h3>
+                            <button
+                                onClick={() => setShowAllExercises(!showAllExercises)}
+                                className="text-xs text-violet-600 hover:text-violet-700 font-medium flex items-center gap-1"
+                            >
+                                {showAllExercises ? 'Thu gọn' : `Xem tất cả (${entry.exercises.length})`}
+                                {showAllExercises ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+                            </button>
+                        </div>
+                        
+                        <div className="space-y-3">
+                            {(showAllExercises ? entry.exercises : entry.exercises.slice(0, 5)).map((ex, idx) => {
+                                const isExpanded = expandedExercises.has(idx);
+                                return (
+                                    <div 
+                                        key={ex._id || idx}
+                                        className="bg-slate-50 rounded-xl border border-slate-100 overflow-hidden"
+                                    >
+                                        <button
+                                            onClick={() => {
+                                                const newSet = new Set(expandedExercises);
+                                                if (isExpanded) {
+                                                    newSet.delete(idx);
+                                                } else {
+                                                    newSet.add(idx);
+                                                }
+                                                setExpandedExercises(newSet);
+                                            }}
+                                            className="w-full flex items-start gap-3 p-4 text-left hover:bg-slate-100 transition-colors"
+                                        >
+                                            <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-violet-100 text-violet-600 flex items-center justify-center text-sm font-bold">
+                                                {idx + 1}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <span className={`px-2 py-0.5 text-[10px] font-bold rounded-md uppercase ${
+                                                        ex.type === 'mcq' 
+                                                            ? 'bg-sky-100 text-sky-600' 
+                                                            : 'bg-emerald-100 text-emerald-600'
+                                                    }`}>
+                                                        {ex.type === 'mcq' ? 'Trắc nghiệm' : 'Điền từ'}
+                                                    </span>
+                                                </div>
+                                                <p className="text-sm text-slate-700 line-clamp-2">{ex.prompt}</p>
+                                            </div>
+                                            <div className="flex-shrink-0">
+                                                {isExpanded ? (
+                                                    <ChevronDown className="w-4 h-4 text-slate-400" />
+                                                ) : (
+                                                    <ChevronRight className="w-4 h-4 text-slate-400" />
+                                                )}
+                                            </div>
+                                        </button>
+                                        
+                                        {isExpanded && (
+                                            <div className="px-4 pb-4 pt-0 border-t border-slate-100 bg-white">
+                                                <div className="pl-11 space-y-3">
+                                                    {/* MCQ Options */}
+                                                    {ex.type === 'mcq' && ex.options && (
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
+                                                            {(['A', 'B', 'C', 'D'] as const).map((key) => {
+                                                                const optionValue = ex.options?.[key];
+                                                                if (!optionValue) return null;
+                                                                const isCorrect = ex.answer === key;
+                                                                return (
+                                                                    <div 
+                                                                        key={key}
+                                                                        className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm ${
+                                                                            isCorrect 
+                                                                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
+                                                                                : 'bg-slate-50 text-slate-600 border border-slate-100'
+                                                                        }`}
+                                                                    >
+                                                                        <span className={`flex-shrink-0 w-6 h-6 rounded-md flex items-center justify-center text-xs font-bold ${
+                                                                            isCorrect 
+                                                                                ? 'bg-emerald-500 text-white' 
+                                                                                : 'bg-slate-200 text-slate-600'
+                                                                        }`}>
+                                                                            {key}
+                                                                        </span>
+                                                                        <span className="truncate">{optionValue}</span>
+                                                                        {isCorrect && <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0 ml-auto" />}
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    )}
+                                                    
+                                                    {/* Fill Answer */}
+                                                    {ex.type === 'fill' && (
+                                                        <div className="mt-3 flex items-center gap-2">
+                                                            <span className="text-sm text-slate-500">Đáp án:</span>
+                                                            <span className="px-3 py-1 bg-emerald-50 text-emerald-700 rounded-lg text-sm font-medium border border-emerald-200">
+                                                                {ex.answer.includes('|') ? ex.answer.split('|').join(' / ') : ex.answer}
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                    
+                                                    {/* Explanation */}
+                                                    {ex.explanation && (
+                                                        <div className="mt-3 p-3 bg-sky-50 text-sky-700 rounded-lg text-sm border border-sky-100">
+                                                            <span className="font-medium">Giải thích:</span> {ex.explanation}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        
+                        {!showAllExercises && entry.exercises.length > 5 && (
+                            <button
+                                onClick={() => setShowAllExercises(true)}
+                                className="mt-3 w-full py-2 text-sm text-violet-600 hover:text-violet-700 font-medium hover:bg-violet-50 rounded-xl transition-colors"
+                            >
+                                Xem thêm {entry.exercises.length - 5} câu hỏi...
+                            </button>
                         )}
                     </div>
                 )}

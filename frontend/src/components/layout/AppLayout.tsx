@@ -52,9 +52,6 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                   <button onClick={() => navigate('/notebook')} className="text-sm font-bold text-slate-600 hover:text-pink-500 transition-colors">
                     Sổ tay
                   </button>
-                  <button onClick={() => navigate('/notebook-reviews')} className="text-sm font-bold text-slate-600 hover:text-pink-500 transition-colors">
-                    Ôn tập Sổ tay
-                  </button>
                 </nav>
 
                 {/* Right side actions */}

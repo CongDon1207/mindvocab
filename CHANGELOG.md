@@ -1,5 +1,13 @@
 # Changelog
 
+## [2026-02-22]
+- **Add**: Manual Review Scheduling for Notebooks - Added `POST /api/notebook-entries/:id/schedule` endpoint to manually set review dates (1, 3, 7, 14, 30 days or custom).
+- **Add**: NotebookCard component (`frontend/src/components/notebook/NotebookCard.tsx`) - Reusable card with schedule dropdown, SRS stage display, review status badges (similar to FolderCard).
+- **Improve**: NotebookDetail page - Added collapsible exercise list preview showing prompts, options (MCQ), answers, and explanations. Users can now view all questions before starting review.
+- **Improve**: NotebookList page - Now uses NotebookCard with schedule functionality, delete action, and quick review start button.
+- **Improve**: NotebookReviewsList page - Now uses NotebookCard allowing users to reschedule due notebooks directly (e.g., postpone to tomorrow).
+- **Add**: Review status badges on notebook cards showing "Cần ôn ngay!", "Còn X ngày", etc.
+
 ## [2026-01-21]
 - **Add**: Batch progress indicator for sequential sessions - UI now displays "Lô X/Y" (e.g., "Lô 3/12") in session header for sequential mode, showing current batch and total batches (10 words per batch) at `frontend/src/components/session/SessionHeader.tsx:43-47`.
 - **Add**: `batchStartIndex` field to Session model at `backend/src/model/Session.js:32` to track batch position in sequential mode.
