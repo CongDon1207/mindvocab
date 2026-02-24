@@ -126,9 +126,9 @@ export default function NotebookCard({
       <div className="absolute -top-20 -right-20 w-40 h-40 bg-gradient-to-br from-violet-200 to-fuchsia-200 rounded-full blur-3xl opacity-0 group-hover:opacity-60 transition-opacity duration-500 pointer-events-none" />
       
       <CardHeader className="pb-3 relative z-10">
-        <div className="flex items-start justify-between">
-          <div className="flex-1 min-w-0">
-            <CardTitle className="text-lg font-bold text-slate-700 truncate group-hover:text-violet-600 transition-colors">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1 min-w-0 overflow-hidden">
+            <CardTitle className="text-lg font-bold text-slate-700 line-clamp-2 group-hover:text-violet-600 transition-colors">
               {title}
             </CardTitle>
             {content && (
@@ -142,7 +142,7 @@ export default function NotebookCard({
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity -mr-2 -mt-1 hover:bg-violet-50 hover:text-violet-600"
+                className="h-8 w-8 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity -mr-2 -mt-1 hover:bg-violet-50 hover:text-violet-600 z-10"
               >
                 <MoreVertical className="h-4 w-4" />
               </Button>
