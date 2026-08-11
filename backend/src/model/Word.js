@@ -1,35 +1,23 @@
-// models/Word.js
-import mongoose from 'mongoose';
+import { createModel } from './sqliteModel.js'
 
-const ExampleSchema = new mongoose.Schema({
-  en: { type: String, default: '' },
-  vi: { type: String, default: '' },
-  source: { type: String, enum: ['user', 'inferred'], default: 'user' } // [Suy luận] -> inferred
-}, { _id: false });
-
-const WordSchema = new mongoose.Schema({
-  folderId: { type: mongoose.Schema.Types.ObjectId, ref: 'Folder', index: true, required: true },
-  word: { type: String, required: true, index: true },
-  pos: { type: String, required: true },           // noun/verb/adj...
-  meaning_vi: { type: String, required: true },    // nghĩa tiếng Việt
-  ipa: { type: String, default: '' },              // khuyến nghị
-  note: { type: String, default: '' },             // mẹo nhớ/collocation
-  ex1: { type: ExampleSchema, default: () => ({}) },
-  ex2: { type: ExampleSchema, default: () => ({}) },
-  tags: { type: [String], default: [] },
+const Word = createModel('words', (data = {}) => ({
+  ...data,
+  ipa: data.ipa ?? '',
+  note: data.note ?? '',
+  ex1: { en: '', vi: '', source: 'user', ...(data.ex1 || {}) },
+  ex2: { en: '', vi: '', source: 'user', ...(data.ex2 || {}) },
+  tags: data.tags || [],
   sources: {
-    meaning_vi: { type: String, enum: ['user', 'inferred'], default: 'user' },
-    pos: { type: String, enum: ['user', 'inferred'], default: 'user' },
-    ipa: { type: String, enum: ['user', 'inferred'], default: 'user' },
-    note: { type: String, enum: ['user', 'inferred'], default: 'user' },
+    meaning_vi: 'user', pos: 'user', ipa: 'user', note: 'user', ...(data.sources || {})
   },
   meta: {
-    difficulty: { type: Number, default: 0 },      // 0–2–4 ...
-    stage: { type: Number, default: 0 },           // SRS stage 0-5
-    nextReviewDate: { type: Date, default: Date.now },
-    lastSeenAt: { type: Date },
-    createdBy: { type: String, default: 'user' }
-  }
-}, { timestamps: true });
+    difficulty: 0,
+    stage: 0,
+    nextReviewDate: new Date(),
+    lastSeenAt: null,
+    createdBy: 'user',
+    ...(data.meta || {})
+  },
+}))
 
-export default mongoose.model('Word', WordSchema);
+export default Word

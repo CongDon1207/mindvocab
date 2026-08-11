@@ -89,10 +89,15 @@ export async function createWord(req, res) {
 export async function updateWord(req, res) {
   try {
     const wordId = req.params.id;
-    const updates = req.body;
-
-    // Không cho phép cập nhật folderId
-    delete updates.folderId;
+    const allowedFields = ['word', 'pos', 'meaning_vi', 'ipa', 'note', 'ex1', 'ex2', 'tags'];
+    const updates = Object.fromEntries(
+      Object.entries(req.body || {}).filter(([field]) => allowedFields.includes(field))
+    );
+    for (const field of ['word', 'pos', 'meaning_vi']) {
+      if (field in updates && (typeof updates[field] !== 'string' || !updates[field].trim())) {
+        return res.status(400).json({ error: `${field} cannot be empty.` });
+      }
+    }
 
     const updatedWord = await Word.findByIdAndUpdate(wordId, updates, { 
       new: true,

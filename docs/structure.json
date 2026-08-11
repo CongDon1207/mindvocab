@@ -4,7 +4,7 @@
     "version": "1.0.0",
     "lastUpdated": "2025-12-30",
     "projectName": "mindvocab",
-    "description": "AI routing index for MindVocab (React + Express + MongoDB + SRS)."
+    "description": "AI routing index for MindVocab (React + Express + SQLite + SRS)."
   },
   "techStack": {
     "frontend": {
@@ -16,7 +16,7 @@
     "backend": {
       "runtime": "Node.js (ESM)",
       "framework": "Express",
-      "database": "MongoDB (Mongoose)"
+      "database": "SQLite (node:sqlite)"
     }
   },
   "directories": {
@@ -43,7 +43,7 @@
             },
             "model": {
               "path": "/backend/src/model",
-              "role": "Mongoose models",
+              "role": "SQLite document models",
               "aiPriority": "high"
             },
             "services": {

@@ -22,7 +22,11 @@ export const getNotebookEntries = async (req, res, next) => {
 export const createNotebookEntry = async (req, res, next) => {
     try {
         const { title, content } = req.body;
-        const newEntry = new NotebookEntry({ title, content });
+        if (typeof title !== 'string' || !title.trim() || typeof content !== 'string' || !content) {
+            res.status(400);
+            throw new Error('Title and content are required');
+        }
+        const newEntry = new NotebookEntry({ title: title.trim(), content });
         const savedEntry = await newEntry.save();
         res.status(201).json(savedEntry);
     } catch (error) {
@@ -51,8 +55,20 @@ export const updateNotebookEntry = async (req, res, next) => {
             res.status(404);
             throw new Error('Notebook entry not found');
         }
-        if (title !== undefined) entry.title = title;
-        if (content !== undefined) entry.content = content;
+        if (title !== undefined) {
+            if (typeof title !== 'string' || !title.trim()) {
+                res.status(400);
+                throw new Error('Title cannot be empty');
+            }
+            entry.title = title.trim();
+        }
+        if (content !== undefined) {
+            if (typeof content !== 'string' || !content) {
+                res.status(400);
+                throw new Error('Content cannot be empty');
+            }
+            entry.content = content;
+        }
 
         const updatedEntry = await entry.save();
         res.json(updatedEntry);
@@ -209,7 +225,7 @@ export const submitReview = async (req, res, next) => {
             throw new Error('Notebook entry not found');
         }
 
-        if (totalCount === 0 || totalCount == null) {
+        if (!Number.isFinite(correctCount) || !Number.isFinite(totalCount) || totalCount <= 0 || correctCount < 0 || correctCount > totalCount) {
             res.status(400);
             throw new Error('totalCount must be > 0');
         }

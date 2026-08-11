@@ -34,44 +34,22 @@ export async function createFolder(req, res) {
  */
 export async function listFolders(_req, res, next) {
   try {
-    const foldersWithStats = await Folder.aggregate([
-      { $sort: { createdAt: -1 } },
-      {
-        $lookup: {
-          from: 'words',
-          let: { folderId: '$_id' },
-          pipeline: [
-            { $match: { $expr: { $eq: ['$folderId', '$$folderId'] } } },
-            {
-              $group: {
-                _id: null,
-                totalWords: { $sum: 1 },
-                mastered: {
-                  $sum: { $cond: [{ $ne: ['$meta.lastSeenAt', null] }, 1, 0] }
-                }
-              }
-            }
-          ],
-          as: 'statsInfo' // dùng tên tạm
-        }
-      },
-      {
-        $addFields: {
-          stats: {
-            $ifNull: [
-              { $arrayElemAt: ['$statsInfo', 0] },
-              { totalWords: 0, mastered: 0 }
-            ]
-          }
-        }
-      },
-      {
-        $project: {
-          statsInfo: 0,
-          'stats._id': 0
-        }
-      }
-    ]);
+    const folders = await Folder.find().sort({ createdAt: -1 }).lean();
+    const words = await Word.find().lean();
+    const wordsByFolder = new Map();
+    words.forEach((word) => {
+      const stats = wordsByFolder.get(word.folderId) || { totalWords: 0, mastered: 0 };
+      stats.totalWords += 1;
+      if (word.meta?.lastSeenAt != null) stats.mastered += 1;
+      wordsByFolder.set(word.folderId, stats);
+    });
+    const foldersWithStats = folders.map((folder) => {
+      const stats = wordsByFolder.get(folder._id) || { totalWords: 0, mastered: 0 };
+      return {
+        ...folder,
+        stats,
+      };
+    });
 
     return res.json(foldersWithStats);
   } catch (err) {
@@ -128,7 +106,15 @@ export async function updateFolder(req, res) {
 
     // Handle nextReviewDate: can be set to a date or cleared (null)
     if (nextReviewDate !== undefined) {
-      updateData.nextReviewDate = nextReviewDate ? new Date(nextReviewDate) : null;
+      if (nextReviewDate) {
+        const parsedDate = new Date(nextReviewDate);
+        if (Number.isNaN(parsedDate.getTime())) {
+          return res.status(400).json({ error: 'nextReviewDate must be a valid date.' });
+        }
+        updateData.nextReviewDate = parsedDate;
+      } else {
+        updateData.nextReviewDate = null;
+      }
     }
 
     const updatedFolder = await Folder.findByIdAndUpdate(id, updateData, { new: true });

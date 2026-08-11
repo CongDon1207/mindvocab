@@ -8,5 +8,6 @@
 !.env.example
 node_modules
 dist
+backend/data/*.sqlite*
 .DS_Store
 .agent

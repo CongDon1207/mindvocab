@@ -5,24 +5,24 @@
 - **Total modules**: 2 (frontend + backend)
 - **Main language**: JavaScript/TypeScript
 - **Frontend**: React 19 + Vite + TypeScript
-- **Backend**: Node.js + Express + MongoDB
+- **Backend**: Node.js + Express + SQLite
 - **Package manager**: npm
 
 ## Directory Tree (Core Project)
 ```
 mindvocab/
 ├── backend/                    # Node.js backend API
-│   ├── package.json           # Backend dependencies (Express, Mongoose)
+│   ├── package.json           # Backend dependencies (Express, SQLite adapter)
 │   └── src/
 │       ├── server.js          # Entry point - Express server
 │       ├── config/
-│       │   └── db.js          # MongoDB connection
+│       │   └── db.js          # SQLite connection
 │       ├── controllers/       # Request handlers
 │       │   ├── folderController.js
 │       │   ├── importJobController.js
 │       │   ├── sessionController.js
 │       │   └── wordController.js
-│       ├── model/             # Mongoose schemas
+│       ├── model/             # SQLite document models
 │       │   ├── Attempt.js
 │       │   ├── Folder.js
 │       │   ├── ImportJob.js
@@ -109,12 +109,12 @@ mindvocab/
 
 | File | Purpose |
 |:---|:---|
-| **backend/package.json** | Backend deps (Express, Mongoose, Gemini AI, Multer, XLSX) |
+| **backend/package.json** | Backend deps (Express, Gemini AI, Multer, XLSX) |
 | **frontend/package.json** | Frontend deps (React 19, Vite, Tailwind, shadcn/ui, Axios) |
 | **frontend/vite.config.ts** | Vite build configuration |
 | **frontend/tsconfig.json** | TypeScript compiler config |
 | **frontend/components.json** | shadcn/ui component config |
-| **backend/src/config/db.js** | MongoDB connection config |
+| **backend/src/config/db.js** | SQLite connection config |
 | **.gitignore** | Git ignore patterns |
 
 ## Feature Map
@@ -137,6 +137,7 @@ mindvocab/
 | Looking for | Path pattern |
 |:---|:---|
 | **Backend models** | backend/src/model/*.js |
+| **SQLite model adapter** | backend/src/model/sqliteModel.js |
 | **Backend controllers** | backend/src/controllers/*Controller.js |
 | **Backend routes** | backend/src/routes/*Route.js |
 | **Backend services** | backend/src/services/*.js |
@@ -194,10 +195,10 @@ AI enrichment via Gemini API adds IPA, meanings, examples automatically.
 ### Backend
 - **Runtime**: Node.js (ES modules)
 - **Framework**: Express.js
-- **Database**: MongoDB (Mongoose ODM)
+- **Database**: SQLite (`node:sqlite`)
 - **AI**: Google Gemini API
 - **File Upload**: Multer
-- **Parsers**: xlsx, natural
+- **Parsers**: xlsx
 
 ### Frontend
 - **Framework**: React 19.1.1
@@ -238,7 +239,7 @@ npm start            # Starts backend server
 2. **Add features**: Read docs/PROJECT_OVERVIEW.md → Identify module → Follow file patterns
 3. **API integration**: Check backend/src/routes/ → backend/src/controllers/ → frontend/src/lib/axios.ts
 4. **UI work**: frontend/src/components/ → reuse ui/ primitives → follow shadcn patterns
-5. **Database**: backend/src/model/ → Mongoose schemas with SRS logic
+5. **Database**: backend/src/model/ → SQLite document models with SRS logic
 
 ---
 

@@ -2,10 +2,10 @@
 // Deterministic question generator với PRNG từ seed
 
 import Word from '../model/Word.js';
-import natural from 'natural';
+const tokenize = (sentence) => sentence.match(/[A-Za-zÀ-ỹ0-9']+/gu) || [];
 
 // Khởi tạo tokenizer để tách câu thành các từ
-const tokenizer = new natural.WordTokenizer();
+const tokenizer = { tokenize };
 
 // ========== PRNG (Pseudo-Random Number Generator) từ seed ==========
 class SeededRandom {

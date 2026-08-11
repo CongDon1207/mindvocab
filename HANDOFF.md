@@ -1,5 +1,18 @@
 # Handoff - 2026-01-11
 
+## Local Development - 2026-08-12
+
+- Run `pnpm dev` from the repository root to start the backend API and Vite frontend together.
+- Validation: the command started both nodemon and Vite; Vite served `http://localhost:5173` successfully.
+
+## Database Migration - 2026-08-11
+
+- Backend persistence now uses Node's built-in SQLite support through a shared document model adapter.
+- The default database path is `backend/data/mindvocab.sqlite`; configure `SQLITE_DB_PATH` to override it.
+- A new empty database is expected. MongoDB Atlas data is not imported.
+- Runtime requirement is Node.js 22.5 or newer.
+- Validation status: SQLite adapter, health endpoint, folder/word API, notebook validation, session question generation and persistence smoke tests passed. Frontend `vite build` passed; the root build command timed out during frontend `npm ci` in this environment.
+
 ## Current Status
 - **Manual Review Scheduling**: Users can now manually schedule review reminders for any folder using a dropdown menu (1 day, 3 days, 1 week, 2 weeks, 1 month, or custom days). Countdown badge shows remaining days on each folder card.
 - **Custom Day Input**: Users can input any positive integer for flexible scheduling (e.g., 5, 12, 45 days).

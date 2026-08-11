@@ -56,7 +56,7 @@ Each word progresses through stages based on session performance:
 ## 🛠️ Technology Stack
 
 - **Frontend**: React 19, Vite, Tailwind CSS v4, Radix UI.
-- **Backend**: Node.js, Express, MongoDB (Mongoose).
+- **Backend**: Node.js, Express and SQLite (`node:sqlite`).
 - **AI Integration**: Google Gemini API for automated enrichment.
 - **Audio**: Web Speech API for instant native-speaker pronunciation.
 

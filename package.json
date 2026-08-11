@@ -8,7 +8,8 @@
   },
   "scripts": {
     "build": "cd backend && npm ci && cd ../frontend && npm ci --include=dev && npm run build",
-    "start": "cd backend && npm start"
+    "start": "cd backend && npm start",
+    "dev": "concurrently --kill-others-on-fail --names backend,frontend --prefix-colors blue,magenta \"npm --prefix backend run dev\" \"npm --prefix frontend run dev\""
   },
   "repository": {
     "type": "git",
@@ -18,6 +19,9 @@
   "author": "",
   "license": "ISC",
   "type": "commonjs",
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  },
   "bugs": {
     "url": "https://github.com/CongDon1207/mindvocab/issues"
   },

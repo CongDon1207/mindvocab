@@ -464,6 +464,7 @@ export const completeSession = async (req, res) => {
 
     // Lặp qua tất cả words trong session
     for (const wordObj of session.wordIds) {
+      if (!wordObj) continue;
       const word = await Word.findById(wordObj._id || wordObj);
       if (!word) continue;
 
@@ -495,6 +496,7 @@ export const completeSession = async (req, res) => {
     if (quizPercentage >= 80) {
       const wrongSetIds = session.wrongSet.map(id => id.toString());
       for (const wordObj of session.wordIds) {
+        if (!wordObj) continue;
         const wordId = (wordObj._id || wordObj).toString();
         if (!wrongSetIds.includes(wordId)) {
           masteredCount++;

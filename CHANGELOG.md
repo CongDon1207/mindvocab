@@ -1,5 +1,11 @@
 # Changelog
 
+- 2026-08-12: Change root `package.json` development script to start the backend and frontend together - simplified local development (completed).
+
+## [2026-08-11]
+- **Change**: Replaced MongoDB/Mongoose persistence with a local SQLite document adapter in `backend/src/model` and `backend/src/config/db.js`.
+- **Change**: Updated backend configuration and documentation for `SQLITE_DB_PATH`; new databases start empty.
+
 ## [2026-02-22]
 - **Add**: Manual Review Scheduling for Notebooks - Added `POST /api/notebook-entries/:id/schedule` endpoint to manually set review dates (1, 3, 7, 14, 30 days or custom).
 - **Add**: NotebookCard component (`frontend/src/components/notebook/NotebookCard.tsx`) - Reusable card with schedule dropdown, SRS stage display, review status badges (similar to FolderCard).
