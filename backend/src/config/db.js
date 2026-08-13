@@ -34,9 +34,41 @@ export async function connectDB() {
     );
     CREATE INDEX IF NOT EXISTS idx_documents_collection
       ON documents (collection);
+    CREATE TABLE IF NOT EXISTS app_metadata (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    );
   `)
 
+  migrateContentSchema(databasePath)
+
   console.log(`SQLite database ready at ${databasePath}`)
+}
+
+function migrateContentSchema(databasePath) {
+  const targetVersion = '2'
+  const row = database.prepare('SELECT value FROM app_metadata WHERE key = ?').get('content_schema_version')
+  if (row?.value === targetVersion) return
+  const dataCount = database.prepare('SELECT COUNT(*) AS count FROM documents').get().count
+  if (!dataCount) {
+    database.prepare('INSERT OR REPLACE INTO app_metadata (key, value) VALUES (?, ?)').run('content_schema_version', targetVersion)
+    return
+  }
+  const backupDir = path.join(path.dirname(databasePath), 'backups')
+  fs.mkdirSync(backupDir, { recursive: true })
+  database.exec('PRAGMA wal_checkpoint(FULL);')
+  const backupPath = path.join(backupDir, `mindvocab-before-content-v2-${new Date().toISOString().replace(/[:.]/g, '-')}.sqlite`)
+  fs.copyFileSync(databasePath, backupPath)
+  database.exec('BEGIN IMMEDIATE;')
+  try {
+    database.exec('DELETE FROM documents;')
+    database.prepare('INSERT OR REPLACE INTO app_metadata (key, value) VALUES (?, ?)').run('content_schema_version', targetVersion)
+    database.exec('COMMIT;')
+    console.log(`Content schema upgraded; backup created at ${backupPath}`)
+  } catch (error) {
+    database.exec('ROLLBACK;')
+    throw error
+  }
 }
 
 export function getDatabase() {

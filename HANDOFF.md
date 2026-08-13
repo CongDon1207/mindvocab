@@ -13,7 +13,16 @@
 - Runtime requirement is Node.js 22.5 or newer.
 - Validation status: SQLite adapter, health endpoint, folder/word API, notebook validation, session question generation and persistence smoke tests passed. Frontend `vite build` passed; the root build command timed out during frontend `npm ci` in this environment.
 
+## SRS Stabilization - 2026-08-12
+
+- Sessions now distinguish SRS, sequential, and retry modes. Only SRS writes word scheduling fields.
+- Completion is SQLite-transactional and idempotent; repeated completion returns the saved result without changing stages again.
+- SRS selection uses overdue, due-today, then new words (up to ten), and returns `NOTHING_DUE` when the daily queue is empty.
+- Validation: `npm.cmd test` in `backend` and `npm.cmd run build` in `frontend` passed.
+
 ## Current Status
+- **Content schema v2**: Vocabulary requires two flashcard examples and one dedicated Fill Blank sentence. The first startup of v2 creates a SQLite backup before clearing legacy application data once.
+- **Import**: Markdown tables from ChatGPT and `.xlsx` files use the same ten-column validation and duplicate policy preview. No Gemini API configuration or enrichment endpoint remains.
 - **Manual Review Scheduling**: Users can now manually schedule review reminders for any folder using a dropdown menu (1 day, 3 days, 1 week, 2 weeks, 1 month, or custom days). Countdown badge shows remaining days on each folder card.
 - **Custom Day Input**: Users can input any positive integer for flexible scheduling (e.g., 5, 12, 45 days).
 - **Reset Progress**: Users can reset learning progress for 100% mastered folders. All words return to unlearned state (stage 0, no lastSeenAt). Reset button appears on hover in Review Dashboard.

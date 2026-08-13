@@ -1,298 +1,54 @@
-import fs from 'fs/promises'
-import path from 'path'
+import path from 'node:path'
 import xlsx from 'xlsx'
+import { WORD_HEADERS, normalizeWordInput, validateWordInput } from './wordContent.js'
 
-const HEADER_ALIASES = {
-  word: ['word', 'từ', 'english', 'en'],
-  meaning_vi: ['meaning_vi', 'meaning', 'definition_vi', 'nghĩa', 'vi', 'vietnamese'],
-  pos: ['pos', 'part_of_speech', 'loại từ', 'speech'],
-  ipa: ['ipa', 'phonetic', 'phiên âm'],
-  note: ['note', 'ghi chú', 'tips', 'hint'],
-  ex1_en: ['ex1_en', 'example1_en', 'example_en', 'ví dụ 1 en'],
-  ex1_vi: ['ex1_vi', 'example1_vi', 'example_vi', 'ví dụ 1 vi'],
-  ex2_en: ['ex2_en', 'example2_en'],
-  ex2_vi: ['ex2_vi', 'example2_vi'],
-  tags: ['tags', 'tag', 'nhãn'],
-}
+const error = (location, message) => ({ stage: 'parse', location, message })
+const cell = (value) => String(value ?? '').trim()
 
-function normalizeHeader(value) {
-  if (!value) return ''
-  const key = value.toString().trim().toLowerCase()
-  return key.replace(/\s+/g, '_')
-}
-
-function mapHeader(cell) {
-  const normalized = normalizeHeader(cell)
-  for (const [target, aliases] of Object.entries(HEADER_ALIASES)) {
-    if (aliases.includes(normalized)) {
-      return target
-    }
+function parseRows(rows, folderId, source) {
+  const header = (rows[0] || []).map(cell)
+  if (header.length !== WORD_HEADERS.length || header.some((value, index) => value !== WORD_HEADERS[index])) {
+    return { type: source, totalLines: Math.max(0, rows.length - 1), records: [], duplicates: [], errors: [error('header', `Headers must be exactly: ${WORD_HEADERS.join(', ')}`)] }
   }
-  return normalized
-}
-
-function baseRecord({ folderId, word, meaning_vi }) {
-  const normalizedWord = word.trim()
-  const wordDisplay = normalizedWord
-  const lower = normalizedWord.toLowerCase()
-
-  return {
-    folderId,
-    word: wordDisplay,
-    normalizedWord: lower,
-    meaning_vi: meaning_vi.trim(),
-    pos: '',
-    ipa: '',
-    note: '',
-    examples: [],
-    tags: [],
-    fieldSources: {
-      meaning_vi: 'user',
-      pos: 'inferred',
-      ipa: 'inferred',
-      note: 'inferred',
-    },
-    missing: {
-      pos: true,
-      ipa: true,
-      note: true,
-      ex1: true,
-      ex2: true,
-    },
-  }
-}
-
-function applyOptionalFields(record, payload) {
-  if (payload.pos) {
-    record.pos = payload.pos.trim()
-    record.fieldSources.pos = 'user'
-    record.missing.pos = false
-  }
-  if (payload.ipa) {
-    record.ipa = payload.ipa.trim()
-    record.fieldSources.ipa = 'user'
-    record.missing.ipa = false
-  }
-  if (payload.note) {
-    record.note = payload.note.trim()
-    record.fieldSources.note = 'user'
-    record.missing.note = !record.note
-  }
-  if (Array.isArray(payload.examples) && payload.examples.length > 0) {
-    record.examples = payload.examples.map((ex) => ({
-      en: ex.en?.trim() || '',
-      vi: ex.vi?.trim() || '',
-      source: 'user',
-    }))
-    if (record.examples[0]?.en && record.examples[0]?.vi) {
-      record.missing.ex1 = false
-    }
-    if (record.examples[1]?.en && record.examples[1]?.vi) {
-      record.missing.ex2 = false
-    }
-  }
-  if (Array.isArray(payload.tags) && payload.tags.length > 0) {
-    record.tags = payload.tags
-  }
-  return record
-}
-
-export async function parseTxtFile(filePath, { folderId }) {
-  const raw = await fs.readFile(filePath, 'utf-8')
-  const lines = raw.split(/\r?\n/)
-  const records = []
-  const errors = []
-  const duplicates = []
-  const seen = new Set()
-
-  lines.forEach((line, index) => {
-    const lineNumber = index + 1
-    if (!line || !line.trim()) {
-      return
-    }
-    const cleaned = line.trim().replace(/^\d+[\.\)]\s*/, '')
-    const normalized = cleaned.replace(/\s+[–—-]\s+/g, ': ')
-    const parts = normalized.split(':')
-    if (parts.length < 2) {
-      errors.push({
-        stage: 'parse',
-        message: 'Không nhận diện được cặp word/meaning',
-        location: `line ${lineNumber}`,
-      })
-      return
-    }
-    const word = parts.shift().trim()
-    const meaning = parts.join(':').trim()
-    if (!word || !meaning) {
-      errors.push({
-        stage: 'parse',
-        message: 'Thiếu word hoặc meaning',
-        location: `line ${lineNumber}`,
-      })
-      return
-    }
-
-    const record = baseRecord({ folderId, word, meaning_vi: meaning })
-    const key = record.normalizedWord
-    if (seen.has(key)) {
-      duplicates.push(word)
-      return
-    }
-    seen.add(key)
-    records.push(record)
+  const records = []; const duplicates = []; const errors = []; const seen = new Set()
+  rows.slice(1).forEach((row, index) => {
+    const values = Array.from({ length: WORD_HEADERS.length }, (_, column) => cell(row[column]))
+    if (!values.some(Boolean)) return
+    if (row.length > WORD_HEADERS.length) { errors.push(error(`row ${index + 2}`, 'Too many columns.')); return }
+    const input = Object.fromEntries(WORD_HEADERS.map((headerName, column) => [headerName, values[column]]))
+    const { value, errors: rowErrors } = validateWordInput(input)
+    if (rowErrors.length) { errors.push(...rowErrors.map((message) => error(`row ${index + 2}`, message))); return }
+    const key = value.word.toLowerCase()
+    if (seen.has(key)) { duplicates.push(value.word); return }
+    seen.add(key); records.push({ folderId, ...value, normalizedWord: key })
   })
-
-  return {
-    type: 'txt',
-    totalLines: lines.length,
-    records,
-    duplicates,
-    errors,
-  }
+  return { type: source, totalLines: Math.max(0, rows.length - 1), records, duplicates, errors }
 }
 
-function extractExamples(rowMap) {
-  const examples = []
-  if (rowMap.ex1_en || rowMap.ex1_vi) {
-    examples.push({
-      en: (rowMap.ex1_en || '').toString(),
-      vi: (rowMap.ex1_vi || '').toString(),
-    })
-  }
-  if (rowMap.ex2_en || rowMap.ex2_vi) {
-    examples.push({
-      en: (rowMap.ex2_en || '').toString(),
-      vi: (rowMap.ex2_vi || '').toString(),
-    })
-  }
-  return examples
+function splitMarkdownRow(line) {
+  const text = line.trim().replace(/^\|/, '').replace(/\|$/, '')
+  return text.split('|').map((value) => value.trim().replace(/\\\|/g, '|'))
+}
+
+function isDivider(row) { return row.length === WORD_HEADERS.length && row.every((cellValue) => /^:?-{3,}:?$/.test(cellValue)) }
+
+export function parseMarkdownTable(content, { folderId }) {
+  const lines = String(content || '').split(/\r?\n/).filter((line) => line.trim())
+  const rows = lines.map(splitMarkdownRow)
+  if (rows[1] && isDivider(rows[1])) rows.splice(1, 1)
+  return parseRows(rows, folderId, 'markdown')
 }
 
 export async function parseXlsxFile(filePath, { folderId }) {
-  const workbook = xlsx.readFile(filePath)
-  const [firstSheetName] = workbook.SheetNames
-  if (!firstSheetName) {
-    return {
-      type: 'xlsx',
-      totalLines: 0,
-      records: [],
-      duplicates: [],
-      errors: [
-        { stage: 'parse', message: 'File không có sheet nào', location: 'sheet 1' },
-      ],
-    }
-  }
-
-  const sheet = workbook.Sheets[firstSheetName]
-  const rows = xlsx.utils.sheet_to_json(sheet, { header: 1, defval: '' })
-
-  if (!rows.length) {
-    return {
-      type: 'xlsx',
-      totalLines: 0,
-      records: [],
-      duplicates: [],
-      errors: [
-        { stage: 'parse', message: 'Sheet đầu tiên không có dữ liệu', location: firstSheetName },
-      ],
-    }
-  }
-
-  const headerRow = rows[0].map(mapHeader)
-  const requiredHeaders = ['word', 'meaning_vi']
-  const hasRequired = requiredHeaders.every((header) => headerRow.includes(header))
-  if (!hasRequired) {
-    return {
-      type: 'xlsx',
-      totalLines: rows.length - 1,
-      records: [],
-      duplicates: [],
-      errors: [
-        {
-          stage: 'parse',
-          message: 'Không tìm thấy cột word/meaning_vi sau khi chuẩn hoá header',
-          location: firstSheetName,
-        },
-      ],
-    }
-  }
-
-  const records = []
-  const errors = []
-  const duplicates = []
-  const seen = new Set()
-
-  rows.slice(1).forEach((row, index) => {
-    const rowNumber = index + 2
-    if (!Array.isArray(row)) return
-
-    const rowMap = {}
-    headerRow.forEach((header, idx) => {
-      rowMap[header] = row[idx]
-    })
-
-    const word = (rowMap.word || '').toString().trim()
-    const meaning = (rowMap.meaning_vi || '').toString().trim()
-
-    if (!word && !meaning) {
-      return
-    }
-
-    if (!word || !meaning) {
-      errors.push({
-        stage: 'parse',
-        message: 'Dòng thiếu word hoặc meaning_vi',
-        location: `row ${rowNumber}`,
-      })
-      return
-    }
-
-    const record = baseRecord({ folderId, word, meaning_vi: meaning })
-    const key = record.normalizedWord
-    if (seen.has(key)) {
-      duplicates.push(word)
-      return
-    }
-    seen.add(key)
-
-    const payload = {
-      pos: (rowMap.pos || '').toString(),
-      ipa: (rowMap.ipa || '').toString(),
-      note: (rowMap.note || '').toString(),
-      examples: extractExamples(rowMap).map((example) => ({
-        ...example,
-      })),
-      tags: typeof rowMap.tags === 'string'
-        ? rowMap.tags
-            .split(',')
-            .map((x) => x.trim())
-            .filter(Boolean)
-        : Array.isArray(rowMap.tags)
-          ? rowMap.tags
-          : [],
-    }
-
-    applyOptionalFields(record, payload)
-    records.push(record)
-  })
-
-  return {
-    type: 'xlsx',
-    totalLines: rows.length - 1,
-    records,
-    duplicates,
-    errors,
-  }
+  const workbook = xlsx.readFile(filePath, { cellFormula: false, cellHTML: false, cellText: true })
+  const sheet = workbook.Sheets[workbook.SheetNames[0]]
+  if (!sheet) return { type: 'xlsx', totalLines: 0, records: [], duplicates: [], errors: [error('sheet 1', 'Workbook has no worksheet.')] }
+  return parseRows(xlsx.utils.sheet_to_json(sheet, { header: 1, defval: '', blankrows: false }), folderId, 'xlsx')
 }
 
-export async function parseImportFile(filePath, options) {
-  const ext = path.extname(filePath).toLowerCase()
-  if (ext === '.txt') {
-    return parseTxtFile(filePath, options)
-  }
-  if (ext === '.xlsx') {
-    return parseXlsxFile(filePath, options)
-  }
-  throw new Error('Định dạng file không hỗ trợ')
+export async function parseImportSource({ file, tableContent, folderId }) {
+  if (tableContent) return parseMarkdownTable(tableContent, { folderId })
+  if (!file) throw new Error('Provide a Markdown table or an .xlsx file.')
+  if (path.extname(file.path).toLowerCase() !== '.xlsx') throw new Error('Only .xlsx files are supported.')
+  return parseXlsxFile(file.path, { folderId })
 }
-

@@ -1,182 +1,30 @@
 import React, { useState } from 'react'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import api from '@/lib/axios'
 
-type UploadWordsDialogProps = {
-  open: boolean
-  onOpenChange: (value: boolean) => void
-  folderId: string
-  onJobCreated: (jobId: string) => void
+type Props = { open: boolean; onOpenChange: (value: boolean) => void; folderId: string; onJobCreated: (jobId: string) => void }
+type Preview = { totalLines: number; validRows: number; duplicates: string[]; existingWords: string[]; errors: { location?: string; message: string }[] }
+const headers = 'word | meaning_vi | pos | ipa | note | ex1_en | ex1_vi | ex2_en | ex2_vi | fill_en'
+const prompt = `Please communicate with me in Vietnamese. If I have not given you a word list, only ask me to send the list. When I give a list, return only a Markdown table with exactly these columns in this order: ${headers}. Keep all listed words, write concise Vietnamese meanings, use noun/verb/adj/adv/prep/phrase/idiom/other for pos, and leave only ipa or note empty when needed. Make two distinct natural examples and one different fill_en sentence (7-18 words); every English sentence must contain the word exactly once. In note, state common context, collocations, or important usage cautions.`
+
+export default function UploadWordsDialog({ open, onOpenChange, folderId, onJobCreated }: Props) {
+  const [tab, setTab] = useState<'paste' | 'file'>('paste'); const [tableContent, setTableContent] = useState(''); const [file, setFile] = useState<File | null>(null)
+  const [duplicatePolicy, setDuplicatePolicy] = useState<'skip' | 'fill_missing' | 'overwrite'>('skip'); const [preview, setPreview] = useState<Preview | null>(null); const [error, setError] = useState(''); const [loading, setLoading] = useState(false)
+  const close = (value: boolean) => { if (!value) { setTableContent(''); setFile(null); setPreview(null); setError('') }; onOpenChange(value) }
+  const formData = () => { const data = new FormData(); data.append('folderId', folderId); if (tab === 'paste') data.append('tableContent', tableContent); else if (file) data.append('file', file); return data }
+  const previewImport = async () => { try { setLoading(true); setError(''); const response = await api.post<Preview>('/import-jobs/preview', formData(), { headers: { 'Content-Type': 'multipart/form-data' } }); setPreview(response.data) } catch (err: any) { setError(err.response?.data?.error || 'Cannot preview this import.') } finally { setLoading(false) } }
+  const submit = async () => { try { setLoading(true); setError(''); const data = formData(); data.append('duplicatePolicy', duplicatePolicy); const response = await api.post('/import-jobs', data, { headers: { 'Content-Type': 'multipart/form-data' } }); onJobCreated(response.data.jobId); close(false) } catch (err: any) { setError(err.response?.data?.error || 'Import failed.') } finally { setLoading(false) } }
+  const copyPrompt = async () => { await navigator.clipboard.writeText(prompt); window.open('https://chatgpt.com/', '_blank', 'noopener,noreferrer') }
+  const canPreview = tab === 'paste' ? Boolean(tableContent.trim()) : Boolean(file)
+  return <Dialog open={open} onOpenChange={close}><DialogContent className="sm:max-w-[680px]"><DialogHeader><DialogTitle>Nhập danh sách từ</DialogTitle></DialogHeader>
+    <div className="flex gap-2"><Button size="sm" variant={tab === 'paste' ? 'default' : 'outline'} onClick={() => setTab('paste')}>Dán bảng từ ChatGPT</Button><Button size="sm" variant={tab === 'file' ? 'default' : 'outline'} onClick={() => setTab('file')}>Upload Excel</Button></div>
+    {tab === 'paste' ? <div className="grid gap-2"><div className="flex justify-between gap-3"><Label>Bảng Markdown</Label><Button type="button" size="sm" variant="outline" onClick={copyPrompt}>Mở ChatGPT và sao chép prompt</Button></div><Textarea rows={10} value={tableContent} onChange={(event) => { setTableContent(event.target.value); setPreview(null) }} placeholder={`| ${headers} |`} /><p className="text-xs text-muted-foreground">Dán nguyên bảng Markdown do ChatGPT trả về.</p></div> : <div className="grid gap-2"><Label>File Excel (.xlsx)</Label><Input type="file" accept=".xlsx" onChange={(event) => { setFile(event.target.files?.[0] || null); setPreview(null) }} /><a href="/import-samples/sample.xlsx" download className="text-sm text-blue-600 hover:underline">Tải mẫu Excel 10 cột</a></div>}
+    <div className="grid gap-2"><Label>Trùng từ</Label><select value={duplicatePolicy} onChange={(event) => setDuplicatePolicy(event.target.value as typeof duplicatePolicy)} className="rounded border px-3 py-2 text-sm"><option value="skip">Bỏ qua từ đã có</option><option value="fill_missing">Chỉ điền trường đang trống</option><option value="overwrite">Ghi đè nội dung, giữ tiến độ SRS</option></select></div>
+    {preview && <div className="rounded border p-3 text-sm space-y-1"><p>{preview.validRows}/{preview.totalLines} dòng hợp lệ.</p><p>{preview.duplicates.length} từ trùng trong bảng; {preview.existingWords.length} từ đã có trong folder.</p>{preview.errors.slice(0, 5).map((item, index) => <p className="text-red-600" key={index}>{item.location}: {item.message}</p>)}</div>}
+    {error && <p className="text-sm text-red-600">{error}</p>}<DialogFooter><Button variant="outline" onClick={() => close(false)}>Hủy</Button><Button variant="outline" disabled={!canPreview || loading} onClick={previewImport}>Kiểm tra</Button><Button disabled={!preview || preview.errors.length > 0 || loading} onClick={submit}>Import</Button></DialogFooter>
+  </DialogContent></Dialog>
 }
-
-const ACCEPTED_TYPES = ['text/plain', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet']
-const MAX_SIZE_MB = Number(import.meta.env.VITE_IMPORT_MAX_SIZE_MB || 5)
-
-const formatBytes = (bytes: number) => {
-  if (bytes === 0) return '0 B'
-  const k = 1024
-  const sizes = ['B', 'KB', 'MB', 'GB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`
-}
-
-const UploadWordsDialog: React.FC<UploadWordsDialogProps> = ({
-  open,
-  onOpenChange,
-  folderId,
-  onJobCreated,
-}) => {
-  const [file, setFile] = useState<File | null>(null)
-  const [allowUpdate, setAllowUpdate] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-
-  const resetState = () => {
-    setFile(null)
-    setAllowUpdate(false)
-    setError(null)
-    setIsSubmitting(false)
-  }
-
-  const handleClose = (value: boolean) => {
-    if (!value) {
-      resetState()
-    }
-    onOpenChange(value)
-  }
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setError(null)
-    const selected = event.target.files?.[0]
-    if (!selected) {
-      setFile(null)
-      return
-    }
-    const isValidType =
-      ACCEPTED_TYPES.includes(selected.type) ||
-      selected.name.toLowerCase().endsWith('.txt') ||
-      selected.name.toLowerCase().endsWith('.xlsx')
-    if (!isValidType) {
-      setError('Định dạng không hợp lệ. Chỉ hỗ trợ .txt và .xlsx')
-      setFile(null)
-      return
-    }
-    if (selected.size > MAX_SIZE_MB * 1024 * 1024) {
-      setError(`File vượt quá giới hạn ${MAX_SIZE_MB}MB`)
-      setFile(null)
-      return
-    }
-    setFile(selected)
-  }
-
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    if (!file) {
-      setError('Vui lòng chọn file cần upload')
-      return
-    }
-
-    try {
-      setIsSubmitting(true)
-      setError(null)
-      const formData = new FormData()
-      formData.append('folderId', folderId)
-      formData.append('allowUpdate', allowUpdate ? 'true' : 'false')
-      formData.append('file', file)
-
-      const response = await api.post('/import-jobs', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      })
-
-      const jobId = response.data?.jobId
-      if (jobId) {
-        onJobCreated(jobId)
-        handleClose(false)
-      } else {
-        setError('Không nhận được thông tin job từ server')
-      }
-    } catch (err: any) {
-      const message = err.response?.data?.error || 'Upload thất bại, vui lòng thử lại'
-      setError(message)
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[520px]">
-        <DialogHeader>
-          <DialogTitle>Upload danh sách từ</DialogTitle>
-        </DialogHeader>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-2">
-            <Label>Chọn file (.txt hoặc .xlsx)</Label>
-            <Input type="file" accept=".txt,.xlsx" onChange={handleFileChange} />
-            <p className="text-xs text-gray-500">
-              Giới hạn dung lượng: {MAX_SIZE_MB}MB. Mỗi dòng: <code>word: meaning</code> (TXT) hoặc
-              dùng header chuẩn (Excel).
-            </p>
-            {file && (
-              <div className="rounded-md border bg-slate-50 p-3 text-sm">
-                <div className="font-medium">{file.name}</div>
-                <div className="text-muted-foreground">{formatBytes(file.size)}</div>
-              </div>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label>Tùy chọn</Label>
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                className="size-4"
-                checked={allowUpdate}
-                onChange={(e) => setAllowUpdate(e.target.checked)}
-              />
-              Cho phép cập nhật từ đã có (ghi đè dữ liệu hiện có nếu cần)
-            </label>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Mẫu tham khảo</Label>
-            <div className="flex flex-wrap gap-2 text-sm">
-              <a
-                href="/import-samples/sample.txt"
-                className="text-blue-600 hover:underline"
-                download
-              >
-                Tải mẫu TXT
-              </a>
-              <a
-                href="/import-samples/sample.xlsx"
-                className="text-blue-600 hover:underline"
-                download
-              >
-                Tải mẫu Excel
-              </a>
-            </div>
-          </div>
-
-          {error && <p className="text-sm text-red-500">{error}</p>}
-
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => handleClose(false)}>
-              Hủy
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Đang xử lý...' : 'Bắt đầu import'}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
-  )
-}
-
-export default UploadWordsDialog
-

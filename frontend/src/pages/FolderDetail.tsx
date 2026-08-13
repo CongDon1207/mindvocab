@@ -16,10 +16,10 @@ const FolderDetail: React.FC = () => {
   const {
     id, folder, words, total, loading, error, page, totalPages, limit,
     searchQuery, posFilter, isAddDialogOpen, editingWord, isUploadDialogOpen, isImportDrawerOpen,
-    activeJobId, enrichingIds, activeTab, folderStats, statsLoading,
+    activeJobId, activeTab, folderStats, statsLoading,
     setPage, setSearchQuery, setPosFilter, setIsAddDialogOpen, setEditingWord, setIsUploadDialogOpen,
     setIsImportDrawerOpen, setActiveTab, handleAddWord, handleUpdateWord, handleDeleteWord,
-    handleEnrichWord, handleStartLearning, handleStartRetrySession,
+    handleStartLearning, handleStartRetrySession,
     handleImportJobCreated, handleJobFinished, navigate, location
   } = useFolderDetail()
 
@@ -93,8 +93,6 @@ const FolderDetail: React.FC = () => {
               posFilter={posFilter}
               onEdit={setEditingWord}
               onDelete={handleDeleteWord}
-              onEnrich={handleEnrichWord}
-              enrichingIds={enrichingIds}
             />
 
             {!loading && words.length > 0 && (

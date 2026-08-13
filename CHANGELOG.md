@@ -1,5 +1,9 @@
 # Changelog
 
+- 2026-08-12: Change vocabulary import, Word content schema, Fill Blank data, and remove Gemini enrichment at `backend/src` and `frontend/src` - imports now validate ten complete columns and Fill Blank uses its dedicated sentence (completed).
+
+- 2026-08-12: Change vocabulary session SRS selection, scoring, idempotent completion, and mode-specific UI at `backend/src` and `frontend/src` - prevents duplicate stage updates and clarifies study choices (completed).
+
 - 2026-08-12: Change root `package.json` development script to start the backend and frontend together - simplified local development (completed).
 
 ## [2026-08-11]

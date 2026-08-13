@@ -62,6 +62,7 @@ const FolderModals: React.FC<FolderModalsProps> = ({
                         ex1_vi: editingWord.ex1?.vi || '',
                         ex2_en: editingWord.ex2?.en || '',
                         ex2_vi: editingWord.ex2?.vi || '',
+                        fill_en: editingWord.fillExample?.en || '',
                     }}
                     title="Chỉnh sửa từ"
                     submitButtonText="Lưu"

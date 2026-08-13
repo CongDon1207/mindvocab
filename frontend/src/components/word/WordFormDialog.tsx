@@ -22,10 +22,11 @@ const schema = z.object({
   meaning_vi: z.string().trim().min(1, 'Nghĩa tiếng Việt là bắt buộc'),
   ipa: z.string().trim().optional(),
   note: z.string().trim().optional(),
-  ex1_en: z.string().trim().optional(),
-  ex1_vi: z.string().trim().optional(),
-  ex2_en: z.string().trim().optional(),
-  ex2_vi: z.string().trim().optional(),
+  ex1_en: z.string().trim().min(1, 'Example 1 is required'),
+  ex1_vi: z.string().trim().min(1, 'Example 1 translation is required'),
+  ex2_en: z.string().trim().min(1, 'Example 2 is required'),
+  ex2_vi: z.string().trim().min(1, 'Example 2 translation is required'),
+  fill_en: z.string().trim().min(1, 'Fill Blank sentence is required'),
 })
 
 type Props = {
@@ -57,6 +58,7 @@ const WordFormDialog: React.FC<Props> = ({
       ex1_vi: '',
       ex2_en: '',
       ex2_vi: '',
+      fill_en: '',
     },
   })
 
@@ -98,9 +100,9 @@ const WordFormDialog: React.FC<Props> = ({
                 <option value="adj">Adjective (tính từ)</option>
                 <option value="adv">Adverb (trạng từ)</option>
                 <option value="prep">Preposition (giới từ)</option>
-                <option value="conj">Conjunction (liên từ)</option>
-                <option value="pron">Pronoun (đại từ)</option>
-                <option value="interj">Interjection (thán từ)</option>
+                <option value="phrase">Phrase</option>
+                <option value="idiom">Idiom</option>
+                <option value="other">Other</option>
               </select>
               {errors.pos && <p className="text-sm text-red-500">{errors.pos.message}</p>}
             </div>
@@ -171,6 +173,13 @@ const WordFormDialog: React.FC<Props> = ({
                 />
               </div>
             </div>
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="fill_en">Fill Blank sentence *</Label>
+            <Input id="fill_en" placeholder="Use a distinct sentence that contains the word once." {...register('fill_en')} />
+            <p className="text-xs text-muted-foreground">This sentence appears only in the final Fill Blank step.</p>
+            {errors.fill_en && <p className="text-sm text-red-500">{errors.fill_en.message}</p>}
           </div>
 
           <DialogFooter className="mt-2">

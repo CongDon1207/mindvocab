@@ -9,5 +9,12 @@
 node_modules
 dist
 backend/data/*.sqlite*
+backend/data/backups/
+backend/storage/
+backend/temp-uploads/
+coverage/
+*.log
+*.tsbuildinfo
+.vite/
 .DS_Store
 .agent

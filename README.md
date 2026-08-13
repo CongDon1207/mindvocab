@@ -1,73 +1,42 @@
 # MindVocab
 
-MindVocab is a vocabulary-learning application that combines spaced repetition (SRS) with AI-assisted content enrichment.
+MindVocab is a local vocabulary-learning application with spaced repetition (SRS), list review, and a six-step practice session.
 
 ## Stack
 
-- Frontend: React, TypeScript, Vite, Tailwind CSS and shadcn/ui.
-- Backend: Node.js, Express and SQLite.
-- AI: Google Gemini for vocabulary enrichment.
+- Frontend: React, TypeScript, Vite, Tailwind CSS, and shadcn/ui.
+- Backend: Node.js, Express, and SQLite through `node:sqlite`.
 
-The backend uses Node's built-in `node:sqlite` module and requires Node.js 22.5 or newer.
+Node.js 22.5 or newer is required. SQLite runs locally and does not require a database server.
 
-## Setup
-
-Install Node.js and Git, then clone the repository:
+## Run
 
 ```bash
-git clone https://github.com/CongDon1207/mindvocab.git
-cd mindvocab
+pnpm install
+pnpm dev
 ```
 
-Create the backend environment file:
-
-```bash
-cd backend
-cp .env.example .env
-```
-
-SQLite is local and does not require a database server. By default, the database is created at `backend/data/mindvocab.sqlite`.
-To use another location, set `SQLITE_DB_PATH` in `backend/.env`:
-
-```env
-SQLITE_DB_PATH=./data/mindvocab.sqlite
-GEMINI_API_KEY=your_gemini_api_key
-```
-
-The database starts empty. Existing MongoDB Atlas data is not imported automatically.
-
-## Install and run
-
-From the repository root:
+This starts the API and Vite development server. For production:
 
 ```bash
 npm run build
 npm start
 ```
 
-The application is available at [http://localhost:5001](http://localhost:5001).
-The backend health check is available at [http://localhost:5001/api/health](http://localhost:5001/api/health).
+The API health check is available at [http://localhost:5001/api/health](http://localhost:5001/api/health).
 
-For development:
+## Database upgrade
 
-```bash
-npm --prefix backend install
-npm --prefix frontend install
-pnpm install
-pnpm dev
+Set `SQLITE_DB_PATH` in `backend/.env` to change the default `backend/data/mindvocab.sqlite` path. On the first content-schema-v2 startup, existing application data is backed up to `backend/data/backups/` and then cleared once so all vocabulary follows the new required format.
+
+## Vocabulary import
+
+Import either an Excel `.xlsx` file or a Markdown table pasted from ChatGPT. The header must be exactly:
+
+```text
+word | meaning_vi | pos | ipa | note | ex1_en | ex1_vi | ex2_en | ex2_vi | fill_en
 ```
 
-`pnpm dev` starts the backend API and the Vite frontend together.
+Only `ipa` and `note` are optional. The app provides a button that copies the compatible ChatGPT prompt and opens ChatGPT; it does not call an AI API. See [docs/format_xlsx.md](docs/format_xlsx.md).
 
-## Import formats
-
-- TXT: one vocabulary item per line. See [docs/format_txt.md](docs/format_txt.md).
-- XLSX: use the `word` and `meaning_vi` columns, with optional `pos`, `ipa`, notes, examples and tags. See [docs/format_xlsx.md](docs/format_xlsx.md).
-
-## Main features
-
-- Folder and vocabulary management.
-- AI-assisted IPA, meaning, note and example enrichment.
-- Six-step study sessions with SRS scheduling.
-- Notebook exercises and review scheduling.
-- Review statistics and retention forecasts.
+`ex1` and `ex2` are shown on flashcards. `fill_en` is held back and used only during Fill Blank.

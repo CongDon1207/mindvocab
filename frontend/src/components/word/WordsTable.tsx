@@ -2,7 +2,7 @@
 import React from 'react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Edit2, Trash2, Sparkles, BookOpen, Wand2 } from 'lucide-react'
+import { Edit2, Trash2, BookOpen } from 'lucide-react'
 import type { Word } from '@/types/word'
 
 interface WordsTableProps {
@@ -12,8 +12,6 @@ interface WordsTableProps {
   posFilter: string
   onEdit: (word: Word) => void
   onDelete: (wordId: string) => void
-  onEnrich?: (wordId: string) => void
-  enrichingIds?: string[]
 }
 
 const TableHeader = () => (
@@ -36,8 +34,6 @@ export const WordsTable: React.FC<WordsTableProps> = ({
   posFilter,
   onEdit,
   onDelete,
-  onEnrich,
-  enrichingIds = [],
 }) => {
   if (loading) {
     return (
@@ -137,18 +133,6 @@ export const WordsTable: React.FC<WordsTableProps> = ({
                 {/* Actions */}
                 <td className="px-6 py-5 text-right">
                   <div className="flex items-center justify-end gap-1.5">
-                    {onEnrich && (
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        onClick={() => onEnrich(word._id)}
-                        disabled={enrichingIds.includes(word._id)}
-                        title="AI Magic"
-                        className="text-violet-400 hover:bg-violet-50 hover:text-violet-600 rounded-lg transition-colors"
-                      >
-                        <Sparkles className={`w-3.5 h-3.5 ${enrichingIds.includes(word._id) ? 'animate-spin' : ''}`} />
-                      </Button>
-                    )}
                     <Button
                       variant="ghost"
                       size="icon-sm"

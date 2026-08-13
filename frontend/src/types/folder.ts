@@ -4,7 +4,11 @@ export type Folder = {
     description?: string;
     stats?: {
         totalWords: number;
+        learned: number;
+        learning: number;
+        strong: number;
         mastered: number;
+        dueToday: number;
     };
     // Manual review scheduling (Forgetting Curve)
     nextReviewDate?: string | null;
@@ -15,6 +19,11 @@ export type Folder = {
 export type FolderStatistics = {
     folderName: string;
     totalWords: number;
+    learned: number;
+    learning: number;
+    strong: number;
+    mastered: number;
+    dueToday: number;
     stageDistribution: {
         [key: number]: number;
     };

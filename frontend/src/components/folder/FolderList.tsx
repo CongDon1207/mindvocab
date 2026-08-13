@@ -9,7 +9,11 @@ export type Folder = {
   description?: string
   stats?: {
     totalWords?: number
+    learned?: number
+    learning?: number
+    strong?: number
     mastered?: number
+    dueToday?: number
   }
   nextReviewDate?: string | null
   owner?: string

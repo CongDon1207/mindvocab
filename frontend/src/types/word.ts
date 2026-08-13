@@ -11,14 +11,12 @@ export type Word = {
   ex1?: {
     en: string
     vi: string
-    source: 'user' | 'inferred'
   }
   ex2?: {
     en: string
     vi: string
-    source: 'user' | 'inferred'
   }
-  tags?: string[]
+  fillExample?: { en: string }
   meta?: {
     difficulty?: number
     stage?: number
@@ -40,6 +38,7 @@ export type WordFormValues = {
   ex1_vi?: string
   ex2_en?: string
   ex2_vi?: string
+  fill_en?: string
 }
 
 export type GetWordsResponse = {

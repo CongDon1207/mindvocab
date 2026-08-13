@@ -1,75 +1,37 @@
-import path from 'path'
-import fs from 'fs/promises'
 import ImportJob from '../model/ImportJob.js'
 import Folder from '../model/Folder.js'
-import { moveFile, resolveStorageDir } from '../utils/fileUtils.js'
-import { runImportJob } from './importPipeline.js'
+import Word from '../model/Word.js'
+import { parseImportSource } from '../utils/importParsers.js'
+import { saveRecords } from './importSave.js'
 
-export async function createImportJobRecord({ folderId, file, allowUpdate = false }) {
-  if (!folderId) {
-    throw new Error('Thiếu folderId')
-  }
-  if (!file) {
-    throw new Error('Thiếu file upload')
-  }
+const POLICIES = new Set(['skip', 'fill_missing', 'overwrite'])
 
-  const folder = await Folder.findById(folderId)
-  if (!folder) {
-    throw new Error('Folder không tồn tại')
-  }
+export async function previewImport({ folderId, file, tableContent }) {
+  if (!folderId) throw new Error('folderId is required.')
+  if (!await Folder.findById(folderId)) throw new Error('Folder not found.')
+  const parsed = await parseImportSource({ folderId, file, tableContent })
+  const words = await Word.find({ folderId })
+  const keys = new Set(words.map((word) => word.word.toLowerCase().trim()))
+  return { ...parsed, existingWords: parsed.records.filter((record) => keys.has(record.normalizedWord)).map((record) => record.word) }
+}
 
-  const storageRoot = resolveStorageDir()
-  const job = await ImportJob.create({
-    folderId,
-    status: 'PENDING',
-    filename: file.filename,
-    originalName: file.originalname,
-    mimeType: file.mimetype,
-    size: file.size,
-    metadata: {
-      aiProvider: process.env.AI_PROVIDER || 'gemini',
-      storagePath: '',
-      retries: 0,
-      options: { allowUpdate: Boolean(allowUpdate) },
-    },
-  })
+export async function createImportJobRecord({ folderId, file, tableContent, duplicatePolicy }) {
+  if (!POLICIES.has(duplicatePolicy)) throw new Error('duplicatePolicy is invalid.')
+  const parsed = await previewImport({ folderId, file, tableContent })
+  if (parsed.errors.length || !parsed.records.length) throw new Error(parsed.errors[0]?.message || 'No valid rows to import.')
+  const job = await ImportJob.create({ folderId, status: 'SAVING', filename: file?.filename || 'pasted-table.md', originalName: file?.originalname || 'Pasted Markdown table', mimeType: file?.mimetype || 'text/markdown', size: file?.size || Buffer.byteLength(tableContent || ''), counters: { totalLines: parsed.totalLines, validRows: parsed.records.length, skippedCount: parsed.duplicates.length }, progress: { totalRecords: parsed.records.length, currentStage: 'SAVING' }, report: { errors: parsed.errors, skippedWords: parsed.duplicates.map((word) => ({ word, reason: 'Duplicate in import.' })) }, metadata: { options: { duplicatePolicy }, records: parsed.records } })
+  setImmediate(() => runImportJob(job._id))
+  return job
+}
 
+async function runImportJob(jobId) {
+  const job = await ImportJob.findById(jobId); if (!job) return
   try {
-    const jobDir = path.join(storageRoot, job._id.toString())
-    const destinationPath = path.join(jobDir, file.originalname)
-    await moveFile(file.path, destinationPath)
-    job.metadata.storagePath = destinationPath
-    await job.save()
-
-    scheduleJob(job._id)
-
-    return job
-  } catch (error) {
-    await ImportJob.findByIdAndDelete(job._id)
-    await fs.rm(file.path, { force: true }).catch(() => {})
-    throw error
-  }
+    const result = await saveRecords(job, job.metadata.records || [])
+    result.skippedCount += job.counters.skippedCount || 0
+    await ImportJob.findByIdAndUpdate(jobId, { status: 'DONE', counters: { ...job.counters, ...result }, progress: { ...job.progress, processedRecords: job.metadata.records.length, currentStage: 'DONE' }, report: { ...job.report, savedWordIds: result.savedWordIds, skippedWords: [...(job.report.skippedWords || []), ...result.skippedWords] }, 'metadata.records': [] })
+  } catch (error) { await ImportJob.findByIdAndUpdate(jobId, { status: 'FAILED', 'progress.currentStage': 'FAILED', $push: { 'report.errors': { stage: 'save', message: error.message } } }) }
 }
 
-function scheduleJob(jobId) {
-  setImmediate(async () => {
-    try {
-      await runImportJob(jobId)
-    } catch (error) {
-      console.error(`[import] Job ${jobId} thất bại:`, error)
-      await ImportJob.findByIdAndUpdate(jobId, {
-        status: 'FAILED',
-        'progress.currentStage': 'FAILED',
-        $push: { 'report.errors': { stage: 'system', message: error.message } },
-      })
-    }
-  })
-}
-
-export async function getImportJob(jobId) {
-  return ImportJob.findById(jobId).select('-metadata.storagePath')
-}
-
-export async function getImportJobReport(jobId) {
-  return ImportJob.findById(jobId).select('report status counters createdAt updatedAt folderId metadata.options')
-}
+export const getImportJob = (jobId) => ImportJob.findById(jobId).select('-metadata.records')
+export const getImportJobReport = (jobId) => ImportJob.findById(jobId).select('report status counters createdAt updatedAt folderId metadata.options')

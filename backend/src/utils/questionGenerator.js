@@ -227,21 +227,11 @@ export async function generateFillBlank(session, words) {
   const finalQuestions = [];
 
   for (const word of words) {
-    let sentence = null;
-    let isInferred = false;
-
-    if (word.ex1?.en) {
-      sentence = word.ex1.en;
-      isInferred = word.ex1.source === 'inferred';
-    } else if (word.ex2?.en) {
-      sentence = word.ex2.en;
-      isInferred = word.ex2.source === 'inferred';
-    }
-
-    let result;
-    if (sentence) {
-      result = findAndReplaceWordVariant(sentence, word.word);
-    } else {
+    const sentence = word.fillExample?.en;
+    if (!sentence) throw new Error(`Fill Blank sentence is missing for ${word.word}`);
+    let result = findAndReplaceWordVariant(sentence, word.word);
+    if (!result.found) {
+      throw new Error(`Fill Blank sentence must contain ${word.word}`);
       // Không có câu ví dụ, tự tạo câu placeholder
       const placeholderSentence = `The word is _____.`;
       result = {
@@ -249,7 +239,6 @@ export async function generateFillBlank(session, words) {
         matchedWord: word.word,
         clozeSentence: placeholderSentence.replace('_____', `[${word.meaning_vi}]`)
       };
-      isInferred = true;
       console.warn(`[FILL_BLANK] Word ${word.word} không có ví dụ, dùng placeholder`);
     }
 
@@ -263,7 +252,7 @@ export async function generateFillBlank(session, words) {
       }
     }
 
-    matchedWords.push(result.matchedWord);
+    matchedWords.push(word.word);
     finalQuestions.push({
       type: 'FILL',
       wordId: word._id,
@@ -271,7 +260,6 @@ export async function generateFillBlank(session, words) {
       options: [],
       answer: result.matchedWord, // Answer là từ đã match
       bank: [], // Sẽ điền sau
-      isInferred,
     });
   }
 

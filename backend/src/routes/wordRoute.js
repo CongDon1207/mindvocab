@@ -1,19 +1,9 @@
-// src/routes/wordRoute.js
-import express from 'express';
-import { createWord, updateWord, deleteWord, enrichWord } from '../controllers/wordController.js';
+import express from 'express'
+import { createWord, updateWord, deleteWord } from '../controllers/wordController.js'
 
-const router = express.Router();
+const router = express.Router()
+router.post('/', createWord)
+router.put('/:id', updateWord)
+router.delete('/:id', deleteWord)
 
-// Tạo từ mới
-router.post('/', createWord);
-
-// Cập nhật từ
-router.put('/:id', updateWord);
-
-// Enrich từ bằng AI
-router.post('/:id/enrich', enrichWord);
-
-// Xóa từ
-router.delete('/:id', deleteWord);
-
-export default router;
+export default router

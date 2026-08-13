@@ -4,11 +4,10 @@ import {
   createSession,
   createNextSession,
   getSession,
-  updateSession,
-  createAttempt,
-  getSessionAttempts,
-  completeSession
+  updateSession
 } from '../controllers/sessionController.js';
+import { createAttempt, getSessionAttempts } from '../controllers/attemptController.js';
+import { completeSession } from '../controllers/sessionCompletionController.js';
 
 const router = express.Router();
 

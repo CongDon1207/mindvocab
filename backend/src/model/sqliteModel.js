@@ -109,7 +109,7 @@ function normalizeReferences(document, collection) {
     result.wordId = idOf(result.wordId)
   }
   if (collection === 'words' || collection === 'importJobs') result.folderId = idOf(result.folderId)
-  if (collection === 'importJobs') result.report.enrichedWordIds = (result.report.enrichedWordIds || []).map(idOf)
+  if (collection === 'importJobs') result.report.savedWordIds = (result.report.savedWordIds || []).map(idOf)
   return result
 }
 async function populate(document, pathName, selection) {

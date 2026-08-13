@@ -39,6 +39,17 @@ const FolderStatsView: React.FC<FolderStatsViewProps> = ({ stats, loading }) => 
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <section className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                <h3 className="text-lg font-bold text-gray-800">Tiến độ ghi nhớ</h3>
+                <p className="mt-1 text-sm text-gray-500">Ưu tiên lịch ôn hôm nay và bốn nhóm dễ hiểu.</p>
+                <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-4">
+                    <ProgressCard label="Chưa học" count={stats.totalWords - stats.learned} />
+                    <ProgressCard label="Đang ghi nhớ" count={stats.learning} />
+                    <ProgressCard label="Ghi nhớ tốt" count={stats.strong} />
+                    <ProgressCard label="Thành thạo" count={stats.mastered} />
+                </div>
+                <p className="mt-4 rounded-lg bg-amber-50 p-3 text-sm font-medium text-amber-800">Cần ôn hôm nay: {stats.dueToday} từ · Đã học {stats.learned}/{stats.totalWords}</p>
+            </section>
             {/* 1. SRS Stage Distribution */}
             <section className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                 <div className="flex items-center gap-2 mb-6">
@@ -169,5 +180,7 @@ const ForecastCard: React.FC<ForecastCardProps> = ({ label, count, color, bgColo
         {sub && <p className="text-[10px] text-gray-400 mt-1 font-medium">{sub}</p>}
     </div>
 )
+
+const ProgressCard = ({ label, count }: { label: string; count: number }) => <div className="rounded-xl bg-slate-50 p-3"><p className="text-2xl font-black text-violet-700">{count}</p><p className="text-xs font-medium text-slate-500">{label}</p></div>
 
 export default FolderStatsView

@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { CheckCircle2, AlertCircle, Sparkles, Wand2 } from 'lucide-react'
+import { CheckCircle2, AlertCircle, Sparkles } from 'lucide-react'
 import api from '@/lib/axios'
 import type { Question } from '@/types/session'
 import { isFlexibleMatch } from '@/lib/string-utils'
@@ -196,11 +196,6 @@ const FillBlankStep: React.FC<FillBlankStepProps> = ({
           {isSubmitted && !results[idx] && (
             <div className="ml-3 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-sm font-black border border-emerald-100 animate-in fade-in slide-in-from-left-2 duration-300">
               {question.answer}
-            </div>
-          )}
-          {question.isInferred && !isSubmitted && (
-            <div className="absolute -top-6 left-1/2 -translate-x-1/2 flex items-center gap-1 text-[8px] font-black uppercase text-violet-400">
-              <Wand2 className="w-2.5 h-2.5" /> AI
             </div>
           )}
         </div>

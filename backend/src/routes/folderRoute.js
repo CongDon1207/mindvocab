@@ -1,5 +1,6 @@
 import express from 'express';
-import { createFolder, deleteFolder, getFolderById, getFolderStats, getReviewDashboard, listFolders, updateFolder, resetFolderProgress } from '../controllers/folderController.js';
+import { createFolder, deleteFolder, getFolderById, listFolders, updateFolder, resetFolderProgress } from '../controllers/folderController.js';
+import { getFolderStats, getReviewDashboard } from '../controllers/folderStatsController.js';
 import { getWordsInFolder } from '../controllers/wordController.js';
 
 const router = express.Router();
