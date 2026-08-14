@@ -1,5 +1,11 @@
 # Changelog
 
+- 2026-08-14: Fix sequential session skipping at `backend/src/controllers/sessionController.js` and `frontend/src/pages/Session.tsx` - skipping opens the next ten words and the action is hidden outside sequential mode (completed).
+
+- 2026-08-13: Fix Fill Blank source fallback, import warnings, session cache refresh, and inline answer rendering at `backend/src` and `frontend/src` - prevents repeated boilerplate exercises while preserving prior learning attempts (completed).
+
+- 2026-08-13: Fix multi-word Fill Blank session generation and invalid table-row markup at `backend/src/utils/questionGenerator.js` and `frontend/src/components/word/WordsTable.tsx` - imported phrase sessions load successfully without HTTP 500 or DOM nesting warnings (completed).
+
 - 2026-08-12: Change vocabulary import, Word content schema, Fill Blank data, and remove Gemini enrichment at `backend/src` and `frontend/src` - imports now validate ten complete columns and Fill Blank uses its dedicated sentence (completed).
 
 - 2026-08-12: Change vocabulary session SRS selection, scoring, idempotent completion, and mode-specific UI at `backend/src` and `frontend/src` - prevents duplicate stage updates and clarifies study choices (completed).

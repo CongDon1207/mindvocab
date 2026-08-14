@@ -2,6 +2,8 @@
 // Deterministic question generator với PRNG từ seed
 
 import Word from '../model/Word.js';
+import { getFillBlankSentence } from './wordContent.js';
+const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const tokenize = (sentence) => sentence.match(/[A-Za-zÀ-ỹ0-9']+/gu) || [];
 
 // Khởi tạo tokenizer để tách câu thành các từ
@@ -161,6 +163,15 @@ export async function generateQuizP2(session, words) {
  *          - clozeSentence: Câu đã được đục lỗ
  */
 function findAndReplaceWordVariant(sentence, targetWord) {
+  const exactMatch = sentence.match(new RegExp(`\\b${escapeRegex(targetWord)}\\b`, 'i'));
+  if (exactMatch) {
+    return {
+      found: true,
+      matchedWord: exactMatch[0],
+      clozeSentence: sentence.replace(exactMatch[0], '_____')
+    };
+  }
+
   const tokens = tokenizer.tokenize(sentence);
   if (!tokens) {
     return { found: false, matchedWord: targetWord, clozeSentence: sentence };
@@ -227,7 +238,7 @@ export async function generateFillBlank(session, words) {
   const finalQuestions = [];
 
   for (const word of words) {
-    const sentence = word.fillExample?.en;
+    const sentence = getFillBlankSentence(word);
     if (!sentence) throw new Error(`Fill Blank sentence is missing for ${word.word}`);
     let result = findAndReplaceWordVariant(sentence, word.word);
     if (!result.found) {

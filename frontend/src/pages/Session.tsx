@@ -324,7 +324,7 @@ const SessionPage: React.FC = () => {
           continueEnabled={continueEnabled}
           onBack={handleBack}
           onContinue={handleContinue}
-          onSkip={handleSkipSession}
+          onSkip={session.mode === 'sequential' ? handleSkipSession : undefined}
         />
       </div>
     </div>

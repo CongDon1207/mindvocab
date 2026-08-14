@@ -20,6 +20,26 @@
 - SRS selection uses overdue, due-today, then new words (up to ten), and returns `NOTHING_DUE` when the daily queue is empty.
 - Validation: `npm.cmd test` in `backend` and `npm.cmd run build` in `frontend` passed.
 
+## Session Loading Fix - 2026-08-13
+
+- Fill Blank generation now recognizes exact multi-word vocabulary such as `a broad range`, so imported phrase sessions no longer fail with `Could not get session.`.
+- The word table no longer renders a `div` directly inside a table row.
+- Validation: all 84 current words generated Fill Blank questions, SRS and sequential session APIs returned ten questions per exercise, all 6 backend tests passed, and the frontend production build passed.
+
+## Fill Blank Source and UI Fix - 2026-08-13
+
+- Fill Blank now prefers a natural `fill_en` sentence and falls back to `ex2_en` when `fill_en` is empty or uses the legacy boilerplate template.
+- Import preview and reports display non-blocking warnings for missing, boilerplate, or heavily repeated Fill Blank templates.
+- Untouched, unfinished sessions refresh only legacy Fill Blank prompts; sessions with submitted Fill Blank attempts remain unchanged.
+- Validation: backend tests cover source priority, import warnings, and cache refresh. Session `50aa41a8-0cc7-4cca-9e15-0c58ad784067` now has ten distinct Fill Blank prompts with no legacy boilerplate.
+- Frontend build requires restoring the local frontend dependencies: `npm ci` was interrupted because `lightningcss.win32-x64-msvc.node` was locked, leaving `frontend/node_modules/.bin/vite.cmd` unavailable.
+
+## Sequential Session Skip Fix - 2026-08-14
+
+- The session-level skip action is available only in sequential mode.
+- Skipping an unfinished sequential session now creates the next batch from the current batch offset instead of reopening the same session.
+- Validation: all 10 backend tests passed, including the new next-batch regression test, and the frontend production build passed.
+
 ## Current Status
 - **Content schema v2**: Vocabulary requires two flashcard examples and one dedicated Fill Blank sentence. The first startup of v2 creates a SQLite backup before clearing legacy application data once.
 - **Import**: Markdown tables from ChatGPT and `.xlsx` files use the same ten-column validation and duplicate policy preview. No Gemini API configuration or enrichment endpoint remains.

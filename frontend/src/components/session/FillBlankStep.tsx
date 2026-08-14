@@ -1,340 +1,103 @@
-// src/components/session/FillBlankStep.tsx
-import React, { useState, useEffect, useRef } from 'react'
-import { Card, CardContent } from '@/components/ui/card'
+import React, { useEffect, useState } from 'react'
+import { AlertCircle, CheckCircle2, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { CheckCircle2, AlertCircle, Sparkles } from 'lucide-react'
+import { Card, CardContent } from '@/components/ui/card'
 import api from '@/lib/axios'
-import type { Question } from '@/types/session'
 import { isFlexibleMatch } from '@/lib/string-utils'
+import type { Question } from '@/types/session'
 
-interface FillBlankStepProps {
-  sessionId: string
-  questions: Question[]
-  onComplete?: (score: number) => void
-}
+type Props = { sessionId: string; questions: Question[]; onComplete?: (score: number) => void }
 
-const FillBlankStep: React.FC<FillBlankStepProps> = ({
-  sessionId,
-  questions,
-  onComplete
-}) => {
+const FillBlankStep: React.FC<Props> = ({ sessionId, questions, onComplete }) => {
   const [answers, setAnswers] = useState<Record<number, string>>({})
+  const [results, setResults] = useState<Record<number, boolean>>({})
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [score, setScore] = useState(0)
-  const [results, setResults] = useState<Record<number, boolean>>({})
-  const scrollInterval = useRef<number | null>(null)
-
   const wordBank = questions[0]?.bank || []
 
   useEffect(() => {
     setAnswers({})
+    setResults({})
     setIsSubmitted(false)
     setScore(0)
-    setResults({})
   }, [questions])
 
-  const isWordUsed = (word: string): number | null => {
-    for (const [idx, answer] of Object.entries(answers)) {
-      if (answer === word) return parseInt(idx)
-    }
-    return null
+  const usedIndex = (word: string) => Object.entries(answers).find(([, answer]) => answer === word)?.[0]
+
+  const setAnswer = (index: number, word: string) => {
+    if (isSubmitted) return
+    setAnswers((current) => {
+      const next = { ...current }
+      const previousIndex = Object.entries(current).find(([, answer]) => answer === word)?.[0]
+      if (previousIndex !== undefined) delete next[Number(previousIndex)]
+      next[index] = word
+      return next
+    })
   }
 
-  const handleWordClick = (word: string) => {
-    if (isSubmitted) return
-    const usedIndex = isWordUsed(word)
-
-    if (usedIndex !== null) {
-      // Clear if already used
-      setAnswers(prev => {
-        const newAnswers = { ...prev }
-        delete newAnswers[usedIndex]
-        return newAnswers
+  const chooseWord = (word: string) => {
+    const previousIndex = usedIndex(word)
+    if (previousIndex !== undefined) {
+      setAnswers((current) => {
+        const next = { ...current }
+        delete next[Number(previousIndex)]
+        return next
       })
-    } else {
-      // Fill first empty blank
-      const firstUnfilled = questions.findIndex((_, i) => !answers[i])
-      if (firstUnfilled !== -1) {
-        setAnswers(prev => ({ ...prev, [firstUnfilled]: word }))
-      }
+      return
     }
+    const emptyIndex = questions.findIndex((_, index) => !answers[index])
+    if (emptyIndex >= 0) setAnswer(emptyIndex, word)
   }
 
-  // --- Drag & Drop Logic ---
-  const handleDragStart = (e: React.DragEvent, word: string) => {
+  const submit = async () => {
     if (isSubmitted) return
-    e.dataTransfer.setData('text/plain', word)
-    e.dataTransfer.effectAllowed = 'move'
-    
-    // Tạo ghost image mờ ảo một chút
-    const ghost = e.currentTarget.cloneNode(true) as HTMLElement
-    ghost.style.opacity = '0.5'
-  }
-
-  const handleDragOver = (e: React.DragEvent) => {
-    if (isSubmitted) return
-    e.preventDefault()
-    e.dataTransfer.dropEffect = 'move'
-
-    // Tự động cuộn trang khi kéo sát mép
-    const threshold = 120 // vùng nhạy cảm cuộn (pixel)
-    const speed = 6 // tốc độ cuộn (giảm từ 15 xuống 6 cho mượt)
-    const { clientY } = e
-    const viewportHeight = window.innerHeight
-
-    if (clientY < threshold) {
-      window.scrollBy(0, -speed)
-    } else if (clientY > viewportHeight - threshold) {
-      window.scrollBy(0, speed)
-    }
-  }
-
-  const handleDrop = (e: React.DragEvent, targetIndex: number) => {
-    if (isSubmitted) return
-    e.preventDefault()
-    const word = e.dataTransfer.getData('text/plain')
-    
-    // Nếu từ này đã được dùng ở ô khác, xóa nó ở ô cũ
-    const oldIndex = isWordUsed(word)
-    
-    setAnswers(prev => {
-      const newAnswers = { ...prev }
-      if (oldIndex !== null) {
-        delete newAnswers[oldIndex]
-      }
-      newAnswers[targetIndex] = word
-      return newAnswers
-    })
-  }
-  // -------------------------
-
-  const handleClearAnswer = (questionIndex: number) => {
-    if (isSubmitted) return
-    setAnswers(prev => {
-      const newAnswers = { ...prev }
-      delete newAnswers[questionIndex]
-      return newAnswers
-    })
-  }
-
-  const handleSubmit = async () => {
-    if (isSubmitted) return
-
-    let correctCount = 0
-    const newResults: Record<number, boolean> = {}
-
-    questions.forEach((q, idx) => {
-      const userAnswer = answers[idx] || ''
-      const isCorrect = isFlexibleMatch(userAnswer, q.answer)
-      newResults[idx] = isCorrect
-      if (isCorrect) correctCount++
-    })
-
-    setResults(newResults)
-    setScore(correctCount)
+    const nextResults = Object.fromEntries(questions.map((question, index) => [index, isFlexibleMatch(answers[index] || '', question.answer)]))
+    const nextScore = Object.values(nextResults).filter(Boolean).length
+    setResults(nextResults)
+    setScore(nextScore)
     setIsSubmitted(true)
-
     try {
       await Promise.all([
-        ...questions.map((q, idx) =>
-          api.post('/attempts', {
-            sessionId,
-            step: 'FILL_BLANK',
-            wordId: q.wordId,
-            userAnswer: answers[idx] || '',
-            isCorrect: newResults[idx]
-          })
-        ),
-        api.put(`/sessions/${sessionId}`, { 'fillBlank.score': correctCount })
+        ...questions.map((question, index) => api.post('/attempts', {
+          sessionId, step: 'FILL_BLANK', wordId: question.wordId,
+          userAnswer: answers[index] || '', isCorrect: nextResults[index],
+        })),
+        api.put(`/sessions/${sessionId}`, { 'fillBlank.score': nextScore }),
       ])
-    } catch (err) {
-      console.error('Failed to save fill-blank results:', err)
+    } catch (error) {
+      console.error('Failed to save fill-blank results:', error)
     }
   }
 
-  const getWordBankStyle = (word: string): string => {
-    const usedIndex = isWordUsed(word)
-    if (usedIndex !== null) {
-      if (!isSubmitted) return 'bg-violet-100 border-violet-300 text-violet-700 shadow-sm scale-95'
-      return results[usedIndex]
-        ? 'bg-emerald-100 border-emerald-300 text-emerald-700 opacity-60'
-        : 'bg-rose-100 border-rose-300 text-rose-700 opacity-60'
-    }
-    return isSubmitted
-      ? 'bg-slate-50 border-slate-100 text-slate-300 opacity-40'
-      : 'bg-white/80 border-white text-slate-600 hover:bg-white hover:border-violet-200 hover:shadow-sm'
-  }
-
-  const getBlankStyle = (idx: number): string => {
-    if (!isSubmitted) {
-      return answers[idx] 
-        ? 'bg-violet-50 border-violet-200 text-violet-800 shadow-inner' 
-        : 'bg-slate-100/50 border-slate-200/50 text-slate-400'
-    }
-    return results[idx] 
-      ? 'bg-emerald-50 border-emerald-200 text-emerald-800' 
-      : 'bg-rose-50 border-rose-200 text-rose-800'
-  }
-
-  const renderSentence = (question: Question, idx: number) => {
-    const parts = question.prompt.split('_____')
-    const userAnswer = answers[idx]
-
-    return (
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-3 text-lg leading-relaxed">
-        <span className="text-slate-700 font-medium">{parts[0]}</span>
-        <div className="relative inline-flex items-center">
-          <div
-            className={`min-w-[140px] px-4 py-1.5 border-2 rounded-xl text-center font-bold transition-all duration-300 ${getBlankStyle(idx)}`}
-            onClick={() => !isSubmitted && handleClearAnswer(idx)}
-            onDragOver={handleDragOver}
-            onDrop={(e) => handleDrop(e, idx)}
-            style={{ cursor: isSubmitted ? 'default' : 'pointer' }}
-          >
-            {userAnswer || '...'}
-          </div>
-          {isSubmitted && !results[idx] && (
-            <div className="ml-3 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-sm font-black border border-emerald-100 animate-in fade-in slide-in-from-left-2 duration-300">
-              {question.answer}
-            </div>
-          )}
-        </div>
-        <span className="text-slate-700 font-medium">{parts[1] || ''}</span>
-      </div>
-    )
+  const blankClass = (index: number) => {
+    if (!isSubmitted) return answers[index] ? 'bg-violet-50 border-violet-200 text-violet-800' : 'bg-slate-100 border-slate-200 text-slate-400'
+    return results[index] ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-rose-50 border-rose-200 text-rose-800'
   }
 
   const filledCount = Object.keys(answers).length
-  const totalQuestions = questions.length
-  const canSubmit = filledCount === totalQuestions && !isSubmitted
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-300" onDragOver={handleDragOver}>
-      {/* Progress & Score */}
-      <div className="space-y-3 px-2">
-        <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-slate-400">
-          <span>
-            {isSubmitted ? 'HOÀN THÀNH BÀI TẬP' : `ĐÃ ĐIỀN: ${filledCount} / ${totalQuestions}`}
-          </span>
-          {isSubmitted && (
-            <span className={`flex items-center gap-2 ${score >= totalQuestions * 0.7 ? 'text-emerald-500' : 'text-amber-500'}`}>
-              <span className="font-black text-sm">{score}/{totalQuestions} CÂU ĐÚNG</span>
-              {score >= totalQuestions * 0.7 ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
-            </span>
-          )}
-        </div>
-        {!isSubmitted && (
-           <div className="w-full bg-slate-200/50 rounded-full h-1.5 overflow-hidden">
-            <div
-              className="bg-gradient-to-r from-violet-400 to-fuchsia-400 h-full rounded-full transition-all duration-500"
-              style={{ width: `${(filledCount / totalQuestions) * 100}%` }}
-            />
-          </div>
-        )}
+    <div className="space-y-8 animate-in fade-in duration-300">
+      <Progress filledCount={filledCount} total={questions.length} isSubmitted={isSubmitted} score={score} />
+      <WordBank words={wordBank} isSubmitted={isSubmitted} usedIndex={usedIndex} onChoose={chooseWord} />
+      <Questions questions={questions} answers={answers} results={results} isSubmitted={isSubmitted} blankClass={blankClass} onClear={(index) => setAnswers((current) => { const next = { ...current }; delete next[index]; return next })} onDrop={setAnswer} />
+      <div className="flex justify-center">
+        {isSubmitted ? <Button onClick={() => onComplete?.(score)} className="min-w-56 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 py-6 text-xs font-black uppercase tracking-widest">Hoàn thành bước này</Button> : <Button onClick={submit} disabled={filledCount !== questions.length} className="min-w-56 rounded-xl bg-violet-600 py-6 text-xs font-black uppercase tracking-widest">Nộp bài ({filledCount}/{questions.length})</Button>}
       </div>
-
-      {/* Word Bank - Compact & Sticky */}
-      <div className="sticky top-[90px] z-20 transition-all duration-300">
-        <Card className="rounded-[1.5rem] border-white bg-white/70 backdrop-blur-xl shadow-lg border-2 border-violet-100/50 overflow-hidden">
-          <CardContent className="p-4 md:p-6">
-            <div className="mb-4 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 bg-violet-500 rounded-lg shadow-sm">
-                  <Sparkles className="w-3 h-3 text-white" />
-                </div>
-                <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Ngân hàng từ</h3>
-              </div>
-              {!isSubmitted && (
-                <span className="text-[9px] font-bold text-violet-400 animate-pulse">KÉO TỪ VÀO Ô TRỐNG</span>
-              )}
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {wordBank.map((word, idx) => {
-                const usedIndex = isWordUsed(word)
-                return (
-                  <button
-                    key={idx}
-                    draggable={!isSubmitted}
-                    onDragStart={(e) => handleDragStart(e, word)}
-                    onClick={() => handleWordClick(word)}
-                    disabled={isSubmitted}
-                    className={`px-4 py-2 border-2 rounded-xl font-bold text-xs transition-all duration-300 flex items-center gap-1.5 touch-none active:scale-95 ${getWordBankStyle(word)}`}
-                  >
-                    {word}
-                    {usedIndex !== null && !isSubmitted && (
-                      <span className="w-4 h-4 rounded-md bg-violet-500 text-white text-[9px] flex items-center justify-center font-black">
-                        {usedIndex + 1}
-                      </span>
-                    )}
-                  </button>
-                )
-              })}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Questions */}
-      <Card className="rounded-[2rem] border-white bg-white/70 backdrop-blur-md shadow-xl shadow-violet-500/5 overflow-hidden">
-        <CardContent className="p-8 md:p-10">
-          <div className="space-y-6">
-            {questions.map((question, idx) => (
-              <div
-                key={idx}
-                className={`p-6 rounded-3xl border-2 transition-all duration-300 ${
-                  isSubmitted && !results[idx] 
-                    ? 'bg-rose-50/50 border-rose-100 shadow-inner' 
-                    : 'bg-white/40 border-white shadow-sm'
-                }`}
-              >
-                <div className="flex items-start gap-4">
-                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-black border mt-1 shadow-sm transition-colors ${
-                    isSubmitted 
-                      ? (results[idx] ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-rose-50 text-rose-600 border-rose-100')
-                      : 'bg-white text-slate-400 border-slate-100'
-                  }`}>
-                    {idx + 1}
-                  </div>
-                  <div className="flex-1 pt-1.5">{renderSentence(question, idx)}</div>
-                  {isSubmitted && (
-                    <div className={results[idx] ? 'text-emerald-500 mt-2' : 'text-rose-500 mt-2'}>
-                      {results[idx] ? <CheckCircle2 className="w-6 h-6" /> : <AlertCircle className="w-6 h-6" />}
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Submit / Complete */}
-      <div className="flex justify-center gap-3 pt-4">
-        {!isSubmitted ? (
-          <Button 
-            onClick={handleSubmit} 
-            disabled={!canSubmit} 
-            className="min-w-[220px] rounded-xl bg-violet-600 hover:bg-violet-700 shadow-xl shadow-violet-200 font-black uppercase tracking-widest text-xs py-6 transition-all disabled:opacity-30 disabled:shadow-none"
-          >
-            NỘP BÀI ({filledCount}/{totalQuestions})
-          </Button>
-        ) : (
-          <Button 
-            onClick={() => onComplete?.(score)} 
-            className="min-w-[220px] rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:scale-105 shadow-xl shadow-violet-200 font-black uppercase tracking-widest text-xs py-6 transition-all"
-          >
-            HOÀN THÀNH BƯỚC NÀY
-          </Button>
-        )}
-      </div>
-
-      {!isSubmitted && (
-        <p className="text-center text-[10px] font-black text-slate-300 uppercase tracking-widest">
-          Điền đủ 10 câu để nộp bài nha!
-        </p>
-      )}
     </div>
   )
+}
+
+function Progress({ filledCount, total, isSubmitted, score }: { filledCount: number; total: number; isSubmitted: boolean; score: number }) {
+  return <div className="space-y-3 px-2"><div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-slate-400"><span>{isSubmitted ? 'HOÀN THÀNH BÀI TẬP' : `ĐÃ ĐIỀN: ${filledCount} / ${total}`}</span>{isSubmitted && <span className={score >= total * 0.7 ? 'text-emerald-500' : 'text-amber-500'}>{score}/{total} CÂU ĐÚNG</span>}</div>{!isSubmitted && <div className="h-1.5 overflow-hidden rounded-full bg-slate-200/50"><div className="h-full rounded-full bg-gradient-to-r from-violet-400 to-fuchsia-400 transition-all duration-500" style={{ width: `${(filledCount / total) * 100}%` }} /></div>}</div>
+}
+
+function WordBank({ words, isSubmitted, usedIndex, onChoose }: { words: string[]; isSubmitted: boolean; usedIndex: (word: string) => string | undefined; onChoose: (word: string) => void }) {
+  return <div className="sticky top-[90px] z-20"><Card className="overflow-hidden rounded-3xl border-2 border-violet-100/50 bg-white/80 shadow-lg backdrop-blur-xl"><CardContent className="p-4 md:p-6"><div className="mb-4 flex items-center justify-between"><div className="flex items-center gap-2"><span className="rounded-lg bg-violet-500 p-1.5 text-white"><Sparkles className="size-3" /></span><h3 className="text-[10px] font-black uppercase tracking-widest text-slate-500">Ngân hàng từ</h3></div><span className="text-[9px] font-bold text-violet-400">BẤM HOẶC KÉO TỪ VÀO Ô TRỐNG</span></div><div className="flex flex-wrap gap-2">{words.map((word) => { const index = usedIndex(word); return <button key={word} draggable={!isSubmitted} disabled={isSubmitted} onDragStart={(event) => event.dataTransfer.setData('text/plain', word)} onClick={() => onChoose(word)} className={`rounded-xl border-2 px-4 py-2 text-xs font-bold transition-all ${index !== undefined ? 'border-violet-300 bg-violet-100 text-violet-700' : 'border-white bg-white text-slate-700 hover:border-violet-200 hover:shadow-sm'}`}>{word}{index !== undefined && <span className="ml-1.5 rounded bg-violet-500 px-1.5 py-0.5 text-[9px] text-white">{Number(index) + 1}</span>}</button> })}</div></CardContent></Card></div>
+}
+
+function Questions({ questions, answers, results, isSubmitted, blankClass, onClear, onDrop }: { questions: Question[]; answers: Record<number, string>; results: Record<number, boolean>; isSubmitted: boolean; blankClass: (index: number) => string; onClear: (index: number) => void; onDrop: (index: number, word: string) => void }) {
+  return <Card className="overflow-hidden rounded-[2rem] border-white bg-white/70 shadow-xl shadow-violet-500/5 backdrop-blur-md"><CardContent className="space-y-6 p-8 md:p-10">{questions.map((question, index) => { const [before, after = ''] = question.prompt.split('_____'); return <div key={question.wordId} className={`rounded-3xl border-2 p-6 ${isSubmitted && !results[index] ? 'border-rose-100 bg-rose-50/50' : 'border-white bg-white/40'}`}><div className="flex items-start gap-4"><span className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-xl border bg-white text-xs font-black text-slate-400">{index + 1}</span><p className="flex-1 pt-1 text-lg leading-relaxed text-slate-700"><span>{before}</span><button type="button" disabled={isSubmitted} onClick={() => onClear(index)} onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); onDrop(index, event.dataTransfer.getData('text/plain')) }} className={`mx-2 inline-flex min-w-36 align-baseline justify-center rounded-xl border-2 px-4 py-1.5 font-bold transition-all ${blankClass(index)}`}>{answers[index] || '...'}</button><span>{after}</span>{isSubmitted && !results[index] && <span className="ml-2 inline-block rounded-lg border border-emerald-100 bg-emerald-50 px-2 py-1 text-sm font-bold text-emerald-600">{question.answer}</span>}</p>{isSubmitted && (results[index] ? <CheckCircle2 className="mt-2 text-emerald-500" /> : <AlertCircle className="mt-2 text-rose-500" />)}</div></div> })}</CardContent></Card>
 }
 
 export default FillBlankStep

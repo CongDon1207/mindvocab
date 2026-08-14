@@ -37,6 +37,6 @@ Import either an Excel `.xlsx` file or a Markdown table pasted from ChatGPT. The
 word | meaning_vi | pos | ipa | note | ex1_en | ex1_vi | ex2_en | ex2_vi | fill_en
 ```
 
-Only `ipa` and `note` are optional. The app provides a button that copies the compatible ChatGPT prompt and opens ChatGPT; it does not call an AI API. See [docs/format_xlsx.md](docs/format_xlsx.md).
+`ipa`, `note`, and `fill_en` are optional. The app provides a button that copies the compatible ChatGPT prompt and opens ChatGPT; it does not call an AI API. See [docs/format_xlsx.md](docs/format_xlsx.md).
 
-`ex1` and `ex2` are shown on flashcards. `fill_en` is held back and used only during Fill Blank.
+`ex1` and `ex2` are shown on flashcards. Fill Blank uses `fill_en` when it is natural and available; otherwise it uses `ex2_en`.

@@ -4,9 +4,16 @@ import Folder from '../model/Folder.js'
 import { generateAllQuestions } from '../utils/questionGenerator.js'
 import { buildProgress, selectSrsWords } from '../services/srsService.js'
 import { isCompleteWord } from '../utils/wordContent.js'
+import Attempt from '../model/Attempt.js'
 
 const STEP_ORDER = ['FLASHCARDS', 'QUIZ_PART1', 'QUIZ_PART2', 'SPELLING', 'FILL_BLANK', 'SUMMARY']
 const MODES = new Set(['srs', 'sequential', 'retry'])
+
+export function shouldRegenerateFillBlank(session, attempts = []) {
+  return !session.completedAt
+    && !attempts.some((attempt) => attempt.step === 'FILL_BLANK')
+    && session.fillBlank?.questions?.some((question) => /^The trainer used\s+["“]_____["”]\s+in a practical workplace example today\.$/i.test(question.prompt))
+}
 
 async function getUniqueFolderWords(folderId) {
   const words = await Word.find({ folderId }).sort({ word: 1, createdAt: 1 })
@@ -50,7 +57,7 @@ async function createStoredSession({ folderId, mode, wordIds, batchStartIndex = 
 
 async function createSequentialSession(folderId, action = 'continue', startOffset) {
   const unfinished = await Session.findOne({ folderId, mode: 'sequential', completedAt: null }).sort({ createdAt: -1 })
-  if (action === 'continue' && unfinished) return { session: unfinished, reused: true }
+  if (action === 'continue' && unfinished && startOffset === undefined) return { session: unfinished, reused: true }
   const words = await getUniqueFolderWords(folderId)
   const latest = await Session.findOne({ folderId, mode: 'sequential', completedAt: { $ne: null } }).sort({ createdAt: -1 })
   const offset = action === 'restart' ? 0 : (startOffset ?? ((latest?.batchStartIndex || 0) + (latest?.wordIds?.length || 0)))
@@ -111,12 +118,18 @@ export async function getSession(req, res) {
     if (!session) return res.status(404).json({ error: 'Session not found.' })
     const words = session.wordIds.filter(Boolean)
     const incompleteWordIds = words.filter((word) => !isCompleteWord(word)).map((word) => word._id)
-    if (incompleteWordIds.length) return res.status(409).json({ code: 'WORDS_INCOMPLETE', error: 'Words must include two examples and a Fill Blank sentence.', wordIds: incompleteWordIds })
-    if (!session.quizP1.questions?.length || !session.quizP2.questions?.length || !session.fillBlank.questions?.length) {
+    if (incompleteWordIds.length) return res.status(409).json({ code: 'WORDS_INCOMPLETE', error: 'Words must include two complete examples.', wordIds: incompleteWordIds })
+    const attempts = await Attempt.find({ sessionId: session._id })
+    const needsQuizP1 = !session.quizP1.questions?.length
+    const needsQuizP2 = !session.quizP2.questions?.length
+    const needsFillBlank = !session.fillBlank.questions?.length
+    const shouldGenerate = needsQuizP1 || needsQuizP2 || needsFillBlank
+    const shouldRefreshFillBlank = shouldRegenerateFillBlank(session, attempts)
+    if (shouldGenerate || shouldRefreshFillBlank) {
       const questions = await generateAllQuestions(session, words)
-      session.quizP1.questions = questions.quizP1
-      session.quizP2.questions = questions.quizP2
-      session.fillBlank.questions = questions.fillBlank
+      if (needsQuizP1) session.quizP1.questions = questions.quizP1
+      if (needsQuizP2) session.quizP2.questions = questions.quizP2
+      if (needsFillBlank || shouldRefreshFillBlank) session.fillBlank.questions = questions.fillBlank
       await session.save()
     }
     const folderWords = await Word.find({ folderId: session.folderId?._id || session.folderId })

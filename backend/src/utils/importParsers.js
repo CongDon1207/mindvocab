@@ -1,8 +1,9 @@
 import path from 'node:path'
 import xlsx from 'xlsx'
-import { WORD_HEADERS, normalizeWordInput, validateWordInput } from './wordContent.js'
+import { WORD_HEADERS, fillBlankTemplate, isLegacyFillBlankSentence, validateWordInput } from './wordContent.js'
 
 const error = (location, message) => ({ stage: 'parse', location, message })
+const warning = (location, message) => ({ stage: 'parse', location, message })
 const cell = (value) => String(value ?? '').trim()
 
 function parseRows(rows, folderId, source) {
@@ -10,7 +11,7 @@ function parseRows(rows, folderId, source) {
   if (header.length !== WORD_HEADERS.length || header.some((value, index) => value !== WORD_HEADERS[index])) {
     return { type: source, totalLines: Math.max(0, rows.length - 1), records: [], duplicates: [], errors: [error('header', `Headers must be exactly: ${WORD_HEADERS.join(', ')}`)] }
   }
-  const records = []; const duplicates = []; const errors = []; const seen = new Set()
+  const records = []; const duplicates = []; const errors = []; const warnings = []; const seen = new Set()
   rows.slice(1).forEach((row, index) => {
     const values = Array.from({ length: WORD_HEADERS.length }, (_, column) => cell(row[column]))
     if (!values.some(Boolean)) return
@@ -20,9 +21,22 @@ function parseRows(rows, folderId, source) {
     if (rowErrors.length) { errors.push(...rowErrors.map((message) => error(`row ${index + 2}`, message))); return }
     const key = value.word.toLowerCase()
     if (seen.has(key)) { duplicates.push(value.word); return }
-    seen.add(key); records.push({ folderId, ...value, normalizedWord: key })
+    seen.add(key)
+    if (!value.fillExample.en) warnings.push(warning(`row ${index + 2}`, 'fill_en is empty; ex2_en will be used for Fill Blank.'))
+    else if (isLegacyFillBlankSentence(value.fillExample.en, value.word)) warnings.push(warning(`row ${index + 2}`, 'fill_en uses the legacy boilerplate; ex2_en will be used for Fill Blank.'))
+    records.push({ folderId, ...value, normalizedWord: key, _sourceRow: index + 2 })
   })
-  return { type: source, totalLines: Math.max(0, rows.length - 1), records, duplicates, errors }
+  const templates = new Map()
+  records.forEach((record) => {
+    if (!record.fillExample.en) return
+    const template = fillBlankTemplate(record.fillExample.en, record.word)
+    templates.set(template, [...(templates.get(template) || []), record])
+  })
+  for (const matches of templates.values()) {
+    if (matches.length < 3) continue
+    matches.forEach((record) => warnings.push(warning(`row ${record._sourceRow}`, 'fill_en shares the same template with at least two other rows.')))
+  }
+  return { type: source, totalLines: Math.max(0, rows.length - 1), records: records.map(({ _sourceRow, ...record }) => record), duplicates, errors, warnings }
 }
 
 function splitMarkdownRow(line) {

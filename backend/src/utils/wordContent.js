@@ -3,9 +3,27 @@ export const POS_VALUES = new Set(['noun', 'verb', 'adj', 'adv', 'prep', 'phrase
 
 const text = (value) => typeof value === 'string' ? value.trim() : ''
 const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+const normalizeSentence = (value) => text(value).replace(/[“”]/g, '"').replace(/\s+/g, ' ')
 
 function sentenceHasWordOnce(sentence, word) {
   return (text(sentence).match(new RegExp(`\\b${escapeRegex(text(word))}\\b`, 'gi')) || []).length === 1
+}
+
+export function isLegacyFillBlankSentence(sentence, word) {
+  const normalized = normalizeSentence(sentence)
+  const target = escapeRegex(text(word))
+  return new RegExp(`^the trainer used\\s+"?${target}"?\\s+in a practical workplace example today\\.$`, 'i').test(normalized)
+}
+
+export function getFillBlankSentence(word) {
+  const fillSentence = text(word.fillExample?.en)
+  return fillSentence && !isLegacyFillBlankSentence(fillSentence, word.word)
+    ? fillSentence
+    : text(word.ex2?.en)
+}
+
+export function fillBlankTemplate(sentence, word) {
+  return normalizeSentence(sentence).replace(new RegExp(`\\b${escapeRegex(text(word))}\\b`, 'gi'), '<word>')
 }
 
 export function normalizeWordInput(data = {}) {
@@ -25,10 +43,9 @@ export function validateWordInput(input) {
     if (!value[field].en) errors.push(`${field}_en is required.`)
     if (!value[field].vi) errors.push(`${field}_vi is required.`)
   }
-  if (!value.fillExample.en) errors.push('fill_en is required.')
   if (value.pos && !POS_VALUES.has(value.pos)) errors.push('pos is invalid.')
   for (const sentence of [value.ex1.en, value.ex2.en, value.fillExample.en]) if (sentence && !sentenceHasWordOnce(sentence, value.word)) errors.push('Each English sentence must contain the word exactly once.')
-  const sentences = [value.ex1.en, value.ex2.en, value.fillExample.en]
+  const sentences = [value.ex1.en, value.ex2.en, value.fillExample.en].filter(Boolean)
   if (new Set(sentences).size !== sentences.length) errors.push('English sentences must be different.')
   const fillLength = value.fillExample.en.split(/\s+/).filter(Boolean).length
   if (value.fillExample.en && (fillLength < 7 || fillLength > 18)) errors.push('fill_en must contain 7 to 18 words.')

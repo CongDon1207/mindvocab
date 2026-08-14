@@ -97,10 +97,8 @@ export const WordsTable: React.FC<WordsTableProps> = ({
                 key={word._id} 
                 className="group relative hover:bg-white/80 transition-all duration-300 cursor-default"
               >
-                {/* Decorative hover indicator */}
-                <div className="absolute left-0 top-1 bottom-1 w-1 bg-gradient-to-b from-violet-400 to-fuchsia-400 rounded-r-full opacity-0 group-hover:opacity-100 transition-all duration-300 -translate-x-1 group-hover:translate-x-0" />
-                
-                <td className="px-6 py-5">
+                <td className="relative px-6 py-5">
+                  <div aria-hidden="true" className="absolute left-0 top-1 bottom-1 w-1 bg-gradient-to-b from-violet-400 to-fuchsia-400 rounded-r-full opacity-0 group-hover:opacity-100 transition-all duration-300 -translate-x-1 group-hover:translate-x-0" />
                   <div className="font-bold text-slate-800 text-base group-hover:text-violet-700 transition-colors">{word.word}</div>
                   {word.note && (
                     <div className="text-[11px] text-slate-500 mt-1 font-medium italic line-clamp-1 opacity-60 group-hover:opacity-100 transition-opacity">{word.note}</div>

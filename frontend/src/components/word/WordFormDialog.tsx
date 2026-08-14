@@ -26,7 +26,7 @@ const schema = z.object({
   ex1_vi: z.string().trim().min(1, 'Example 1 translation is required'),
   ex2_en: z.string().trim().min(1, 'Example 2 is required'),
   ex2_vi: z.string().trim().min(1, 'Example 2 translation is required'),
-  fill_en: z.string().trim().min(1, 'Fill Blank sentence is required'),
+  fill_en: z.string().trim().optional(),
 })
 
 type Props = {
@@ -176,9 +176,9 @@ const WordFormDialog: React.FC<Props> = ({
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="fill_en">Fill Blank sentence *</Label>
+            <Label htmlFor="fill_en">Fill Blank sentence (optional)</Label>
             <Input id="fill_en" placeholder="Use a distinct sentence that contains the word once." {...register('fill_en')} />
-            <p className="text-xs text-muted-foreground">This sentence appears only in the final Fill Blank step.</p>
+            <p className="text-xs text-muted-foreground">This sentence is preferred in the final Fill Blank step; Example 2 is used when it is empty.</p>
             {errors.fill_en && <p className="text-sm text-red-500">{errors.fill_en.message}</p>}
           </div>
 
