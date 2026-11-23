@@ -1,7 +1,7 @@
 // src/components/session/SessionNavigation.tsx
 import React from 'react'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, ArrowRight, SkipForward, CheckCircle } from 'lucide-react'
+import { ArrowLeft, ArrowRight, SkipForward } from 'lucide-react'
 
 interface SessionNavigationProps {
   currentStepIndex: number
@@ -41,7 +41,7 @@ const SessionNavigation: React.FC<SessionNavigationProps> = ({
         {/* Center section */}
         <div className="flex items-center gap-4">
           {/* Skip button */}
-          {onSkip && (
+          {onSkip && !isLastStep && (
             <Button 
               variant="ghost" 
               onClick={onSkip} 
@@ -59,27 +59,14 @@ const SessionNavigation: React.FC<SessionNavigationProps> = ({
         </div>
 
         {/* Continue button */}
-        <Button 
-          onClick={onContinue} 
+        {!isLastStep && <Button
+          onClick={onContinue}
           disabled={!continueEnabled}
-          className={`px-8 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg transition-all hover:-translate-y-0.5 active:scale-95 ${
-            isLastStep 
-              ? 'bg-gradient-to-r from-emerald-500 to-teal-500 shadow-emerald-200' 
-              : 'bg-gradient-to-r from-violet-500 to-fuchsia-500 shadow-violet-200'
-          } text-white disabled:opacity-30 disabled:shadow-none`}
+          className="px-8 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg transition-all hover:-translate-y-0.5 active:scale-95 bg-gradient-to-r from-violet-500 to-fuchsia-500 shadow-violet-200 text-white disabled:opacity-30 disabled:shadow-none"
         >
-          {isLastStep ? (
-            <>
-              <CheckCircle className="w-4 h-4 mr-2" />
-              HOÀN THÀNH
-            </>
-          ) : (
-            <>
-              TIẾP TỤC
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </>
-          )}
-        </Button>
+          TIẾP TỤC
+          <ArrowRight className="w-4 h-4 ml-2" />
+        </Button>}
       </div>
     </div>
   )

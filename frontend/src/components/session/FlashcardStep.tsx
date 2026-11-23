@@ -4,6 +4,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { ChevronLeft, ChevronRight, RotateCw, Sparkles, Star, Volume2 } from 'lucide-react'
 import type { Word } from '@/types/word'
+import { useLocalSpeech } from '@/hooks/useLocalSpeech'
+import FlashcardExamples from './FlashcardExamples'
 
 interface FlashcardStepProps {
   words: Word[]
@@ -15,6 +17,7 @@ const FlashcardStep: React.FC<FlashcardStepProps> = ({ words, onComplete }) => {
   const [isFlipped, setIsFlipped] = useState(false)
   const [viewedCards, setViewedCards] = useState<Set<number>>(new Set())
   const [markedDifficult, setMarkedDifficult] = useState<Set<number>>(new Set())
+  const { activeId, speak, stop } = useLocalSpeech()
 
   const currentWord = words[currentIndex]
   const totalCards = words.length
@@ -23,30 +26,6 @@ const FlashcardStep: React.FC<FlashcardStepProps> = ({ words, onComplete }) => {
   useEffect(() => {
     setViewedCards(prev => new Set(prev).add(currentIndex))
   }, [currentIndex])
-
-  const handleSpeak = (lang: 'en-US' | 'en-GB', e?: React.MouseEvent) => {
-    if (e) e.stopPropagation()
-    if (!('speechSynthesis' in window)) return
-
-    window.speechSynthesis.cancel() // Stop any current speech
-    const utterance = new SpeechSynthesisUtterance(currentWord.word)
-    utterance.lang = lang
-    utterance.rate = 0.9
-
-    // Try to find a specific voice for the language
-    const voices = window.speechSynthesis.getVoices()
-    const matchingVoices = voices.filter(v =>
-      v.lang.toLowerCase().replace('_', '-') === lang.toLowerCase()
-    )
-
-    if (matchingVoices.length > 0) {
-      // Prioritize Google voices if available as they usually sound better
-      const googleVoice = matchingVoices.find(v => v.name.includes('Google'))
-      utterance.voice = googleVoice || matchingVoices[0]
-    }
-
-    window.speechSynthesis.speak(utterance)
-  }
 
   // Check if all cards viewed at least once
   const allCardsViewed = viewedCards.size === totalCards
@@ -62,6 +41,7 @@ const FlashcardStep: React.FC<FlashcardStepProps> = ({ words, onComplete }) => {
   // Navigation handlers
   const handleNext = () => {
     if (currentIndex < totalCards - 1) {
+      stop()
       setCurrentIndex(prev => prev + 1)
       setIsFlipped(false)
     }
@@ -69,12 +49,14 @@ const FlashcardStep: React.FC<FlashcardStepProps> = ({ words, onComplete }) => {
 
   const handlePrev = () => {
     if (currentIndex > 0) {
+      stop()
       setCurrentIndex(prev => prev - 1)
       setIsFlipped(false)
     }
   }
 
   const handleFlip = () => {
+    stop()
     setIsFlipped(prev => !prev)
   }
 
@@ -91,27 +73,6 @@ const FlashcardStep: React.FC<FlashcardStepProps> = ({ words, onComplete }) => {
   }
 
   const isDifficult = markedDifficult.has(currentIndex)
-
-  // Render example with [Inferred] badge
-  const renderExample = (ex?: { en: string; vi: string; source?: 'user' | 'inferred' }) => {
-    if (!ex || !ex.en) return null
-
-    return (
-      <div className="space-y-2 rounded-2xl bg-white/50 p-5 border border-white shadow-sm hover:bg-white/80 transition-colors">
-        <div className="flex items-start justify-between gap-2">
-          <p className="flex-1 text-base font-bold text-slate-700 leading-relaxed">{ex.en}</p>
-          {ex.source === 'inferred' && (
-            <span className="inline-flex items-center whitespace-nowrap px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-tighter bg-violet-100 text-violet-600 border border-violet-200">
-              AI MAGIC
-            </span>
-          )}
-        </div>
-        {ex.vi && (
-          <p className="text-sm text-slate-500 font-medium italic leading-relaxed">{ex.vi}</p>
-        )}
-      </div>
-    )
-  }
 
   return (
     <div className="space-y-6">
@@ -155,7 +116,7 @@ const FlashcardStep: React.FC<FlashcardStepProps> = ({ words, onComplete }) => {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={(e) => handleSpeak('en-US', e)}
+                      onClick={(e) => { e.stopPropagation(); speak('word-us', currentWord.word, 'en-US') }}
                       className="h-10 px-4 text-[10px] font-black tracking-widest border-sky-100 text-sky-600 bg-sky-50/50 hover:bg-sky-100 hover:border-sky-200 transition-all rounded-2xl shadow-sm uppercase"
                     >
                       <Volume2 className="h-4 w-4 mr-1.5" />
@@ -164,7 +125,7 @@ const FlashcardStep: React.FC<FlashcardStepProps> = ({ words, onComplete }) => {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={(e) => handleSpeak('en-GB', e)}
+                      onClick={(e) => { e.stopPropagation(); speak('word-uk', currentWord.word, 'en-GB') }}
                       className="h-10 px-4 text-[10px] font-black tracking-widest border-pink-100 text-pink-600 bg-pink-50/50 hover:bg-pink-100 hover:border-pink-200 transition-all rounded-2xl shadow-sm uppercase"
                     >
                       <Volume2 className="h-4 w-4 mr-1.5" />
@@ -226,17 +187,12 @@ const FlashcardStep: React.FC<FlashcardStepProps> = ({ words, onComplete }) => {
                   </h3>
                 </div>
 
-                {(currentWord.ex1 || currentWord.ex2) && (
-                  <div className="space-y-4 pt-4">
-                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-300">VÍ DỤ NGỮ CẢNH</p>
-                    <div className="space-y-3">
-                      {renderExample(currentWord.ex1)}
-                      {currentWord.ex2 && currentWord.ex2.en && (
-                        renderExample(currentWord.ex2)
-                      )}
-                    </div>
-                  </div>
-                )}
+                <FlashcardExamples
+                  ex1={currentWord.ex1}
+                  ex2={currentWord.ex2}
+                  activeId={activeId}
+                  onSpeak={speak}
+                />
 
                 {currentWord.note && (
                   <div className="pt-4">
@@ -276,6 +232,7 @@ const FlashcardStep: React.FC<FlashcardStepProps> = ({ words, onComplete }) => {
             <button
               key={idx}
               onClick={() => {
+                stop()
                 setCurrentIndex(idx)
                 setIsFlipped(false)
               }}

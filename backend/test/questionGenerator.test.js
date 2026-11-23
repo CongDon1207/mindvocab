@@ -28,6 +28,15 @@ test('generateFillBlank keeps single-word matching behavior', async () => {
   assert.equal(questions[0].answer, 'adjacent')
 })
 
+test('generateFillBlank replaces an exact phrase that ends with punctuation', async () => {
+  const questions = await generateFillBlank(session, [
+    word('punctuated', 'I share the same belief.', 'I share the same belief. Self-respect should never depend entirely on others.'),
+  ])
+
+  assert.equal(questions[0].prompt, '_____ Self-respect should never depend entirely on others.')
+  assert.equal(questions[0].answer, 'I share the same belief.')
+})
+
 test('Fill Blank prefers a natural fill_en and falls back for blank or boilerplate values', () => {
   const natural = word('natural', 'harbor', 'The harbor remained calm despite the rain overnight.')
   const blank = word('blank', 'harbor', '')

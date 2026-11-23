@@ -2,8 +2,7 @@
 // Deterministic question generator với PRNG từ seed
 
 import Word from '../model/Word.js';
-import { getFillBlankSentence } from './wordContent.js';
-const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+import { createWordRegex, getFillBlankSentence } from './wordContent.js';
 const tokenize = (sentence) => sentence.match(/[A-Za-zÀ-ỹ0-9']+/gu) || [];
 
 // Khởi tạo tokenizer để tách câu thành các từ
@@ -163,7 +162,8 @@ export async function generateQuizP2(session, words) {
  *          - clozeSentence: Câu đã được đục lỗ
  */
 function findAndReplaceWordVariant(sentence, targetWord) {
-  const exactMatch = sentence.match(new RegExp(`\\b${escapeRegex(targetWord)}\\b`, 'i'));
+  const exactRegex = createWordRegex(targetWord, 'i');
+  const exactMatch = exactRegex ? sentence.match(exactRegex) : null;
   if (exactMatch) {
     return {
       found: true,
@@ -240,27 +240,9 @@ export async function generateFillBlank(session, words) {
   for (const word of words) {
     const sentence = getFillBlankSentence(word);
     if (!sentence) throw new Error(`Fill Blank sentence is missing for ${word.word}`);
-    let result = findAndReplaceWordVariant(sentence, word.word);
+    const result = findAndReplaceWordVariant(sentence, word.word);
     if (!result.found) {
       throw new Error(`Fill Blank sentence must contain ${word.word}`);
-      // Không có câu ví dụ, tự tạo câu placeholder
-      const placeholderSentence = `The word is _____.`;
-      result = {
-        found: true,
-        matchedWord: word.word,
-        clozeSentence: placeholderSentence.replace('_____', `[${word.meaning_vi}]`)
-      };
-      console.warn(`[FILL_BLANK] Word ${word.word} không có ví dụ, dùng placeholder`);
-    }
-
-    // Nếu không tìm thấy biến thể, thử lại với regex gốc để đảm bảo không bỏ sót
-    if (!result.found && sentence) {
-      const targetRegex = new RegExp(`\\b${word.word}\\b`, 'gi');
-      if (targetRegex.test(sentence)) {
-        result.found = true;
-        result.matchedWord = word.word;
-        result.clozeSentence = sentence.replace(targetRegex, '_____');
-      }
     }
 
     matchedWords.push(word.word);

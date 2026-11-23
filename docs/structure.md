@@ -1,6 +1,6 @@
 # Project Structure Index
 
-> Updated: 2026-08-12
+> Updated: 2026-09-25
 
 ## Modules
 
@@ -28,6 +28,7 @@
 | Import dialog and reports | `frontend/src/components/import/` |
 | Word form and table | `frontend/src/components/word/` |
 | Session steps | `frontend/src/components/session/` |
+| Flashcard example speech | `frontend/src/components/session/FlashcardExamples.tsx`, `frontend/src/hooks/useLocalSpeech.ts` |
 
 ## Import contract
 

@@ -5,8 +5,16 @@ const text = (value) => typeof value === 'string' ? value.trim() : ''
 const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 const normalizeSentence = (value) => text(value).replace(/[“”]/g, '"').replace(/\s+/g, ' ')
 
-function sentenceHasWordOnce(sentence, word) {
-  return (text(sentence).match(new RegExp(`\\b${escapeRegex(text(word))}\\b`, 'gi')) || []).length === 1
+export function createWordRegex(word, flags = 'gi') {
+  const target = text(word)
+  if (!target) return null
+  const regexFlags = flags.includes('u') ? flags : `${flags}u`
+  return new RegExp(`(?<![\\p{L}\\p{N}_])${escapeRegex(target)}(?![\\p{L}\\p{N}_])`, regexFlags)
+}
+
+export function countWordOccurrences(sentence, word) {
+  const regex = createWordRegex(word, 'gi')
+  return regex ? (text(sentence).match(regex) || []).length : 0
 }
 
 export function isLegacyFillBlankSentence(sentence, word) {
@@ -23,7 +31,8 @@ export function getFillBlankSentence(word) {
 }
 
 export function fillBlankTemplate(sentence, word) {
-  return normalizeSentence(sentence).replace(new RegExp(`\\b${escapeRegex(text(word))}\\b`, 'gi'), '<word>')
+  const regex = createWordRegex(word, 'gi')
+  return regex ? normalizeSentence(sentence).replace(regex, '<word>') : normalizeSentence(sentence)
 }
 
 export function normalizeWordInput(data = {}) {
@@ -44,7 +53,11 @@ export function validateWordInput(input) {
     if (!value[field].vi) errors.push(`${field}_vi is required.`)
   }
   if (value.pos && !POS_VALUES.has(value.pos)) errors.push('pos is invalid.')
-  for (const sentence of [value.ex1.en, value.ex2.en, value.fillExample.en]) if (sentence && !sentenceHasWordOnce(sentence, value.word)) errors.push('Each English sentence must contain the word exactly once.')
+  for (const [field, sentence] of [['ex1_en', value.ex1.en], ['ex2_en', value.ex2.en], ['fill_en', value.fillExample.en]]) {
+    if (!sentence || !value.word) continue
+    const count = countWordOccurrences(sentence, value.word)
+    if (count !== 1) errors.push(`${field} must contain the word exactly once (found ${count}).`)
+  }
   const sentences = [value.ex1.en, value.ex2.en, value.fillExample.en].filter(Boolean)
   if (new Set(sentences).size !== sentences.length) errors.push('English sentences must be different.')
   const fillLength = value.fillExample.en.split(/\s+/).filter(Boolean).length

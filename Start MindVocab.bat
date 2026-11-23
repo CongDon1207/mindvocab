@@ -1,4 +1,5 @@
 @echo off
 cd /d "%~dp0"
 start "" http://localhost:5173
-pnpm dev
+call npm run dev
+pause

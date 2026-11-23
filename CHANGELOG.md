@@ -1,5 +1,13 @@
 # Changelog
 
+- 2026-09-27: Fix sequential review completion at `frontend/src/components/session/SummaryStep.tsx` and `frontend/src/components/session/SessionNavigation.tsx` - show a clear next-batch action and remaining-word progress, and avoid exiting the list by mistake (completed).
+
+- 2026-09-25: Add local English example playback at `frontend/src/components/session/FlashcardExamples.tsx` and `frontend/src/hooks/useLocalSpeech.ts` - flashcards read each example on click without an external speech API (completed).
+
+- 2026-09-17: Fix punctuated vocabulary matching at `backend/src/utils/wordContent.js` and `backend/src/utils/questionGenerator.js` - Markdown imports and Fill Blank accept exact phrases with punctuation and report field-specific occurrence counts (completed).
+
+- 2026-09-01: Fix Markdown import textarea scrolling and simplify the root `pnpm start` command at `frontend/src/components/import/UploadWordsDialog.tsx` and `package.json` - long pasted tables remain usable and backend startup avoids a nested npm runner (completed).
+
 - 2026-08-14: Fix sequential session skipping at `backend/src/controllers/sessionController.js` and `frontend/src/pages/Session.tsx` - skipping opens the next ten words and the action is hidden outside sequential mode (completed).
 
 - 2026-08-13: Fix Fill Blank source fallback, import warnings, session cache refresh, and inline answer rendering at `backend/src` and `frontend/src` - prevents repeated boilerplate exercises while preserving prior learning attempts (completed).

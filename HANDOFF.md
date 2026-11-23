@@ -1,5 +1,30 @@
 # Handoff - 2026-01-11
 
+## Sequential Review Continuation - 2026-09-27
+
+- Sequential review results now show progress through the word list and a next-batch button sized to the remaining words.
+- The separate “Complete” session navigation action is hidden on the summary step, and exhausting the list returns to its folder.
+- Validation has not been run yet.
+
+## Local Flashcard Speech - 2026-09-25
+
+- Added manual listen/stop controls for each English flashcard example, using only English voices the browser reports as local.
+- Word US/UK controls now share the same local-only speech lifecycle; card navigation and flipping cancel playback.
+- Frontend production build passed. Repository-wide TypeScript checking still reports errors in unrelated files; none were reported in the new speech files.
+- User will check audible behavior and voice availability on their machine.
+
+## Punctuated Vocabulary Import Fix - 2026-09-17
+
+- Import validation and Fill Blank generation now recognize exact vocabulary phrases that include punctuation, such as `I share the same belief.`.
+- Import errors identify the English column and occurrence count; the ChatGPT prompt preserves the supplied word text.
+- Validation: backend regression tests cover the reported 52-row case, punctuated phrases, repeated occurrences, and Fill Blank generation.
+
+## Import Dialog and Startup Fix - 2026-09-01
+
+- Pasted Markdown tables now stay within a scrollable textarea, keeping import controls visible on typical desktop viewports.
+- `pnpm start` now launches Node directly after changing into `backend`, preserving the existing environment, SQLite, and production asset paths while avoiding the nested npm startup overhead.
+- Validation: frontend lint and production build passed; browser smoke testing confirmed long Markdown input scrolls and startup health checks succeeded.
+
 ## Local Development - 2026-08-12
 
 - Run `pnpm dev` from the repository root to start the backend API and Vite frontend together.
